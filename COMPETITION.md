@@ -131,15 +131,39 @@ Evaluation subset: **best-performing models below 10B parameters**. Intended for
 
 Reported analyses (organizers' final report, not the live metric): public vs private, per perturbation type, per model, published vs unpublished problems, with bootstrap CIs and paired tests.
 
+### How results are measured (verified 16 Sep 2026 from the Codabench API and the website)
+
+There are three levels, and only the last decides prizes:
+
+| Level | What it scores | What it is good for |
+| --- | --- | --- |
+| Local: `getting-started/scripts/run_local.py` | The public `val-sample` (24 cases, only **1** small-model case), run through the same ingestion and scoring programs Codabench uses | Contract and packaging checks: `coverage 1.0`, `invalid_predictions 0`, `small.txt` placement. **Not** a score estimate. |
+| **Live Codabench leaderboard** | Task "AIMO Robustness Validation v7 - Small Model Track" in the Competition Phase. Input and reference data are non-public, i.e. the hidden validation set, which the website says "covers all types of models contained in the test set". | The only external estimate of real performance. It is public and shows Accuracy, Coverage, and Invalid predictions. |
+| Final ranking | Held-out private test set, scored after the deadline | Prizes. Ties are broken by average runtime over repeated runs. |
+
+Scoring details from `components/scoring_program/scoring.py`:
+
+- `accuracy = correct / total labels`.
+- A missing, duplicated, or non-bool prediction counts as wrong and lowers `coverage`.
+- The small track runs identical scoring; the track only enforces the `small.txt` marker.
+
+Submission rules from the Codabench API:
+
+- **10 submissions per day and 100 per person in total.**
+- 3600 s execution limit per submission.
+- Leaderboard rule `Force_Latest_Multiple`.
+
+The leaderboard metric is raw accuracy, which depends on the class prior, while our development metric is balanced accuracy. Choose the decision threshold deliberately, and do not tune it by leaderboard probing: the budget is small and the validation set is not the test set.
+
 ---
 
 ## 6. Key dates
 
 | When | What |
 | --- | --- |
-| Early August 2026 | Competition start; train+validation data and baseline bundles; two-week warmup |
-| **15 Aug – 1 Nov 2026** | **Main competition phase (we are in this window)** |
-| **1 Nov 2026** | **Final submission deadline** — Codabench closes |
+| 30 Apr – 31 Aug 2026 | Codabench Warmup Phase (task "AIMO Robustness Validation v8") |
+| **1 Sep – 1 Nov 2026, 12:55 UTC** | **Codabench Competition Phase (we are in this window)**: Main Track and Small Model Track tasks. The website describes the competition phase as 15 Aug – 1 Nov. |
+| **1 Nov 2026, 12:55 UTC** | **Final submission deadline**: Codabench closes |
 | 1–15 Nov 2026 | Technical report + open-sourced implementation |
 | 15 Nov 2026 | Report due for award-eligible teams |
 | 15–30 Nov 2026 | Result validation, report review, rules compliance; award-eligible teams peer-review up to 3 reports |

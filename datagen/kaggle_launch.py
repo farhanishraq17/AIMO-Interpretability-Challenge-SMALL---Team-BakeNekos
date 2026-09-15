@@ -173,6 +173,24 @@ EXPERIMENTS: dict[str, Experiment] = {
                     "--batch-size", "4", "--dtype", "float16"),
         ),
     ),
+    "e7-sample-smoke": Experiment(
+        account="ISHMAM1",
+        purpose="E7 plumbing and throughput check: installs vLLM, rebuilds the olympiad pool and variants "
+        "from pinned revisions and a fixed seed, then samples AMC and AIME originals (k=4, 4,096-token cap) "
+        "in fp16 with tensor parallelism across the two T4s. Measures tokens/s and base-eligibility yield.",
+        steps=(
+            ("-m", "pip", "install", "-q", "vllm"),
+            ("datagen/perturb/pool.py",),
+            ("datagen/perturb/generate.py", "--examples", "0"),
+            ("datagen/perturb/sample.py", "--phase", "base", "--model-id", DEEPSEEK, "--backend", "vllm",
+             "--tiers", "amc", "--limit", "16", "--k", "4", "--max-new-tokens", "4096",
+             "--out-dir", "/kaggle/working/e7-amc"),
+            ("datagen/perturb/sample.py", "--phase", "base", "--model-id", DEEPSEEK, "--backend", "vllm",
+             "--tiers", "aime", "--limit", "8", "--k", "4", "--max-new-tokens", "4096",
+             "--out-dir", "/kaggle/working/e7-aime"),
+        ),
+        bundle_globs=("datagen/ingest_public.py", "datagen/perturb/*.py"),
+    ),
     "e3-stagea-olmo-smoke": Experiment(
         account="TASHIN",
         purpose="Olmo-3-7B-Instruct plumbing check: loads under transformers 5.13 on T4x2, layer "
