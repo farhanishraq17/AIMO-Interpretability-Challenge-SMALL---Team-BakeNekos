@@ -130,6 +130,13 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None, help="debug: stop after N instances")
     parser.add_argument("--local-files-only", action="store_true")
     parser.add_argument(
+        "--dtype",
+        default="auto",
+        choices=["auto", "float16"],
+        help="auto follows the starter kit (bf16 whenever torch reports it, emulated and slow on a T4); "
+        "match the dtype the traces were generated in",
+    )
+    parser.add_argument(
         "--filter-model",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -168,7 +175,16 @@ def main() -> None:
         return
 
     started = time.time()
-    model, tokenizer = load_model_and_tokenizer(args.model_id, local_files_only=args.local_files_only)
+    if args.dtype == "float16":
+        # Same override as extract_generation_features.py: hide emulated bf16 from the loader.
+        reported = torch.cuda.is_bf16_supported
+        torch.cuda.is_bf16_supported = lambda *_, **__: False
+        try:
+            model, tokenizer = load_model_and_tokenizer(args.model_id, local_files_only=args.local_files_only)
+        finally:
+            torch.cuda.is_bf16_supported = reported
+    else:
+        model, tokenizer = load_model_and_tokenizer(args.model_id, local_files_only=args.local_files_only)
     device = get_model_input_device(model)
     print(f"loaded {args.model_id} dtype={model.dtype} in {time.time() - started:.0f}s", flush=True)
 

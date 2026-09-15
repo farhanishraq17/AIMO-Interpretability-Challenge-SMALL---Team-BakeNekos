@@ -74,7 +74,9 @@ BUNDLE_WARN_BYTES = 900_000
 
 ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR"]
 
-E2_TRACES = "runs/e2-stageb-deepseek-s*/features/stageb-deepseek/shard_*/records.jsonl"
+# Stage B traces used downstream (E4). fp16 only: the dtype benchmark showed bf16 and fp16
+# greedy traces diverge, so the two sets must never be mixed.
+E2_TRACES = "runs/e2f-stageb-fp16-s*/features/stageb-fp16-deepseek/shard_*/records.jsonl"
 
 
 @dataclass(frozen=True)
@@ -131,6 +133,8 @@ EXPERIMENTS: dict[str, Experiment] = {
             merge(f"{KAGGLE_FEATURES}/stagea-deepseek"),
         ),
     ),
+    # Superseded by e2f-*: emulated bf16 on T4 ran at ~617 s/instance and shard 1 hit CUDA OOM.
+    # Kept so their kernels stay addressable; shard 0's output is the bf16 drift reference.
     "e2-stageb-deepseek-s0": Experiment(
         account="ISHRAQ",
         purpose="Stage B shard 0/2 on DeepSeek-R1-0528-Qwen3-8B: greedy generation (4096 cap) "
@@ -142,10 +146,37 @@ EXPERIMENTS: dict[str, Experiment] = {
         purpose="Stage B shard 1/2 on DeepSeek-R1-0528-Qwen3-8B (see shard 0).",
         steps=(stage_b(DEEPSEEK, "stageb-deepseek", "--num-shards", "2", "--shard-index", "1"),),
     ),
+    "e2-bench-dtype": Experiment(
+        account="TASHIN",
+        purpose="Throughput benchmark after E2 ran at ~617 s/instance: the same 8 problems, 512-token "
+        "greedy generation at batch size 8, first in emulated bf16 (the starter-kit default), then fp16.",
+        steps=(
+            # bf16 first, so its timing survives even if fp16 fails the non-finite preflight.
+            stage_b(DEEPSEEK, "bench-bf16", "--limit", "8", "--max-new-tokens", "512"),
+            stage_b(DEEPSEEK, "bench-fp16", "--limit", "8", "--max-new-tokens", "512", "--dtype", "float16"),
+        ),
+    ),
+    "e2f-stageb-fp16-s0": Experiment(
+        account="DESIKALAKAR",
+        purpose="Stage B rerun in native fp16, shard 0/2: 3.3x the throughput of emulated bf16 on T4 "
+        "(e2-bench-dtype), batch size 4 after the OOM at 8.",
+        steps=(
+            stage_b(DEEPSEEK, "stageb-fp16-deepseek", "--num-shards", "2", "--shard-index", "0",
+                    "--batch-size", "4", "--dtype", "float16"),
+        ),
+    ),
+    "e2f-stageb-fp16-s1": Experiment(
+        account="DIDHITI",
+        purpose="Stage B rerun in native fp16, shard 1/2 (see shard 0).",
+        steps=(
+            stage_b(DEEPSEEK, "stageb-fp16-deepseek", "--num-shards", "2", "--shard-index", "1",
+                    "--batch-size", "4", "--dtype", "float16"),
+        ),
+    ),
     "e3-stagea-olmo-smoke": Experiment(
         account="TASHIN",
-        purpose="Olmo-3-7B-Instruct plumbing check: loads under transformers 5.13 in fp16 on "
-        "T4x2, layer count, activation finiteness. Labels are NOT Olmo's (--no-filter-model).",
+        purpose="Olmo-3-7B-Instruct plumbing check: loads under transformers 5.13 on T4x2, layer "
+        "count, activation finiteness. Labels are NOT Olmo's (--no-filter-model).",
         steps=(
             stage_a(OLMO, "stagea-olmo-smoke", "--no-filter-model"),
             merge(f"{KAGGLE_FEATURES}/stagea-olmo-smoke"),
@@ -153,11 +184,11 @@ EXPERIMENTS: dict[str, Experiment] = {
     ),
     "e4-tracestate-deepseek": Experiment(
         account="SALAM",
-        purpose="E4 on DeepSeek-R1-0528-Qwen3-8B: teacher-forced forward pass over prompt + E2 "
-        "greedy trace; hidden states at every layer pooled over prompt_last, trace_mean, "
-        "trace thirds, and trace_last. Needs E2 outputs downloaded to runs/ first.",
+        purpose="E4 on DeepSeek-R1-0528-Qwen3-8B: teacher-forced forward pass over prompt + the fp16 E2 "
+        "greedy trace; hidden states at every layer pooled over prompt_last, trace_mean, trace "
+        "thirds, and trace_last. Needs the e2f outputs downloaded to runs/ first.",
         steps=(
-            trace_states(DEEPSEEK, E2_TRACES, "tracestate-deepseek"),
+            trace_states(DEEPSEEK, E2_TRACES, "tracestate-deepseek", "--dtype", "float16"),
             merge(f"{KAGGLE_FEATURES}/tracestate-deepseek"),
         ),
         bundle_globs=(E2_TRACES,),
@@ -228,7 +259,15 @@ def main():
         with zipfile.ZipFile(io.BytesIO(base64.b64decode(BUNDLE_B64))) as bundle:
             bundle.extractall(REPO)
         # Model weights go to /tmp: /kaggle/working is capped at 20 GB and saved as output.
-        env = dict(os.environ, HF_HOME="/tmp/hf", TOKENIZERS_PARALLELISM="false", PYTHONUNBUFFERED="1")
+        # Expandable segments: E2 shard 1 died of fragmentation (567 MB reserved but unallocated).
+        env = dict(
+            os.environ,
+            HF_HOME="/tmp/hf",
+            TOKENIZERS_PARALLELISM="false",
+            PYTHONUNBUFFERED="1",
+            PYTORCH_ALLOC_CONF="expandable_segments:True",
+            PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True",
+        )
         run([sys.executable, "-c", VERSIONS], "env.log", env=env)
         for index, argv in enumerate(EXPERIMENT["steps"]):
             step_started = time.time()

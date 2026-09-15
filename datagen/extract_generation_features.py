@@ -108,6 +108,12 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None, help="debug: stop after N instances")
     parser.add_argument("--local-files-only", action="store_true", help="forbid model downloads")
     parser.add_argument(
+        "--dtype",
+        default="auto",
+        choices=["auto", "float16"],
+        help="auto follows the starter kit: bf16 whenever torch reports it, which on a T4 is emulated",
+    )
+    parser.add_argument(
         "--allow-nonfinite",
         action="store_true",
         help="generate even if the preflight forward pass produced inf/NaN logits",
@@ -153,7 +159,17 @@ def main() -> None:
         return
 
     started = time.time()
-    model, tokenizer = load_model_and_tokenizer(args.model_id, local_files_only=args.local_files_only)
+    if args.dtype == "float16":
+        # The starter kit's loader picks bf16 whenever torch reports support. On a T4 that
+        # support is emulated and slow, so report it unavailable while the model loads.
+        reported = torch.cuda.is_bf16_supported
+        torch.cuda.is_bf16_supported = lambda *_, **__: False
+        try:
+            model, tokenizer = load_model_and_tokenizer(args.model_id, local_files_only=args.local_files_only)
+        finally:
+            torch.cuda.is_bf16_supported = reported
+    else:
+        model, tokenizer = load_model_and_tokenizer(args.model_id, local_files_only=args.local_files_only)
     load_seconds = time.time() - started
     finite = logits_are_finite(model, tokenizer, todo[0]["problem"], config)
 

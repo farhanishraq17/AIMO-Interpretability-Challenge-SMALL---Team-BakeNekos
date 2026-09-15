@@ -291,6 +291,38 @@ poolings, same folds as the text floor.)
 
 ---
 
+**13. On T4s, emulated bf16 makes long generation about 3.3× slower than fp16, and the dtype
+changes greedy traces.** (E2, `e2-bench-dtype`.)
+
+- **Starter-kit default failed.** It uses bf16, emulated on Turing, with batch size 8 and a
+  4,096-token cap.
+  - It ran at **617 s per instance**.
+  - Shard 1 finished 16 of 69 instances in 2.8 h, then hit CUDA out-of-memory on GPU 1 (567 MB
+    reserved but unallocated, i.e. fragmentation).
+  - 7 of those 16 traces hit the token cap; median 3,883 tokens.
+- **Benchmark.** The same 8 problems, 512 tokens, batch size 8.
+
+  | Dtype | Aggregate throughput | Model load | Preflight |
+  | --- | --- | --- | --- |
+  | Emulated bf16 | 14.7 tokens/s | 102 s | finite |
+  | **Native fp16** | **48.4 tokens/s** | 20 s | finite |
+
+- **Drift.**
+  - No trace was identical across dtypes (0 of 8); traces share a 37% prefix on average.
+  - Mean absolute differences: entropy 0.021 on a mean of 0.213; mean log-prob 0.011 on 0.104;
+    high-confidence fraction 0.019 on 0.784.
+- **Decisions.**
+  - Stage B reruns entirely in fp16 (`e2f-*`), with batch size 4 and expandable CUDA segments;
+    the bf16 and fp16 sets are never mixed.
+  - bf16 shard 0 keeps running as a drift reference.
+  - E4 teacher-forces in fp16 to match its traces.
+- **Risk.** Evaluation computes features in native bf16 on Blackwell, so a model fit on fp16
+  features needs recalibration, or a refit on bf16 features from the Fields grant.
+- **Scope of Finding 10.** "bf16 in practice" still holds for short forward passes; for long
+  generation, speed forces fp16.
+
+---
+
 ## 7. Results so far
 
 ### Text-only floor

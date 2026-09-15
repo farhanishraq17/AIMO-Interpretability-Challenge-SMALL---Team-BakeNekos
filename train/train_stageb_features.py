@@ -41,7 +41,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "getting-started" / "solutions" / "uncertainty-profiling"))
 from uncertainty_profile.config import FEATURE_NAMES  # noqa: E402
 
-DEFAULT_GLOB = str(ROOT / "runs" / "e2-stageb-deepseek-s*" / "features" / "stageb-deepseek" / "shard_*" / "records.jsonl")
+# fp16 reruns only: bf16 and fp16 greedy traces diverge (e2-bench-dtype), so never glob both.
+DEFAULT_GLOB = str(ROOT / "runs" / "e2f-stageb-fp16-s*" / "features" / "stageb-fp16-deepseek" / "shard_*" / "records.jsonl")
 INSTANCES = ROOT / "data" / "small_track" / "instances_train.parquet"
 SPLITS = ROOT / "data" / "small_track" / "splits.json"
 TEXT_FLOOR_BALANCED_ACCURACY = 0.6732
