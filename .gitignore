@@ -1,0 +1,21 @@
+# Credentials: never commit
+Secrets.env
+*.env
+.kaggle/
+
+# Python
+**/__pycache__/
+*.pyc
+.venv/
+
+# Generated, regenerable outputs
+data/
+dist/
+features/
+runs/
+kaggle_runs/
+
+# Local tooling
+.claude/
+.vscode/
+.idea/
