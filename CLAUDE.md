@@ -33,9 +33,14 @@ is the actual filename.
 
 - **OS/shell:** Windows 11. PowerShell 5.1 is the primary shell (no `&&`; use `;` or
   `if ($?)`). Git Bash is also available.
-- **Not a git repository yet.** `.gitignore` is inert until `git init`. Before any commit,
-  confirm `Secrets.env`, `data/`, `features/`, `runs/`, `kaggle_runs/`, and `dist/` stay
-  excluded.
+- **Git:**
+  - Branch `main`, remote
+    `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Small-Model-Track`.
+  - `getting-started/` is a **submodule** pinned to upstream `aimo-interp/getting-started` at
+    `e98c489`; clone with `--recurse-submodules`.
+  - `.gitignore` excludes `Secrets.env` (and `*.env`), `data/`, `features/`, `runs/`,
+    `kaggle_runs/`, and `dist/`.
+  - Before every commit, `git grep --cached -n "KGAT_"` must print nothing.
 - **Python:** system Python 3.13 carries the Kaggle CLI (2.2.2). The project venv is
   `getting-started/.venv`, pinned to the competition runtime: torch 2.12.1 (CPU build
   locally), transformers 5.13.0, scikit-learn 1.8.0, pandas 3.0.3, pyarrow.
@@ -98,7 +103,7 @@ python -m uv run scripts/run_local.py dist/solution-always-true-small.zip --smal
 ```
 COMPETITION.md PLAN.md PROGRESS.md RESULTS.md CLAUDE.md
 Secrets.env                  Kaggle tokens (KGAT_…) per alias. NEVER print, commit, or bundle.
-getting-started/             Upstream starter kit (commit e98c489) + pinned venv. Treat as vendored.
+getting-started/             Upstream starter kit: git submodule at e98c489 (+ local pinned venv). Don't edit.
   solutions/trained-probe/          last-prompt-token linear probe baseline (+ probe_artifact.pkl)
   solutions/uncertainty-profiling/  14 trace-uncertainty features -> RF regressor baseline
   solutions/always-true/            packaging check
@@ -109,14 +114,16 @@ datagen/
   ingest_public.py           consolidate all public aimo-interp tables -> data/small_track/
   extract_features.py        Stage A: one forward pass, pooled hidden states at every layer
   extract_generation_features.py  Stage B: greedy generation + 14 uncertainty features + text
-  merge_features.py          merge Stage A shards (refuses inconsistent dtype/prompt/layers)
+  extract_trace_states.py    E4: teacher-forced pass over prompt + E2 trace, segment-pooled states
+  merge_features.py          merge Stage A / E4 shards (refuses inconsistent dtype/prompt/layers)
   plan_shards.py             shard balance and time estimate, no model load
   kaggle_launch.py           experiment registry; renders and pushes self-contained kernels
 train/
   train_text_baseline.py     text-only methods under grouped CV (writes RESULTS.md)
   check_dataset_confound.py  is the text signal just dataset detection? (appends)
-  train_stagea_probes.py     nested grouped-CV probes over layer x pooling (Stage A)
+  train_stagea_probes.py     nested probes, layer ensembles, text fusion (Stage A; E4 via --section)
   train_stageb_features.py   trace-feature classifiers + fusion with text (Stage B)
+  train_fusion.py            E10: nested fusion of text / stagea / tracestate / trace blocks
   results_io.py              section upsert for RESULTS.md
 scripts/                     setup and one-off audits (Kaggle accounts, HF access, label rule)
 data/small_track/            generated training set (git-ignored, regenerable)

@@ -351,7 +351,7 @@ and olympiad-scale labelling. Up to 10,000 H200-h is available. This needs you.
 | 3600 s blown by generation + consistency passes | Invalid submission | Time every candidate on Codabench early (Lane A gives real timings); cap tokens |
 | Codabench congestion near the deadline | Missed upload | Freeze 27 Oct; final upload by 30 Oct |
 | Library version drift in artifacts | Silent load failure | Pinned venv for all final fits; ZIP load test in Docker |
-| Workspace not under version control | Lost work; report reproducibility | `git init` with `Secrets.env` excluded before the next code change |
+| Secrets leaking into the public repo | Compromised Kaggle accounts | `Secrets.env`/`*.env` git-ignored; `git grep --cached -n "KGAT_"` before every commit |
 
 ---
 
@@ -364,8 +364,8 @@ and olympiad-scale labelling. Up to 10,000 H200-h is available. This needs you.
    `solution-uncertainty-profiling-small.zip` (G0, plus real runtime numbers).
 2. Send the organizer questions in §10 on Discord or aimo.interp@gmail.com.
 3. Submit the Fields Model compute-grant form.
-4. Decide on `git init` and a private GitHub remote. The report requires open-sourcing, and
-   `Secrets.env` must stay excluded.
+4. ~~Put the workspace under git with a GitHub remote.~~ Done 15 Sep. Still to decide: when
+   the repository is public. The report requires open-sourcing by 15 Nov.
 
 **Can proceed here:**
 

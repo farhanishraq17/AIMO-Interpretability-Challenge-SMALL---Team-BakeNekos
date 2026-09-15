@@ -429,9 +429,11 @@ deterministically.
 
 **Housekeeping:**
 
-- **This workspace is still not a git repository**, so `.gitignore` is inert while
-  `Secrets.env` sits in the tree. Initialise git before any commit or push and confirm
-  `Secrets.env` is excluded.
+- **Version control (15 Sep).** The workspace is now a git repository with remote
+  `farhanishraq17/AIMO-Interpretability-Challenge---Small-Model-Track`.
+  - `getting-started/` is a submodule at upstream `e98c489`.
+  - `Secrets.env` and every generated directory are ignored.
+  - Before the first commit, the index was checked for token strings; none were found.
 - `General-Instructions.md` is still an empty placeholder, and `Inferred-Notebooks/` is empty.
 
 ---
