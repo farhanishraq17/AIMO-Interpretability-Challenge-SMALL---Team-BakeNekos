@@ -17,52 +17,37 @@ Decisions that matter at evaluation time:
   instead, and it must round-trip a sample before the model is used.
 * **Other models.** No labels exist for Qwen/Qwen3.5-4B, Skywork/Skywork-OR1-Math-7B or
   allenai/Olmo-3-7B-Think, and every public model with enough labels is mostly spurious, so
-  any model other than DeepSeek gets `False` for every problem.
+  any model other than DeepSeek gets `False` for every problem. The Competition Phase passes
+  model ids verbatim, so no alias resolution is needed.
 * **Failure policy.** If the language model cannot be loaded or run, the batch falls back to
-  the text block with its own out-of-fold threshold, so predictions stay valid.
+  the text block with its own out-of-fold threshold; if the text block itself fails, every
+  prediction is `False`. Either way the batch stays valid.
 """
 
 from __future__ import annotations
 
+import functools
 import gc
 import sys
 from pathlib import Path
 
 import joblib
 import numpy as np
+from scipy.special import expit, logit
 
 ARTIFACT_PATH = Path(__file__).resolve().parent / "artifacts" / "e11_deepseek.joblib"
 ROUND_TRIP_SAMPLE = "Every morning Aya goes for a $9$-kilometer-long walk.\nFind the answer \\boxed{204}."
 EPS = 1e-6
 
-_artifact_cache: dict | None = None
 
-
+@functools.cache
 def load_artifact() -> dict:
-    global _artifact_cache
-    if _artifact_cache is None:
-        _artifact_cache = joblib.load(ARTIFACT_PATH)
-    return _artifact_cache
-
-
-def resolve_model(model_id: str, artifact: dict) -> str | None:
-    """The checkpoint this artifact serves, or None for any other model."""
-    if model_id == artifact["model_id"] or model_id in artifact["aliases"]:
-        return artifact["model_id"]
-    return None
-
-
-def logit(p: np.ndarray) -> np.ndarray:
-    p = np.clip(np.asarray(p, dtype=np.float64), EPS, 1 - EPS)
-    return np.log(p / (1 - p))
-
-
-def sigmoid(x: np.ndarray) -> np.ndarray:
-    return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
+    return joblib.load(ARTIFACT_PATH)
 
 
 def standardised(block: str, probabilities: np.ndarray, artifact: dict) -> np.ndarray:
-    return (logit(probabilities) - artifact["block_logit_mean"][block]) / artifact["block_logit_std"][block]
+    z = logit(np.clip(np.asarray(probabilities, dtype=np.float64), EPS, 1 - EPS))
+    return (z - artifact["block_logit_mean"][block]) / artifact["block_logit_std"][block]
 
 
 def stagea_probability(pooled: dict[str, np.ndarray], artifact: dict) -> float:
@@ -72,7 +57,7 @@ def stagea_probability(pooled: dict[str, np.ndarray], artifact: dict) -> float:
         x = np.asarray(pooled[pooling], dtype=np.float64)  # (n_layers, hidden_dim)
         z = (x - artifact["probe_mean"][index]) / artifact["probe_scale"][index]
         margins = np.einsum("ld,ld->l", z, artifact["probe_coef"][index].astype(np.float64))
-        probabilities.append(sigmoid(margins + artifact["probe_intercept"][index]))
+        probabilities.append(expit(margins + artifact["probe_intercept"][index]))
     return float(np.mean(np.concatenate(probabilities)))
 
 
@@ -117,26 +102,19 @@ def pooled_prompt_states(tokenizer, model, problem: str, artifact: dict) -> dict
     """Replicates datagen/extract_features.py: same prompt, truncation, poolings, float16 storage."""
     import torch
 
-    system_prompt = artifact["system_prompt"]
-    try:
-        prompt = tokenizer.apply_chat_template(
-            [{"role": "system", "content": system_prompt}, {"role": "user", "content": problem}],
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-    except Exception:
-        prompt = f"{system_prompt}\n\n{problem}"
+    prompt = tokenizer.apply_chat_template(
+        [{"role": "system", "content": artifact["system_prompt"]}, {"role": "user", "content": problem}],
+        tokenize=False,
+        add_generation_prompt=True,
+    )
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=artifact["max_prompt_tokens"])
     inputs = {name: tensor.to(model.device) for name, tensor in inputs.items()}
     with torch.inference_mode():
         output = model(**inputs, output_hidden_states=True, return_dict=True, use_cache=False)
-    hidden_states = output.hidden_states
-    if len(hidden_states) != artifact["n_layers"]:
-        raise RuntimeError(f"model returned {len(hidden_states)} hidden states, probes expect {artifact['n_layers']}")
 
     mask = inputs["attention_mask"][0].bool()
     pooled: dict[str, list[np.ndarray]] = {"last": [], "mean": [], "max": []}
-    for layer in hidden_states:
+    for layer in output.hidden_states:
         tokens = layer[0][mask.to(layer.device)].float()
         pooled["last"].append(tokens[-1].cpu().numpy())
         pooled["mean"].append(tokens.mean(dim=0).cpu().numpy())
@@ -147,12 +125,8 @@ def pooled_prompt_states(tokenizer, model, problem: str, artifact: dict) -> dict
 
 
 def predict_robustness(model_id: str, problems: list[str]) -> list[bool]:
-    problems = list(problems)
-    if not problems:
-        return []
     artifact = load_artifact()
-    checkpoint = resolve_model(model_id, artifact)
-    if checkpoint is None:
+    if model_id != artifact["model_id"]:
         return [False] * len(problems)
 
     try:
@@ -160,9 +134,12 @@ def predict_robustness(model_id: str, problems: list[str]) -> list[bool]:
     except Exception as exc:  # e.g. an sklearn version mismatch; never let the batch go invalid
         print(f"e11: text block failed ({type(exc).__name__}: {exc}); predicting False", file=sys.stderr)
         return [False] * len(problems)
+
+    import torch
+
     tokenizer = model = None
     try:
-        tokenizer, model = load_language_model(checkpoint)
+        tokenizer, model = load_language_model(model_id)
         stagea_prob = np.array(
             [stagea_probability(pooled_prompt_states(tokenizer, model, p, artifact), artifact) for p in problems]
         )
@@ -173,11 +150,5 @@ def predict_robustness(model_id: str, problems: list[str]) -> list[bool]:
     finally:
         tokenizer = model = None
         gc.collect()
-        try:
-            import torch
-
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-        except Exception:
-            pass
+        torch.cuda.empty_cache()
     return [bool(score >= 0.0) for score in scores]

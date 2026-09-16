@@ -18,28 +18,18 @@ from transformers import AutoTokenizer, PreTrainedTokenizerBase, PreTrainedToken
 ROUND_TRIP_SAMPLE = "Every morning Aya goes for a $9$-kilometer-long walk.\nFind the answer \\boxed{204}."
 
 
-def load_tokenizer(model_id: str, **kwargs) -> PreTrainedTokenizerBase:
-    """Prefer the fast byte-level tokenizer (as the starter kit's uncertainty baseline does)."""
-    try:
-        return PreTrainedTokenizerFast.from_pretrained(model_id, **kwargs)
-    except (OSError, TypeError, ValueError):
-        return AutoTokenizer.from_pretrained(model_id, **kwargs)
-
-
-def round_trips(tokenizer: PreTrainedTokenizerBase, sample: str = ROUND_TRIP_SAMPLE) -> bool:
-    ids = tokenizer(sample, add_special_tokens=False)["input_ids"]
-    return tokenizer.decode(ids) == sample
-
-
 def load_checked_tokenizer(model_id: str, allow_lossy: bool = False, **kwargs) -> tuple[PreTrainedTokenizerBase, dict]:
-    """Load, verify the encode/decode round trip, and return provenance for metadata.json."""
-    tokenizer = load_tokenizer(model_id, **kwargs)
-    ok = round_trips(tokenizer)
-    info = {"tokenizer_class": type(tokenizer).__name__, "tokenizer_round_trip": ok}
+    """Load the fast byte-level tokenizer (falling back to AutoTokenizer), verify the encode/decode
+    round trip, and return provenance for metadata.json."""
+    try:
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(model_id, **kwargs)
+    except (OSError, TypeError, ValueError):
+        tokenizer = AutoTokenizer.from_pretrained(model_id, **kwargs)
+    decoded = tokenizer.decode(tokenizer(ROUND_TRIP_SAMPLE, add_special_tokens=False)["input_ids"])
+    ok = decoded == ROUND_TRIP_SAMPLE
     if not ok and not allow_lossy:
-        ids = tokenizer(ROUND_TRIP_SAMPLE, add_special_tokens=False)["input_ids"]
         raise SystemExit(
             f"tokenizer {type(tokenizer).__name__} for {model_id} does not round-trip: "
-            f"{ROUND_TRIP_SAMPLE!r} -> {tokenizer.decode(ids)!r}"
+            f"{ROUND_TRIP_SAMPLE!r} -> {decoded!r}"
         )
-    return tokenizer, info
+    return tokenizer, {"tokenizer_class": type(tokenizer).__name__, "tokenizer_round_trip": ok}

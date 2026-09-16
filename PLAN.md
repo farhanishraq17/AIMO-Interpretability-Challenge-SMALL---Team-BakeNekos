@@ -112,10 +112,20 @@ Details are in `PROGRESS.md`:
 
 ### 2.1 Evaluated (fixed by organizers)
 
-| Priority | HF ID | Codabench alias | Params | Labels | Plumbing |
+**Updated 16 Sep (upstream README `995f992`):** the small track evaluates four models, passed
+verbatim with no aliases. `Olmo-3-7B-Instruct` was warm-up only.
+
+| Priority | `model_id` | Params | Labels | Plumbing | E11 v1 handling |
 | --- | --- | --- | --- | --- | --- |
-| P0 | `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | `qwen3-8b:low` | 8B | 138 train-ready | 37 hidden states; **needs `PreTrainedTokenizerFast`** |
-| P0 | `allenai/Olmo-3-7B-Instruct` | unknown (ask) | 7B | **none** | 33 hidden states; tokenizer round-trips |
+| P0 | `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 8B | 138 train-ready | 37 hidden states; **needs `PreTrainedTokenizerFast`** | text + stagea fusion |
+| P0 | `Qwen/Qwen3.5-4B` | 4B | **none** | untested | all `False` |
+| P0 | `Skywork/Skywork-OR1-Math-7B` | 7B | **none** | untested | all `False` |
+| P0 | `allenai/Olmo-3-7B-Think` | 7B | **none** | untested (E3 covered the Instruct checkpoint) | all `False` |
+
+**Largest new gap: three of the four scored models have no labels anywhere public.** Labelling
+them ourselves is limited to non-official perturbation categories (§3.3), and those may not
+measure the same robustness the test labels do. Ask the organizers whether a train split for
+these models is coming.
 
 Every artifact ships per `model_id`, plus a safe fallback of `[False] * len(problems)`.
 

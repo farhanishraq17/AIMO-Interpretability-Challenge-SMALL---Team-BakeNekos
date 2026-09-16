@@ -189,16 +189,26 @@ Open participation: no affiliation, team-size, or career-level restrictions. You
 
 The public `val-sample` mixes **closed APIs** and **open-weight** systems. White-box internals are only available for open-weight checkpoints cached on the workers.
 
-### Currently cached on evaluation workers
+### Models evaluated in the Competition Phase (upstream README, commit `995f992`, checked 16 Sep 2026)
 
-| Hugging Face ID | Scale | Open-weight | Small track (<10B) |
+| `model_id` (passed verbatim) | Main Track | Small Models Track | Public labels |
 | --- | --- | --- | --- |
-| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 8B | Yes | **Yes — primary target** |
-| `allenai/Olmo-3-7B-Instruct` | 7B | Yes | **Yes** |
-| `google/gemma-3-27b-it` | 27B | Yes | No (Main) |
-| `openai/gpt-oss-120b` | 120B (cached as bf16, ~218 GiB) | Yes | No (Main) |
+| `Qwen/Qwen3.5-4B` | yes | **yes** | none |
+| `Skywork/Skywork-OR1-Math-7B` | yes | **yes** | none |
+| `allenai/Olmo-3-7B-Think` | yes | **yes** | none |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | yes | **yes** | 138 train-ready |
+| `openai/gpt-oss-120b` | yes | no | — |
 
-`gpt-oss-120b` is stored as plain bfloat16, not MXFP4, because MXFP4 cannot be materialized on the Blackwell scoring GPUs.
+- **No aliases.** The `:low`-suffixed names in the public datasets are never passed during the
+  Competition Phase.
+- **Warm-up only.** `allenai/Olmo-3-7B-Instruct` and `google/gemma-3-27b-it` were used in the
+  warm-up phase only. `Olmo-3-7B-Think` is a different checkpoint from `Olmo-3-7B-Instruct`.
+- **Hardware.** Each evaluation container sees **one** RTX PRO 6000 (96 GB), and every model
+  fits on it. `gpt-oss-120b` is now cached in MXFP4 (about 62 GiB). A 4–8B checkpoint loads in
+  about 2 s from the warm cache.
+- **Interface.** The unmerged `reasoning_effort` branch adds an optional
+  `are_robust(model_id, reasoning_effort, problems)`. It detects the parameter by name and
+  keeps the legacy two-argument call working.
 
 Anything outside this cache cannot be loaded during evaluation. Contact organizers if another checkpoint must be mounted.
 

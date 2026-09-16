@@ -3,7 +3,7 @@
 Local checks cannot load the 8B model, so the DeepSeek path of the ZIP has never run. On a
 Kaggle GPU this script:
 
-1. unpacks the exact ZIP (or finds its already-extracted files under the dataset mount);
+1. finds the submission files, which Kaggle unpacks from the ZIP uploaded as a private dataset;
 2. calls `are_robust` on the 138 DeepSeek training problems, timing the full call including
    model load, and compares its decisions with the artifact's reference decisions (a silent
    fallback to the text block would show up here as disagreements);
@@ -22,40 +22,30 @@ import argparse
 import json
 import sys
 import time
-import zipfile
 from pathlib import Path
 
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTANCES = ROOT / "data" / "small_track" / "instances_train.parquet"
-ZIP_NAME = "solution-e11-text-stagea-small.zip"
 MODEL_ID = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
 
 
-def locate_submission(search_root: Path, workdir: Path) -> Path:
-    archives = sorted(search_root.rglob(ZIP_NAME))
-    if archives:
-        with zipfile.ZipFile(archives[0]) as bundle:
-            bundle.extractall(workdir)
-        print(f"extracted {archives[0]} -> {workdir}")
-        return workdir
-    # Kaggle may unpack uploaded zips into the dataset mount.
+def locate_submission(search_root: Path) -> Path:
     for candidate in sorted(search_root.rglob("e11_inference.py")):
         if (candidate.parent / "solution.py").is_file():
-            print(f"using extracted submission at {candidate.parent}")
+            print(f"using submission at {candidate.parent}")
             return candidate.parent
-    raise SystemExit(f"no {ZIP_NAME} or extracted submission under {search_root}")
+    raise SystemExit(f"no unpacked E11 submission under {search_root}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--search-root", type=Path, default=Path("/kaggle/input"))
-    parser.add_argument("--workdir", type=Path, default=Path("/tmp/e11-submission"))
     parser.add_argument("--out", type=Path, default=Path("/kaggle/working/e11_gpu_check.json"))
     args = parser.parse_args()
 
-    submission = locate_submission(args.search_root, args.workdir)
+    submission = locate_submission(args.search_root)
     sys.path.insert(0, str(submission))
     import numpy as np
     import e11_inference as inference

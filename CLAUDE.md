@@ -168,11 +168,18 @@ Recovered or measured facts that the pipeline depends on (evidence in `PROGRESS.
 - Small-track ZIPs need a root-level `small.txt`; main-track ZIPs must not contain one.
 - Offline evaluation: `HF_HUB_OFFLINE=1`; load with `local_files_only=True`; no pip, no
   network. Allowed imports are the stdlib plus the `Dockerfile.competition` pins.
-- Cached models: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` (alias `qwen3-8b:low`),
-  `allenai/Olmo-3-7B-Instruct`, `google/gemma-3-27b-it`, `openai/gpt-oss-120b`.
-  Resolve aliases, and return `[False] * len(problems)` for unknown models rather than raising.
-- Budget: **3600 s** for prediction on 8x RTX PRO 6000 (Blackwell, bf16). Loading the 8B
-  model costs about a minute. Ties break on runtime.
+- **Small-track models** (Competition Phase, passed verbatim, no aliases):
+  `Qwen/Qwen3.5-4B`, `Skywork/Skywork-OR1-Math-7B`, `allenai/Olmo-3-7B-Think`,
+  `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`. Only DeepSeek has public labels. Main Track adds
+  `openai/gpt-oss-120b`. Return `[False] * len(problems)` for models you do not cover rather
+  than raising.
+- Budget: **3600 s** for the whole prediction run on **one** RTX PRO 6000 (96 GB, Blackwell,
+  bf16). A cached 4–8B model loads in about 2 s. Ties break on runtime.
+- Accept both call styles: `are_robust(model_id, problems)` and the pending
+  `are_robust(model_id, reasoning_effort=..., problems=...)`. The E11 signature
+  `(model_id, problems, reasoning_effort="default")` works under both.
+- **Load the DeepSeek tokenizer as `PreTrainedTokenizerFast`**; `AutoTokenizer` strips
+  whitespace under transformers 5.13 (Finding 14). Use `datagen/tokenizer_check.py`.
 - **Fit every shipped sklearn/joblib artifact in the pinned local venv**, never on Kaggle.
   Load-test the ZIP in `Dockerfile.competition` before uploading.
 - Never bundle datasets, labels, model weights, venvs, `__pycache__`, or credentials.

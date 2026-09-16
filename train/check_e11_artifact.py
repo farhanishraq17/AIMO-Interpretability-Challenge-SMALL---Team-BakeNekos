@@ -62,9 +62,9 @@ def main() -> None:
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
     fallback = are_robust("deepseek-ai/DeepSeek-R1-0528-Qwen3-8B", reasoning_effort="default", problems=problems)
     assert len(fallback) == 2 and all(type(v) is bool for v in fallback), fallback
-    legacy = are_robust("qwen3-8b:low", problems)
+    legacy = are_robust("deepseek-ai/DeepSeek-R1-0528-Qwen3-8B", problems)
     assert len(legacy) == 2 and all(type(v) is bool for v in legacy), legacy
-    print(f"3. DeepSeek without a cached model -> valid text-only fallback {fallback}; alias qwen3-8b:low {legacy}")
+    print(f"3. DeepSeek without a cached model -> valid text-only fallback {fallback}; legacy positional call {legacy}")
     print("all checks passed")
 
 

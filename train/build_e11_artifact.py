@@ -149,7 +149,6 @@ def main() -> None:
         "schema_version": 1,
         "name": "e11-text-stagea",
         "model_id": MODEL_ID,
-        "aliases": ["qwen3-8b:low"],
         "system_prompt": system_prompt,
         "system_prompt_sha1": shard_meta["system_prompt_sha1"],
         "max_prompt_tokens": MAX_PROMPT_TOKENS,

@@ -508,6 +508,40 @@ fp16, hook pooling; `train_stagea_probes.py --section` and `train_fusion.py`.)
   text + stagea as the Lane B candidate on efficiency grounds** until an out-of-sample check
   (E7) says otherwise; the runtime tie-break favours it too.
 
+**19. With the tokenizer fixed and longer caps, olympiad base sampling works but is
+expensive.** (`e7b-sample-smoke`: vLLM 0.29, fp16, 2× T4, k=4, token-id prompts.)
+
+| Tier | Cap | Samples at cap | Accuracy per sample | Solved 4/4 | Time per problem | Throughput |
+| --- | --- | --- | --- | --- | --- | --- |
+| AMC (16) | 8,192 | 45/64 | 0.297 (0.203 at 4k, lossy tokenizer) | 4/16 | 311 s | 88 tok/s |
+| AIME (8) | 16,384 | 21/32 | 0.344 (0.062 at 4k, lossy tokenizer) | 2/8 | 1,258 s | 44 tok/s |
+
+- Completions are clean text, and every correct sample ends in a parsed `\boxed{}`.
+- **Most samples still hit the cap**, so only about a quarter of problems are eligible
+  (solved in every sample).
+- **Cost.** A base pass over the 505-problem pool at these rates is roughly 45–175 GPU-hours
+  before any variant sampling, against about 180 GPU-hours a week for the whole fleet. Long-cap
+  labelling fits the Fields compute grant better than Kaggle T4s.
+
+**20. The E11 submission ZIP passes on real GPUs.** (`e11-gpu-check`, 2× T4, bf16,
+transformers 5.13, scikit-learn 1.8.0; the exact ZIP mounted from a private Kaggle dataset.)
+
+- **Decisions.** `are_robust` on the 138 DeepSeek training problems returned 138 valid bools,
+  42 robust, with **0 flips** against the artifact's reference decisions.
+- **Features.** Recomputed stagea probabilities match the training-time reference to within
+  **1.3e-9**.
+- **Other models.** `Qwen/Qwen3.5-4B` gets all `False` in under 0.01 s.
+- **Runtime.** 176.8 s for the full call, including a 7.8 s model load and 0.96 s of forward
+  pass per problem on T4s.
+- **Issues found on the way, all fixed.**
+  1. Kaggle ships scikit-learn 1.6.1, which cannot unpickle 1.8.0 estimators. Kernels now pin
+     1.8.0, as the evaluation image does.
+  2. An exception in the text block would have invalidated the whole batch. It now falls back
+     to `False`.
+  3. With no checkpoint in the local cache, the `local_files_only` load silently fell back to
+     text-only; the check caught this as 4 flips. The check now pre-downloads the model, as
+     the evaluation workers' warm cache does.
+
 ---
 
 ## 7. Results so far
