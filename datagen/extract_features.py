@@ -4,7 +4,7 @@ Designed to run one shard per Kaggle account so the six accounts cover the whole
 instance table in parallel. Stage A only: a single forward pass over the prompt, no
 generation, so a shard finishes well inside a Kaggle session.
 
-Two deliberate departures from the shipped probe baseline:
+Three deliberate departures from the shipped probe baseline:
 
 * The baseline reloads the 8B model for *every* problem (`_encode_problem` calls
   `_load_model` each call). We load once and reuse, which is the difference between
@@ -12,9 +12,12 @@ Two deliberate departures from the shipped probe baseline:
 * The baseline keeps only the last prompt token at one layer, which measured at chance
   (PLAN.md Finding 2). We keep several poolings at every layer so the pooling and layer
   choice become training-time decisions rather than baked-in guesses.
+* The baseline loads `AutoTokenizer`, which under transformers 5.13 strips all whitespace
+  from DeepSeek-R1-0528-Qwen3-8B prompts. We load through `tokenizer_check`, which refuses
+  a tokenizer that does not round-trip (PROGRESS.md Finding 14).
 
-Prompt construction mirrors the baseline exactly (same system prompt, read from the
-probe artifact; same chat template with `add_generation_prompt=True`) so our features
+Prompt construction otherwise mirrors the baseline exactly (same system prompt, read from
+the probe artifact; same chat template with `add_generation_prompt=True`) so our features
 stay comparable to the published probe numbers.
 
 Example, shard 0 of 6:
@@ -38,7 +41,9 @@ from pathlib import Path
 import numpy as np
 import pyarrow.parquet as pq
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM
+
+from tokenizer_check import load_checked_tokenizer
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INSTANCES = ROOT / "data" / "small_track" / "instances_train.parquet"
@@ -189,6 +194,11 @@ def main() -> None:
     parser.add_argument("--max-length", type=int, default=2048, help="matches the baseline's max_prompt_length")
     parser.add_argument("--limit", type=int, default=None, help="debug: stop after N instances")
     parser.add_argument(
+        "--allow-lossy-tokenizer",
+        action="store_true",
+        help="debug only: run even if the tokenizer does not round-trip text",
+    )
+    parser.add_argument(
         "--filter-model",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -256,7 +266,8 @@ def main() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"loading {args.model_id} dtype={dtype} device={device}")
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_id)
+    tokenizer, tokenizer_info = load_checked_tokenizer(args.model_id, allow_lossy=args.allow_lossy_tokenizer)
+    print(f"tokenizer: {tokenizer_info}")
     model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
         dtype=dtype,
@@ -345,6 +356,7 @@ def main() -> None:
                 "torch": torch.__version__,
                 "platform": platform.platform(),
                 "system_prompt_sha1": hashlib.sha1(system_prompt.encode()).hexdigest(),
+                **tokenizer_info,
             },
             indent=2,
         ),

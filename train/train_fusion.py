@@ -57,7 +57,8 @@ from train_stageb_features import DEFAULT_GLOB, FEATURE_NAMES, MODELS, trace_fea
 ROOT = Path(__file__).resolve().parents[1]
 INSTANCES = ROOT / "data" / "small_track" / "instances_train.parquet"
 SPLITS = ROOT / "data" / "small_track" / "splits.json"
-DEFAULT_STAGEA = ROOT / "runs" / "e1-stagea-deepseek" / "features" / "stagea-deepseek"
+# e1b, not e1: the original run's prompts went through a whitespace-stripping tokenizer (Finding 14).
+DEFAULT_STAGEA = ROOT / "runs" / "e1b-stagea-deepseek" / "features" / "stagea-deepseek"
 DEFAULT_TRACESTATE = ROOT / "runs" / "e4-tracestate-deepseek" / "features" / "tracestate-deepseek"
 DEFAULT_OUT = ROOT / "runs" / "e10-fusion"
 BLOCKS = ("text", "stagea", "tracestate", "trace")
@@ -321,11 +322,16 @@ def main() -> None:
     ]
     if headline:
         _, auc, bal = headline
-        established = auc[1] > 0 or bal[1] > 0
+
+        def status(diff: tuple[float, float, float]) -> str:
+            if diff[1] > 0:
+                return "established gain"
+            return "established loss" if diff[2] < 0 else "not established"
+
+        # Report each metric on its own; one metric clearing zero says nothing about the other.
         lines.append(
-            f"**Verdict:** fusing all blocks changes AUC by {ci(auc)} and balanced accuracy by {ci(bal)} "
-            f"relative to {reference_name}; the gain is {'established' if established else 'not established'} "
-            f"at n={len(table)}."
+            f"**Verdict:** relative to {reference_name}, fusing all blocks changes AUC by {ci(auc)} "
+            f"({status(auc)}) and balanced accuracy by {ci(bal)} ({status(bal)}) at n={len(table)}."
         )
         lines.append("")
     lines.append(

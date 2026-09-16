@@ -249,35 +249,68 @@ perturbation-type-aware method must infer it.
   an attention mask living on `cuda:0`, which fails for layers that `device_map="auto"`
   places on `cuda:1`. The earlier smoke test ran on one device and could not have shown it.
 
-**11. Prompt hidden states: selecting a layer fails, averaging all layers is promising but
-not established.** (E1, `train/train_stagea_probes.py`; 138 instances, 37 layers × 3
-poolings, same folds as the text floor.)
+**11. Prompt hidden states: selecting a layer fails; averaging all layers is a lead alone and
+a statistically established gain when fused with text.** (E1b, `train/train_stagea_probes.py`
+and `train/train_fusion.py`; 138 instances, 37 layers × 3 poolings, same folds as the text
+floor. E1b replaced E1, whose prompts were whitespace-stripped: Finding 14.)
 
-| Method | Balanced acc. | ROC-AUC | AUC minus text (95% paired bootstrap CI) |
-| --- | --- | --- | --- |
-| Char tf-idf text (recomputed; matches the floor) | 0.6732 | 0.6686 | — |
-| 5 next-token uncertainty scalars | 0.5809 | 0.6392 | −0.029 [−0.169, +0.123] |
-| Nested-selected probe (layer, pooling chosen in-fold) | 0.5417 | 0.5929 | −0.076 [−0.195, +0.040] |
-| Layer ensemble, `last` pooling (no selection) | 0.6340 | 0.6955 | +0.027 [−0.071, +0.126] |
-| Layer ensemble, `mean` pooling | 0.6209 | 0.7320 | +0.064 [−0.029, +0.155] |
-| Layer ensemble, all poolings | 0.6201 | 0.7331 | +0.065 [−0.024, +0.153] |
-| Fusion: text + all-pooling ensemble | 0.6291 | 0.7260 | +0.058 [−0.007, +0.124] |
+| Method | Balanced acc. | ROC-AUC | AUC minus text (95% paired bootstrap CI) | E1 (corrupted) AUC |
+| --- | --- | --- | --- | --- |
+| Char tf-idf text (recomputed; matches the floor) | 0.6732 | 0.6686 | — | 0.6686 |
+| 5 next-token uncertainty scalars | 0.6299 | 0.6887 | +0.020 [−0.121, +0.163] | 0.6392 |
+| Nested-selected probe (layer, pooling chosen in-fold) | 0.5515 | 0.6397 | −0.029 [−0.150, +0.088] | 0.5929 |
+| Layer ensemble, `last` pooling (no selection) | 0.6381 | 0.6966 | +0.028 [−0.072, +0.129] | 0.6955 |
+| Layer ensemble, `max` pooling | 0.5613 | 0.7538 | +0.085 [−0.014, +0.175] | 0.7214 |
+| Layer ensemble, `mean` pooling | 0.6479 | 0.7481 | +0.080 [−0.010, +0.173] | 0.7320 |
+| Layer ensemble, all poolings | 0.5972 | 0.7489 | +0.080 [−0.009, +0.168] | 0.7331 |
+| Fixed-weight fusion: text + all-pooling ensemble, 0.5 threshold | 0.6332 | 0.7342 | +0.066 [−0.000, +0.129] | 0.7260 |
 
-- **Selection overfits.** Inner-CV AUCs of 0.76–0.83 collapse to 0.59 on held-out folds.
-  The chosen configuration differs in every fold (mean L23, max L16, max L7, mean L14,
-  max L29). Picking a layer is fitting noise: the same effect behind the baseline's 58.4%.
+**Nested fusion (E10 protocol, text + stagea).** Thresholds are learned in-fold and fusions
+were fixed in advance.
+
+| Method | Balanced acc. | ROC-AUC |
+| --- | --- | --- |
+| Text alone, learned threshold | 0.6389 | 0.6481 |
+| Stagea alone | 0.6046 | 0.7059 |
+| **Mean fusion** | **0.7173** | **0.7230** |
+| Stacked fusion | 0.6748 | 0.7258 |
+
+Mean fusion minus text alone:
+
+- **AUC +0.075 [+0.031, +0.117].**
+- **Balanced accuracy +0.078 [+0.015, +0.148].**
+- Both intervals exclude zero.
+
+Findings:
+
+- **Selection overfits.**
+  - Inner-CV AUCs of 0.75–0.85 fall to 0.64 on held-out folds.
+  - The chosen configuration differs in every fold: max L27, max L16, max L17, mean L16,
+    max L15.
+  - Picking a layer is fitting noise, the same effect behind the baseline's 58.4%.
 - **Averaging recovers a ranking signal.** Ensembles over all layers out-rank text by about
-  0.06 AUC. At n=138 every interval spans zero, so this is a lead, not a result.
-- **Balanced accuracy hides it.** Hidden-state probabilities sit off-centre: the ensemble
-  median is 0.25, and only 33 of 138 are predicted robust at 0.5. At a prior-matched
-  threshold the mean- and max-pooling ensembles reach 0.643 against text's 0.624. A shipped
-  version must learn its threshold in-fold.
-- **Per-layer probes are not at chance here.** Mean per-layer balanced accuracy is 0.58–0.62
-  across poolings, against the shipped artifact's 0.5005. The training setups differ, so
-  this does not by itself show the baseline was mis-trained.
-- **Implication for Lane B.** Drop single-layer probing; keep a layer-ensemble block as one
-  input to fusion. Testing whether states over the *generated trace* carry more than prompt
-  states is now a cheap experiment, because Stage A costs 1 s per instance.
+  0.08 AUC, but alone every interval still spans zero.
+- **Fused with text, the gain is established.** The nested mean fusion beats text alone on
+  both metrics with intervals excluding zero. It also beats the 0.5-threshold floor
+  (0.6732) by 0.044 balanced accuracy. Caveats:
+  - The bootstrap resamples instances, not model refits.
+  - Only 1 of the 138 instances is olympiad-level.
+- **Thresholds matter.**
+  - Hidden-state probabilities sit off-centre: the all-pooling ensemble's median is 0.25, and
+    only 30 of 138 are predicted robust at 0.5.
+  - At a prior-matched threshold the `mean`-pooling ensemble reaches 0.662 balanced
+    accuracy, against text's 0.624.
+  - A shipped model must learn its threshold in-fold.
+- **The tokenizer bug depressed but did not flip the result.** Correct prompts raised the
+  next-token scalars' AUC by 0.05, the nested probe's by 0.05, and every ensemble's by
+  0.00–0.03.
+- **Per-layer probes are not at chance here.** Mean per-layer balanced accuracy is
+  0.59–0.64 across poolings, against the shipped artifact's 0.5005. The training setups
+  differ, so this does not by itself show the baseline was mis-trained.
+- **Implication for Lane B.**
+  - Drop single-layer probing.
+  - Keep the layer-ensemble block in fusion.
+  - Next, test whether states over the *generated trace* (E4) carry more than prompt states.
 
 **12. Olmo-3-7B-Instruct plumbing works (E3).**
 
@@ -320,6 +353,160 @@ changes greedy traces.** (E2, `e2-bench-dtype`.)
   features needs recalibration, or a refit on bf16 features from the Fields grant.
 - **Scope of Finding 10.** "bf16 in practice" still holds for short forward passes; for long
   generation, speed forces fp16.
+
+**14. Under transformers 5.13, `AutoTokenizer` strips all whitespace from
+DeepSeek-R1-0528-Qwen3-8B text. E1 was extracted on corrupted prompts.** (Found through
+`Ġ`/`Ċ` artifacts in E7 smoke completions; verified locally in the pinned venv.)
+
+- **The broken loader.** `AutoTokenizer.from_pretrained` resolves to a legacy
+  `LlamaTokenizer` conversion.
+  - `"Every morning Aya goes for a $9$-kilometer-long walk.\nFind the answer \boxed{204}."`
+    decodes as `"EverymorningAyagoesfora$9$-kilometer-longwalk.Findtheanswer\boxed{204}."`
+  - Decoding correct ids with it yields `Ġ`/`Ċ` text.
+- **The working loader.** `PreTrainedTokenizerFast` (the class the starter kit's
+  uncertainty baseline deliberately uses) round-trips exactly.
+- **Impact by run:**
+
+  | Run | Tokenizer | Status |
+  | --- | --- | --- |
+  | **E1** | `AutoTokenizer` | **Invalid.** Recorded prompt lengths match the lossy tokenizer exactly; 135 of 138 prompts encode differently with the correct one. Re-extracted as **E1b** (`e1b-stagea-deepseek`, 16 Sep) with the checked tokenizer; Finding 11 now reports E1b. |
+  | **E7 smoke** | vLLM's default, the same `AutoTokenizer` path | **Invalid.** Its accuracy numbers are not trustworthy. |
+  | E2 / e2f, e2-bench-dtype, E4 | Starter kit's `PreTrainedTokenizerFast` | Valid |
+  | E3 | Olmo-3-7B-Instruct round-trips under both loaders | Valid |
+  | Text-only floor | No tokenizer | Valid |
+
+- **The shipped trained-probe baseline.** `probe_inference.py` also loads `AutoTokenizer`, so
+  under the evaluation runtime it sees whitespace-stripped prompts. This may contribute to its
+  near-chance behaviour (Finding 2), and it is worth reporting upstream.
+- **Fix.**
+  - `datagen/tokenizer_check.py` loads `PreTrainedTokenizerFast` first and refuses any
+    tokenizer that fails an encode/decode round trip. Its class and round-trip result are
+    recorded in `metadata.json`.
+  - `extract_features.py` and `perturb/sample.py` load through it.
+  - The vLLM backend now runs with `skip_tokenizer_init`: prompts go in as ids from the
+    checked tokenizer, and completions are decoded with it.
+  - For DeepSeek the chat template already carries BOS, and the tokenizer adds no second one.
+
+**15. The published uncertainty-profiling features barely separate robust from spurious on our
+instances. Trace length does, in an unexpected direction.** (E2 rerun in fp16, `e2f-*`;
+`train/train_stageb_features.py`.)
+
+- **Setup.** 138 instances; greedy decoding with a 4,096-token cap, fp16, batch size 4, and
+  the starter kit's tokenizer (round-trips correctly).
+- **Cost.** 190–211 s per instance, or 3.7 h and 4.1 h per shard, against 617 s per instance
+  in emulated bf16.
+- **Results.** Out-of-fold, same folds as the text floor:
+
+| Features | Best balanced acc. | Best ROC-AUC |
+| --- | --- | --- |
+| 14 uncertainty features (the baseline's set) | 0.5752 | 0.5487 |
+| + length (log tokens, hit cap) | 0.6136 | 0.6176 |
+| + trace shape (log chars, boxed, closed think, reflections) | 0.5940 | 0.6484 |
+| Fixed-weight fusion: text + trace (logreg), 0.5 threshold | 0.6438 | 0.6874 |
+| Text floor | 0.6732 | 0.6686 |
+
+- **Alone, the baseline's 14 features are near chance** (AUC 0.54–0.55). Its shipped artifact
+  reports 0.6262 grouped out-of-fold balanced accuracy on its own 141-row split. This is not a
+  clean replication: our traces are fp16 (Finding 13), our labels include derived rows and
+  eligibility filters, and we classify rather than regress decay. Read it as "does not
+  transfer to our setup", not as a refutation.
+- **Longer traces lean robust.** 55% of traces hit the cap: 72% of robust ones and 49% of
+  spurious ones. Univariate AUCs:
+  - lean robust: log chars 0.640, log tokens 0.636, hit cap 0.616;
+  - lean spurious: closing `</think>` 0.364, producing a boxed answer 0.384, reflection markers
+    per 1k words 0.314.
+
+  A plausible reading is that the model answers brittle problems quickly and fluently. But
+  under a 4,096-token cap, length is confounded with difficulty, so this needs checking at a
+  longer cap before it becomes a feature.
+
+**16. E10 fusion v1: the pre-declared all-block fusion improves AUC over text but not balanced
+accuracy; the trace block adds nothing.** (`train/train_fusion.py`: text, E1b prompt layer
+ensemble, and E2 fp16 trace features; nested, with in-fold thresholds.)
+
+| Row | Balanced acc. | ROC-AUC | AUC minus text-alone | Balanced acc. minus text-alone |
+| --- | --- | --- | --- | --- |
+| text alone | 0.6389 | 0.6481 | — | — |
+| stagea alone | 0.6046 | 0.7059 | +0.058 [−0.037, +0.149] | −0.034 [−0.139, +0.064] |
+| trace alone | 0.5792 | 0.6334 | −0.015 [−0.146, +0.113] | −0.060 [−0.181, +0.059] |
+| text + stagea (ablation) | **0.7173** | 0.7230 | +0.075 [+0.031, +0.117] | +0.078 [+0.015, +0.148] |
+| text + trace (ablation) | 0.6103 | 0.6419 | −0.006 [−0.054, +0.038] | −0.029 [−0.110, +0.051] |
+| stagea + trace (ablation) | 0.6928 | **0.7571** | +0.109 [+0.015, +0.199] | +0.054 [−0.039, +0.141] |
+| **mean fusion, all blocks (pre-declared)** | 0.6667 | 0.7176 | **+0.069 [+0.019, +0.121]** | +0.028 [−0.047, +0.104] |
+| stacked fusion, all blocks (pre-declared) | 0.6471 | 0.7285 | +0.080 [−0.020, +0.175] | +0.008 [−0.090, +0.100] |
+
+- **Pre-declared headline.** The AUC gain is established; the balanced-accuracy gain is not.
+  An earlier version of the script's verdict called the gain "established" whenever either
+  metric cleared zero. It now reports each metric separately.
+- **Trace features dilute.** Adding the trace block to text + stagea cuts balanced accuracy
+  from 0.7173 to 0.6667, and text + trace is below text alone.
+- **The strongest rows are ablations.** Text + stagea is best on balanced accuracy; stagea +
+  trace is best on AUC. Adopting either after reading this table is a selection effect, so
+  confirm on independent data first (olympiad labels from E7).
+- **Gate G1 decision.**
+  - Trace-uncertainty features leave the fusion for now.
+  - **Text + prompt layer ensemble is the Lane B candidate**, pending an out-of-sample check.
+  - Its inference cost is one forward pass per problem (~1 s on a T4, less on the evaluation
+    GPUs) plus a tf-idf model, far inside the 3600 s budget, which also helps the runtime
+    tie-break.
+
+**17. E4 ran out of memory because `output_hidden_states=True` holds every layer at once;
+hooks fix it, but only after matching the final-norm convention.**
+
+- **Failure.** The first E4 kernel died at instance 100 of 138 with CUDA OOM on GPU 1, while
+  trying to allocate 572 MB. It was running at 8.4 s per instance, and every completed
+  instance had a full 4,096-token trace.
+- **Cause.** `output_hidden_states=True` materialises all 37 layers for the whole sequence:
+  37 × 6,144 × 4,096 × 2 bytes ≈ **1.9 GB** on top of ~8 GB of weights per GPU. Stage A never
+  hit this because its prompts are about 100 tokens.
+- **Fix.** Forward hooks pool each layer the moment it is produced and release it, so only one
+  layer is ever held.
+- **The subtlety that first made hooks wrong.** `hidden_states` is not each layer's output.
+  transformers appends every layer's *input*, then the last layer's output *after* the model's
+  final norm, giving `(embeddings, out_1, ..., out_{N-1}, norm(out_N))`. Hooking only
+  embeddings and decoder layers captured the raw `out_N` instead, and the two paths differed
+  by up to **2.28** on the tiny model. Hooking the norm as well and dropping the raw final
+  layer makes them **identical (max difference 0.0)**.
+- **Why exactness matters.** E1b Stage A used the standard path, so E4 features have to follow
+  the same convention to be comparable or fusible.
+- `--no-hooks` keeps the original path for debugging, and `pooling_via_hooks` is recorded in
+  `metadata.json`.
+
+**18. E4 trace states lift the fusion, but the signal sits in the prompt, not in the
+reasoning.** (`e4-tracestate-deepseek` v2, 138 instances, 37 layers × 5 segment poolings,
+fp16, hook pooling; `train_stagea_probes.py --section` and `train_fusion.py`.)
+
+- **Cost.** 8.7 s per instance, 23 minutes for all 138.
+- **Within E4, prompt beats trace.**
+
+  | Layer ensemble (no selection) | Balanced acc. | ROC-AUC |
+  | --- | --- | --- |
+  | `prompt_last` (state generation started from) | 0.6618 | **0.7386** |
+  | `trace_first_third` | 0.6397 | 0.7394 |
+  | `trace_mean` | 0.6013 | 0.6860 |
+  | `trace_last_third` | 0.5163 | 0.6253 |
+  | `trace_last` | 0.5114 | 0.6040 |
+
+  The nested selector chose `prompt_last` in 4 of 5 folds. **States late in the reasoning are
+  the weakest**, which is the opposite of the hypothesis E4 was built to test.
+- **Fusion (nested, in-fold thresholds), against text alone:**
+
+  | Row | Balanced acc. | ROC-AUC | AUC vs text | Bal. acc. vs text |
+  | --- | --- | --- | --- | --- |
+  | tracestate alone | 0.6454 | 0.7037 | +0.056 [−0.038, +0.156] | +0.007 [−0.102, +0.114] |
+  | text + stagea (previous candidate) | **0.7173** | 0.7230 | +0.075 [+0.031, +0.117] | +0.078 [+0.015, +0.148] |
+  | **text + stagea + tracestate** | 0.7116 | **0.7391** | **+0.091 [+0.031, +0.152]** | **+0.073 [+0.003, +0.150]** |
+
+  This is the first pre-declared block set whose **balanced-accuracy** gain also excludes zero.
+- **Interpretation.** E4's contribution is mostly a second view of *prompt* state under a
+  different template (user-only, versus the probe's system prompt in E1b), not evidence that
+  reasoning-time internals add information. Trace-derived features have now disappointed twice:
+  trace-uncertainty statistics (Finding 15) and trace-position poolings here.
+- **Candidate status.** Adding tracestate buys +0.016 AUC over text + stagea and costs
+  −0.006 balanced accuracy, with overlapping intervals; it also requires generating a full
+  trace at inference (minutes per problem) rather than one forward pass (~1 s). **Keep
+  text + stagea as the Lane B candidate on efficiency grounds** until an out-of-sample check
+  (E7) says otherwise; the runtime tie-break favours it too.
 
 ---
 

@@ -2,8 +2,8 @@
 
 Stage A reads the prompt only. Finding 11 found no single prompt layer that generalises,
 but an all-layer ensemble out-ranks problem text, and fused with text it lifts balanced
-accuracy (E10). The natural next question is whether internals *during reasoning* carry
-more signal. Does the model's state while working through its own greedy solution
+accuracy (Finding 16). The natural next question is whether internals *during reasoning*
+carry more signal. Does the model's state while working through its own greedy solution
 separate robust from spurious answers better than its state before it starts?
 
 This script feeds each E2 greedy trace back through the model in a single teacher-forced
@@ -15,6 +15,11 @@ layer's hidden states over five segments:
     trace_first_third  mean over the first third of the trace (setting up)
     trace_last_third   mean over the last third (answer and any self-checking)
     trace_last         final trace token
+
+**Layers are pooled through forward hooks, not `output_hidden_states=True`.** Keeping all 37
+layers of a 6k-token sequence costs about 1.9 GB on top of the model and ran a T4 out of
+memory at instance 100 of 138. Hooks pool each layer the moment it is produced, so only one
+layer's activations are ever held.
 
 The output layout matches `extract_features.py` (vectors/*.npz, records.jsonl,
 metadata.json), so `merge_features.py`, `train/train_stagea_probes.py`, and
@@ -32,7 +37,7 @@ Run (after the E2 outputs are downloaded):
 
     python datagen/extract_trace_states.py \
         --model-id deepseek-ai/DeepSeek-R1-0528-Qwen3-8B \
-        --traces "runs/e2-stageb-deepseek-s*/features/stageb-deepseek/shard_*/records.jsonl" \
+        --traces "runs/e2f-stageb-fp16-s*/features/stageb-fp16-deepseek/shard_*/records.jsonl" \
         --out-dir features/tracestate-deepseek
 """
 
@@ -85,36 +90,83 @@ def load_traces(pattern: str) -> dict[str, str]:
     return traces
 
 
-def pool_segments(hidden_states, n_prompt: int) -> tuple[dict[str, np.ndarray], int]:
-    """Per-layer segment poolings as (n_layers, hidden_dim) float16 arrays, plus non-finite count.
+def pool_layer(hidden: torch.Tensor, n_prompt: int) -> tuple[dict[str, torch.Tensor], int]:
+    """Segment poolings for one layer's (1, seq_len, hidden_dim) activations, moved to CPU."""
+    tokens = hidden[0].float()
+    n_nonfinite = int((~torch.isfinite(tokens)).sum().item())
+    trace = tokens[n_prompt:]
+    if len(trace) == 0:  # empty or fully truncated trace: fall back to the prompt state
+        trace = tokens[n_prompt - 1 : n_prompt]
+    third = max(1, len(trace) // 3)
+    return {
+        "prompt_last": tokens[n_prompt - 1].cpu(),
+        "trace_mean": trace.mean(dim=0).cpu(),
+        "trace_first_third": trace[:third].mean(dim=0).cpu(),
+        "trace_last_third": trace[-third:].mean(dim=0).cpu(),
+        "trace_last": trace[-1].cpu(),
+    }, n_nonfinite
 
-    Each layer stays on its own device (device_map="auto" splits layers across GPUs) until the
-    pooled vectors are moved to CPU.
+
+def layer_modules(model) -> tuple[list, bool]:
+    """Modules to hook, and whether the final norm is among them.
+
+    `output_hidden_states` does not return each layer's raw output: transformers appends every
+    layer's *input*, then the last layer's output *after* the model's final norm. So the tuple
+    is (embeddings, out_1, ..., out_{N-1}, norm(out_N)). Hooking the norm as well, and dropping
+    the raw final layer, reproduces that sequence exactly — which matters because Stage A (E1b)
+    used the standard path.
     """
-    out: dict[str, list[torch.Tensor]] = {name: [] for name in POOLINGS}
-    n_nonfinite = 0
-    for layer in hidden_states:
-        tokens = layer[0].float()  # (seq_len, hidden_dim)
-        n_nonfinite += int((~torch.isfinite(tokens)).sum().item())
-        trace = tokens[n_prompt:]
-        if len(trace) == 0:  # empty or fully truncated trace: fall back to the prompt state
-            trace = tokens[n_prompt - 1 : n_prompt]
-        third = max(1, len(trace) // 3)
-        out["prompt_last"].append(tokens[n_prompt - 1].cpu())
-        out["trace_mean"].append(trace.mean(dim=0).cpu())
-        out["trace_first_third"].append(trace[:third].mean(dim=0).cpu())
-        out["trace_last_third"].append(trace[-third:].mean(dim=0).cpu())
-        out["trace_last"].append(trace[-1].cpu())
-    return {name: torch.stack(vals).numpy().astype(np.float16) for name, vals in out.items()}, n_nonfinite
+    decoder = model.get_decoder() if hasattr(model, "get_decoder") else getattr(model, "model", None)
+    layers = getattr(decoder, "layers", None)
+    if layers is None:
+        raise SystemExit(f"cannot locate decoder layers on {type(model).__name__}; use --no-hooks")
+    norm = getattr(decoder, "norm", None)
+    modules = [model.get_input_embeddings(), *layers]
+    if norm is not None:
+        modules.append(norm)
+    return modules, norm is not None
 
 
 @torch.inference_mode()
-def forward(model, input_ids: torch.Tensor):
-    try:
-        # Only hidden states are needed; skip the 150k-vocabulary logits over every position.
-        return model(input_ids=input_ids, output_hidden_states=True, use_cache=False, logits_to_keep=1)
-    except TypeError:
-        return model(input_ids=input_ids, output_hidden_states=True, use_cache=False)
+def pooled_states(model, input_ids: torch.Tensor, n_prompt: int, use_hooks: bool):
+    """Per-layer segment poolings as (n_layers, hidden_dim) float16 arrays, plus non-finite count."""
+    if not use_hooks:
+        output = model(input_ids=input_ids, output_hidden_states=True, use_cache=False)
+        collected, n_nonfinite = [], 0
+        for hidden in output.hidden_states:
+            pooled, bad = pool_layer(hidden, n_prompt)
+            collected.append(pooled)
+            n_nonfinite += bad
+        del output
+    else:
+        collected, nonfinite = [], [0]
+
+        def hook(_module, _args, output):
+            hidden = output[0] if isinstance(output, tuple) else output
+            pooled, bad = pool_layer(hidden.detach(), n_prompt)
+            collected.append(pooled)
+            nonfinite[0] += bad
+
+        modules, has_norm = layer_modules(model)
+        handles = [module.register_forward_hook(hook) for module in modules]
+        try:
+            # Hidden states are pooled and released layer by layer; keep only the last logit.
+            try:
+                model(input_ids=input_ids, use_cache=False, logits_to_keep=1)
+            except TypeError:
+                model(input_ids=input_ids, use_cache=False)
+        finally:
+            for handle in handles:
+                handle.remove()
+        if has_norm:
+            # Keep norm(out_N), drop the raw out_N, matching the hidden_states convention.
+            del collected[-2]
+        n_nonfinite = nonfinite[0]
+
+    return {
+        name: torch.stack([layer[name] for layer in collected]).numpy().astype(np.float16)
+        for name in POOLINGS
+    }, n_nonfinite
 
 
 def main() -> None:
@@ -129,6 +181,11 @@ def main() -> None:
     parser.add_argument("--max-length", type=int, default=2048 + 4096, help="prompt + trace token cap")
     parser.add_argument("--limit", type=int, default=None, help="debug: stop after N instances")
     parser.add_argument("--local-files-only", action="store_true")
+    parser.add_argument(
+        "--no-hooks",
+        action="store_true",
+        help="debug: materialise every layer with output_hidden_states (needs ~1.9 GB at 6k tokens)",
+    )
     parser.add_argument(
         "--dtype",
         default="auto",
@@ -198,6 +255,7 @@ def main() -> None:
         # merge_features.py checks this key for cross-shard consistency.
         "system_prompt_sha1": hashlib.sha1(PROMPT_FORMAT.encode()).hexdigest(),
         "trace_retokenised": True,
+        "pooling_via_hooks": not args.no_hooks,
         "traces": args.traces,
         "max_length": args.max_length,
         "num_shards": args.num_shards,
@@ -218,8 +276,9 @@ def main() -> None:
         ids = (prompt_ids + trace_ids)[: args.max_length]
         n_prompt = min(len(prompt_ids), len(ids))
 
-        output = forward(model, torch.tensor([ids], device=device))
-        pooled, n_nonfinite = pool_segments(output.hidden_states, n_prompt)
+        pooled, n_nonfinite = pooled_states(
+            model, torch.tensor([ids], device=device), n_prompt, use_hooks=not args.no_hooks
+        )
         if n_nonfinite:
             print(f"  warning: {n_nonfinite} non-finite activations for {row['problem_key']}")
 
@@ -250,7 +309,6 @@ def main() -> None:
                 flush=True,
             )
 
-        del output
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 

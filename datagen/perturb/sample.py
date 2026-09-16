@@ -20,8 +20,14 @@ Backends:
            answers are needed, not token-level statistics.
     hf     transformers `generate`, for local smoke tests on tiny models.
 
+**Tokenization never goes through vLLM's own tokenizer.** Under transformers 5.13 it
+resolves DeepSeek-R1-0528-Qwen3-8B to a legacy conversion that drops whitespace (PROGRESS.md
+Finding 14). Prompts are encoded with the round-trip-checked tokenizer from
+`tokenizer_check`, passed to vLLM as token ids, and completions are decoded with the same
+tokenizer.
+
 Output: <out-dir>/<phase>/shard_XX_of_YY/records.jsonl, one line per item, flushed per chunk
-and resumable; metadata.json records sampling settings, versions, and throughput.
+and resumable; metadata.json records sampling settings, tokenizer, versions, and throughput.
 
 Example (Kaggle):
 
@@ -51,6 +57,7 @@ for import_path in (PERTURB, PERTURB.parent):
 
 from answers import extract_answer  # noqa: E402
 from extract_features import assign_shards  # noqa: E402
+from tokenizer_check import load_checked_tokenizer  # noqa: E402
 
 DEFAULT_POOL = ROOT / "data" / "olympiad_pool" / "pool.parquet"
 DEFAULT_VARIANTS = ROOT / "data" / "perturbations" / "variants.parquet"
@@ -123,21 +130,39 @@ def build_items(args: argparse.Namespace) -> tuple[list[dict], dict]:
     return items, info
 
 
-def format_prompt(tokenizer, problem: str) -> str:
+def encode_prompt(tokenizer, problem: str) -> list[int]:
+    """Chat-templated prompt ids. The template already carries BOS, so add no special tokens."""
     message = [{"role": "user", "content": problem + PROMPT_SUFFIX}]
     try:
-        return tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
+        text = tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
+        return tokenizer(text, add_special_tokens=False)["input_ids"]
     except (AttributeError, TypeError, ValueError):
-        return problem + PROMPT_SUFFIX  # tokenizers without a chat template (smoke tests)
+        # Tokenizers without a chat template (smoke tests).
+        return tokenizer(problem + PROMPT_SUFFIX)["input_ids"]
+
+
+def stop_token_ids(tokenizer, model_id: str, local_files_only: bool) -> list[int]:
+    """EOS ids from the tokenizer and the model's generation config (R1 models end on either)."""
+    ids = {tokenizer.eos_token_id} if tokenizer.eos_token_id is not None else set()
+    try:
+        from transformers import GenerationConfig
+
+        eos = GenerationConfig.from_pretrained(model_id, local_files_only=local_files_only).eos_token_id
+        ids |= set(eos) if isinstance(eos, (list, tuple)) else ({eos} if eos is not None else set())
+    except (OSError, ValueError):
+        pass
+    return sorted(ids)
 
 
 class VllmBackend:
     name = "vllm"
 
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, args: argparse.Namespace, tokenizer):
         from vllm import LLM, SamplingParams, __version__
 
         self.version = __version__
+        self.tokenizer = tokenizer
+        self.stop_ids = stop_token_ids(tokenizer, args.model_id, args.local_files_only)
         self.llm = LLM(
             model=args.model_id,
             tensor_parallel_size=args.tensor_parallel,
@@ -146,65 +171,76 @@ class VllmBackend:
             gpu_memory_utilization=args.gpu_memory_utilization,
             enforce_eager=args.enforce_eager,
             seed=args.seed,
+            skip_tokenizer_init=True,  # vLLM's tokenizer would be the lossy one
         )
-        self.tokenizer = self.llm.get_tokenizer()
         self.params = SamplingParams(
             n=args.k,
             temperature=args.temperature,
             top_p=args.top_p,
             max_tokens=args.max_new_tokens,
             seed=args.seed,
+            stop_token_ids=self.stop_ids,
+            detokenize=False,
         )
 
-    def generate(self, prompts: list[str]) -> list[list[tuple[str, int, bool]]]:
-        outputs = self.llm.generate(prompts, self.params, use_tqdm=False)
-        return [
-            [(c.text, len(c.token_ids), c.finish_reason == "length") for c in output.outputs]
-            for output in outputs
-        ]
+    def generate(self, prompt_ids: list[list[int]]) -> list[list[tuple[str, int, bool]]]:
+        outputs = self.llm.generate([{"prompt_token_ids": ids} for ids in prompt_ids], self.params, use_tqdm=False)
+        results = []
+        for output in outputs:
+            samples = []
+            for completion in output.outputs:
+                token_ids = list(completion.token_ids)
+                text = self.tokenizer.decode(token_ids, skip_special_tokens=True)
+                samples.append((text, len(token_ids), completion.finish_reason == "length"))
+            results.append(samples)
+        return results
 
 
 class HfBackend:
     name = "hf"
 
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, args: argparse.Namespace, tokenizer):
         import torch
         import transformers
-        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from transformers import AutoModelForCausalLM
 
         self.torch = torch
         self.version = transformers.__version__
         self.args = args
+        self.tokenizer = tokenizer
         cuda = torch.cuda.is_available()
-        self.tokenizer = AutoTokenizer.from_pretrained(args.model_id, local_files_only=args.local_files_only)
         self.model = AutoModelForCausalLM.from_pretrained(
             args.model_id,
             dtype=torch.float16 if cuda else torch.float32,
             device_map="auto" if cuda else None,
             local_files_only=args.local_files_only,
         ).eval()
+        self.stop_ids = stop_token_ids(tokenizer, args.model_id, args.local_files_only)
         torch.manual_seed(args.seed)
 
-    def generate(self, prompts: list[str]) -> list[list[tuple[str, int, bool]]]:
+    def generate(self, prompt_ids: list[list[int]]) -> list[list[tuple[str, int, bool]]]:
         torch, args, tokenizer = self.torch, self.args, self.tokenizer
-        eos = tokenizer.eos_token_id
+        stop = set(self.stop_ids)
+        pad = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else (self.stop_ids or [0])[0]
         results = []
-        for prompt in prompts:
-            encoded = tokenizer(prompt, return_tensors="pt").to(self.model.device)
+        for ids in prompt_ids:
+            input_ids = torch.tensor([ids], device=self.model.device)
             with torch.inference_mode():
                 output = self.model.generate(
-                    **encoded,
+                    input_ids=input_ids,
+                    attention_mask=torch.ones_like(input_ids),
                     do_sample=True,
                     temperature=args.temperature,
                     top_p=args.top_p,
                     max_new_tokens=args.max_new_tokens,
                     num_return_sequences=args.k,
-                    pad_token_id=tokenizer.pad_token_id if tokenizer.pad_token_id is not None else eos,
+                    eos_token_id=self.stop_ids or None,
+                    pad_token_id=pad,
                 )
             samples = []
-            for row in output[:, encoded["input_ids"].shape[1]:].tolist():
-                length = row.index(eos) if eos in row else len(row)
-                samples.append((tokenizer.decode(row[:length], skip_special_tokens=True), length, eos not in row))
+            for row in output[:, len(ids):].tolist():
+                length = next((i for i, token in enumerate(row) if token in stop), len(row))
+                samples.append((tokenizer.decode(row[:length], skip_special_tokens=True), length, length == len(row)))
             results.append(samples)
         return results
 
@@ -231,6 +267,7 @@ def main() -> None:
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.90)
     parser.add_argument("--enforce-eager", action="store_true", help="skip CUDA graphs (saves memory on small GPUs)")
     parser.add_argument("--local-files-only", action="store_true")
+    parser.add_argument("--allow-lossy-tokenizer", action="store_true", help="debug only; see tokenizer_check.py")
     parser.add_argument("--chunk", type=int, default=32, help="items per generate call; also the flush interval")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--num-shards", type=int, default=1)
@@ -262,7 +299,11 @@ def main() -> None:
         return
 
     started = time.time()
-    backend = VllmBackend(args) if args.backend == "vllm" else HfBackend(args)
+    tokenizer, tokenizer_info = load_checked_tokenizer(
+        args.model_id, allow_lossy=args.allow_lossy_tokenizer, local_files_only=args.local_files_only
+    )
+    print(f"tokenizer: {tokenizer_info}", flush=True)
+    backend = VllmBackend(args, tokenizer) if args.backend == "vllm" else HfBackend(args, tokenizer)
     load_seconds = time.time() - started
     metadata = {
         "stage": f"E7 {args.phase}",
@@ -270,6 +311,8 @@ def main() -> None:
         "backend": backend.name,
         "backend_version": backend.version,
         "prompt_suffix": PROMPT_SUFFIX,
+        "stop_token_ids": backend.stop_ids,
+        **tokenizer_info,
         "selection": info,
         "n_items": len(shard),
         "load_seconds": round(load_seconds, 1),
@@ -282,8 +325,7 @@ def main() -> None:
     loop_started = time.time()
     for start in range(0, len(todo), args.chunk):
         chunk = todo[start : start + args.chunk]
-        prompts = [format_prompt(backend.tokenizer, item["problem"]) for item in chunk]
-        completions = backend.generate(prompts)
+        completions = backend.generate([encode_prompt(tokenizer, item["problem"]) for item in chunk])
         with records_path.open("a", encoding="utf-8") as handle:
             for item, samples in zip(chunk, completions):
                 answers = [extract_answer(text) for text, _, _ in samples]

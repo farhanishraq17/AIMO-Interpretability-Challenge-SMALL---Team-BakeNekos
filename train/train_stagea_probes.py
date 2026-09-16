@@ -55,7 +55,8 @@ from sklearn.preprocessing import StandardScaler
 from results_io import METRICS_HEADER, metrics_row, paired_auc_difference, score, upsert_section
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_FEATURES = ROOT / "runs" / "e1-stagea-deepseek" / "features" / "stagea-deepseek"
+# e1b, not e1: the original run's prompts went through a whitespace-stripping tokenizer (Finding 14).
+DEFAULT_FEATURES = ROOT / "runs" / "e1b-stagea-deepseek" / "features" / "stagea-deepseek"
 INSTANCES = ROOT / "data" / "small_track" / "instances_train.parquet"
 
 # Measured elsewhere: PLAN.md Finding 2.

@@ -58,6 +58,7 @@ PIP_PINS = [
 ]
 
 BUNDLE_FILES = [
+    "datagen/tokenizer_check.py",  # imported by every extractor (Finding 14)
     "datagen/extract_features.py",
     "datagen/extract_generation_features.py",
     "datagen/extract_trace_states.py",
@@ -86,6 +87,8 @@ class Experiment:
     steps: tuple[tuple[str, ...], ...]  # argv after `python`, run from the bundle root
     accelerator: str = "NvidiaTeslaT4"  # T4x2: 8B in half precision needs ~16.4 GB, more than one P100
     bundle_globs: tuple[str, ...] = ()  # extra repo files (e.g. upstream run outputs) to embed
+    # Private Kaggle datasets to mount, for inputs too large to embed (e.g. a submission ZIP).
+    dataset_sources: tuple[str, ...] = ()
 
 
 def stage_a(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
@@ -190,6 +193,42 @@ EXPERIMENTS: dict[str, Experiment] = {
              "--out-dir", "/kaggle/working/e7-aime"),
         ),
         bundle_globs=("datagen/ingest_public.py", "datagen/perturb/*.py"),
+    ),
+    "e1b-stagea-deepseek": Experiment(
+        account="ISHMAM1",
+        purpose="E1 re-extraction with the round-trip-checked tokenizer: e1-stagea-deepseek ran on "
+        "AutoTokenizer, which strips all whitespace from DeepSeek-R1-0528-Qwen3-8B prompts (Finding 14).",
+        steps=(
+            stage_a(DEEPSEEK, "stagea-deepseek"),
+            merge(f"{KAGGLE_FEATURES}/stagea-deepseek"),
+        ),
+    ),
+    "e7b-sample-smoke": Experiment(
+        account="TASHIN",
+        purpose="E7 smoke rerun with the tokenizer fix (token-id prompts, own decoding) and longer caps: "
+        "e7-sample-smoke hit its 4,096-token cap on 80% of AMC and 97% of AIME samples. AMC at 8,192 "
+        "tokens, AIME at 16,384, k=4.",
+        steps=(
+            ("-m", "pip", "install", "-q", "vllm"),
+            ("datagen/perturb/pool.py",),
+            ("datagen/perturb/generate.py", "--examples", "0"),
+            ("datagen/perturb/sample.py", "--phase", "base", "--model-id", DEEPSEEK, "--backend", "vllm",
+             "--tiers", "amc", "--limit", "16", "--k", "4", "--max-new-tokens", "8192",
+             "--out-dir", "/kaggle/working/e7b-amc"),
+            ("datagen/perturb/sample.py", "--phase", "base", "--model-id", DEEPSEEK, "--backend", "vllm",
+             "--tiers", "aime", "--limit", "8", "--k", "4", "--max-new-tokens", "16384",
+             "--out-dir", "/kaggle/working/e7b-aime"),
+        ),
+        bundle_globs=("datagen/ingest_public.py", "datagen/perturb/*.py"),
+    ),
+    "e11-gpu-check": Experiment(
+        account="ISHMAM1",
+        purpose="Pre-submission check of dist/solution-e11-text-stagea-small.zip on a real GPU: runs the "
+        "packaged are_robust on the 138 DeepSeek training problems, compares decisions and stagea "
+        "probabilities with the artifact's reference, and times the call.",
+        steps=(("submission/gpu_check.py", "--search-root", "/kaggle/input"),),
+        bundle_globs=("submission/gpu_check.py",),
+        dataset_sources=("ishmamahmid/aimo-small-e11-bundle",),
     ),
     "e3-stagea-olmo-smoke": Experiment(
         account="TASHIN",
@@ -400,7 +439,7 @@ def build(name: str) -> Path:
         "enable_gpu": True,
         "enable_internet": True,
         "machine_shape": experiment.accelerator,
-        "dataset_sources": [],
+        "dataset_sources": list(experiment.dataset_sources),
         "competition_sources": [],
         "kernel_sources": [],
         "model_sources": [],
