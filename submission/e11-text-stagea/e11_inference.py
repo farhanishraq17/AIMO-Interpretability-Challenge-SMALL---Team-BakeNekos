@@ -155,7 +155,11 @@ def predict_robustness(model_id: str, problems: list[str]) -> list[bool]:
     if checkpoint is None:
         return [False] * len(problems)
 
-    text_prob = artifact["text_model"].predict_proba(problems)[:, 1]
+    try:
+        text_prob = artifact["text_model"].predict_proba(problems)[:, 1]
+    except Exception as exc:  # e.g. an sklearn version mismatch; never let the batch go invalid
+        print(f"e11: text block failed ({type(exc).__name__}: {exc}); predicting False", file=sys.stderr)
+        return [False] * len(problems)
     tokenizer = model = None
     try:
         tokenizer, model = load_language_model(checkpoint)

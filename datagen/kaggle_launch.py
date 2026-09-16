@@ -55,6 +55,9 @@ PIP_PINS = [
     "huggingface-hub==1.22.0",
     "tokenizers==0.22.2",
     "safetensors==0.8.0",
+    # Kaggle ships scikit-learn 1.6.1, which cannot unpickle 1.8.0 estimators (e11-gpu-check).
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3",
 ]
 
 BUNDLE_FILES = [
@@ -226,7 +229,12 @@ EXPERIMENTS: dict[str, Experiment] = {
         purpose="Pre-submission check of dist/solution-e11-text-stagea-small.zip on a real GPU: runs the "
         "packaged are_robust on the 138 DeepSeek training problems, compares decisions and stagea "
         "probabilities with the artifact's reference, and times the call.",
-        steps=(("submission/gpu_check.py", "--search-root", "/kaggle/input"),),
+        steps=(
+            # The solution loads with local_files_only=True, like the evaluation worker's warm
+            # cache; download the checkpoint first, or it silently falls back to text only.
+            ("-c", f"from huggingface_hub import snapshot_download; print(snapshot_download('{DEEPSEEK}'))"),
+            ("submission/gpu_check.py", "--search-root", "/kaggle/input"),
+        ),
         bundle_globs=("submission/gpu_check.py",),
         dataset_sources=("ishmamahmid/aimo-small-e11-bundle",),
     ),
