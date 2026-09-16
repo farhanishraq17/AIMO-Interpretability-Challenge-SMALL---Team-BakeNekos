@@ -542,6 +542,25 @@ transformers 5.13, scikit-learn 1.8.0; the exact ZIP mounted from a private Kagg
      text-only; the check caught this as 4 flips. The check now pre-downloads the model, as
      the evaluation workers' warm cache does.
 
+**21. On the live leaderboard, E11 v1 scores no better than a constant.** (Codabench 16180,
+Small Model Track, 16 Sep; scores are accuracy over all hidden cases, with invalid cases
+counted wrong. Probe ZIPs come from `submission/make_probes.py`.)
+
+| Submission | Predicts | Score |
+| --- | --- | --- |
+| 927865 `e11-text-stagea` | E11 fusion for DeepSeek, `False` for the other three models | 0.47 |
+| 927882 `probe-true-deepseek` | `True` for every DeepSeek case, `False` otherwise | 0.47 |
+
+- **E11 matches "always True for DeepSeek".** With its 0.188 decision threshold, it most
+  likely predicts `True` for almost every olympiad problem.
+- **Robust DeepSeek cases make up 47% of the hidden set**, since a DeepSeek-only `True`
+  scores only on those.
+- **Four probes went to the Main Track by mistake** (927935 all-false; 927883, 927889 and
+  927893 true-olmo3/qwen35/skywork). That task rejects `small.txt` at ingestion ("small.txt
+  is not allowed for a main-track submission"), so their 0.00 carries no information. They
+  are being resubmitted to the Small Model Track to measure the per-model base rates E11 v2
+  needs.
+
 ---
 
 ## 7. Results so far
