@@ -282,3 +282,89 @@ Protocol: nested grouped CV; block scores standardised on inner folds; threshold
 **Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0910 [+0.0309, +0.1518] (established gain) and balanced accuracy by +0.0727 [+0.0029, +0.1501] (established gain) at n=138.
 
 Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
+
+## E12 label-free signals (DeepSeek)
+
+138 DeepSeek training problems (36 robust). AUC > 0.5 means higher values indicate robust. The CI is a paired bootstrap against a constant score (AUC 0.5); rows where a signal is undefined are dropped for that signal.
+
+| Signal | n | ROC-AUC | 95% CI vs chance | AUC within length quintiles |
+| --- | --- | --- | --- | --- |
+| variant_agree | 101 | 0.5065 | [0.3907, 0.6174] | 0.4967 |
+| variant_kl | 101 | 0.5628 | [0.4425, 0.6806] | 0.5654 |
+| answer_entropy | 138 | 0.6119 | [0.5158, 0.7042] | 0.4918 |
+| answer_max_prob | 138 | 0.3922 | [0.2987, 0.4890] | 0.4934 |
+| problem_nll | 138 | 0.3235 | [0.2309, 0.4299] | 0.4194 |
+| next_token_entropy | 138 | 0.7361 | [0.6399, 0.8165] | 0.5872 |
+| next_token_max_prob | 138 | 0.5000 | [0.5000, 0.5000] | 0.5000 |
+| next_token_logit_margin | 138 | 0.2857 | [0.2017, 0.3876] | 0.4169 |
+| problem_length | 138 | 0.7337 | [0.6491, 0.8110] | — |
+
+Immediate answers stable across all rewrites: 65.3% of 101 problems. Spearman correlation with problem length: problem_nll -0.50, next_token_entropy +0.67, next_token_logit_margin -0.59, answer_entropy +0.43.
+
+### Cross-model transfer: other models' signals against DeepSeek's labels
+
+| Scored by | n | problem_nll | next_token_entropy | next_token_logit_margin | answer_entropy | Spearman with DeepSeek's next_token_entropy |
+| --- | --- | --- | --- | --- | --- | --- |
+| `allenai/Olmo-3-7B-Think` | 138 | 0.2985 | 0.5929 | 0.4127 | 0.5376 | +0.55 |
+| `Qwen/Qwen3.5-4B` | 138 | 0.3306 | 0.5057 | 0.5162 | 0.5648 | -0.06 |
+| `Skywork/Skywork-OR1-Math-7B` | 138 | 0.2922 | 0.4281 | 0.5347 | 0.6411 | +0.06 |
+
+Labels are DeepSeek's throughout; no other model has labels.
+
+## E14: test-time answer agreement (DeepSeek)
+
+138 DeepSeek training problems (36 robust). AUC > 0.5 means higher values indicate robust. The CI is a paired bootstrap against a constant score (AUC 0.5); rows where a signal is undefined are dropped for that signal.
+
+| Signal | n | ROC-AUC | 95% CI vs chance | AUC within length quintiles |
+| --- | --- | --- | --- | --- |
+| rewrite_agree | 121 | 0.4577 | [0.3627, 0.5489] | 0.5430 |
+| rewrite_min_agree | 121 | 0.4681 | [0.3754, 0.5548] | 0.5656 |
+| orig_self_agree | 121 | 0.4551 | [0.3733, 0.5244] | 0.4842 |
+| orig_answered | 138 | 0.4372 | [0.3494, 0.5165] | 0.5121 |
+| orig_tokens | 138 | 0.6520 | [0.5574, 0.7439] | 0.4968 |
+| rewrite_token_ratio | 138 | 0.4658 | [0.3449, 0.5775] | 0.5307 |
+| hit_length_frac | 138 | 0.6057 | [0.5108, 0.7036] | 0.4879 |
+| agree_latex_to_plaintext | 85 | 0.4743 | [0.3933, 0.5427] | 0.5130 |
+| agree_premise_reorder | 5 | 0.6667 | [0.5000, 1.0000] | nan |
+| agree_typos | 55 | 0.5044 | [0.4086, 0.5875] | 0.5047 |
+| agree_distract | 121 | 0.4500 | [0.3576, 0.5375] | 0.5305 |
+| problem_length | 138 | 0.7337 | [0.6464, 0.8100] | — |
+
+Setup: k=2 samples per prompt, 8192-token cap, vllm 0.29.0 in float16 on T4s. 447 prompts (309 rewrites: latex_to_plaintext 85, premise_reorder 5, typos 55, distract 121).
+Anchor answer found for 121 of 138 problems; every rewrite sample matched it for 78.5% of them.
+Cost: 3.86M generated tokens, 27,988 per problem, 10.1 GPU-session hours (107 tok/s on 2x T4).
+
+## E14: fusion with test-time agreement
+
+Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
+Instances: 138 of 138 with every block (36 robust)  
+Blocks: text, stagea, agreement  
+Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
+
+| Method | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
+| --- | --- | --- | --- | --- |
+| always-spurious (majority) | 0.7391 | 0.5000 | 0.5000 | 0 |
+| text alone | 0.6522 | 0.6389 | 0.6481 | 56 |
+| stagea alone | 0.6014 | 0.6046 | 0.7059 | 63 |
+| agreement alone | 0.5942 | 0.6626 | 0.6955 | 78 |
+| mean fusion: text + stagea | 0.6884 | 0.7173 | 0.7230 | 63 |
+| mean fusion: text + agreement | 0.6159 | 0.6683 | 0.7290 | 73 |
+| mean fusion: stagea + agreement | 0.6232 | 0.7181 | 0.7563 | 82 |
+| **mean fusion: all blocks** | 0.6522 | 0.6928 | 0.7320 | 68 |
+| **stacked fusion: all blocks** | 0.6522 | 0.6748 | 0.7092 | 64 |
+
+### Difference from text alone (95% paired bootstrap CI)
+
+| Row | AUC difference | Balanced-accuracy difference |
+| --- | --- | --- |
+| stagea alone | +0.0577 [-0.0366, +0.1494] | -0.0343 [-0.1388, +0.0642] |
+| agreement alone | +0.0474 [-0.0879, +0.1881] | +0.0237 [-0.1019, +0.1546] |
+| mean fusion: text + stagea | +0.0749 [+0.0308, +0.1174] | +0.0784 [+0.0145, +0.1477] |
+| mean fusion: text + agreement | +0.0809 [-0.0145, +0.1770] | +0.0294 [-0.0537, +0.1171] |
+| mean fusion: stagea + agreement | +0.1081 [+0.0047, +0.2107] | +0.0792 [-0.0185, +0.1794] |
+| **mean fusion: all blocks** | +0.0839 [+0.0229, +0.1463] | +0.0539 [-0.0255, +0.1405] |
+| **stacked fusion: all blocks** | +0.0610 [-0.0422, +0.1628] | +0.0359 [-0.0601, +0.1303] |
+
+**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0839 [+0.0229, +0.1463] (established gain) and balanced accuracy by +0.0539 [-0.0255, +0.1405] (not established) at n=138.
+
+Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.

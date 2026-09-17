@@ -172,6 +172,14 @@ class VllmBackend:
             enforce_eager=args.enforce_eager,
             seed=args.seed,
             skip_tokenizer_init=True,  # vLLM's tokenizer would be the lossy one
+            # Custom all-reduce crashed on some Kaggle T4 pairs (PCIe, no NVLink) with
+            # "custom_all_reduce.cuh:164 invalid argument" (e14/e16, 17 Sep); NCCL works everywhere.
+            disable_custom_all_reduce=True,
+            # Hybrid models (Qwen3.5) need one state block per running sequence; the default 256
+            # exceeded the 157 blocks a T4 holds (e15, 17 Sep).
+            **({"max_num_seqs": args.max_num_seqs} if args.max_num_seqs else {}),
+            # Qwen3.5 checkpoints are vision-language models; text-only skips the vision tower.
+            **({"limit_mm_per_prompt": {"image": 0, "video": 0}} if args.text_only else {}),
         )
         self.params = SamplingParams(
             n=args.k,
@@ -266,6 +274,10 @@ def main() -> None:
     parser.add_argument("--dtype", default="float16", help="float16 on T4 (Finding 13)")
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.90)
     parser.add_argument("--enforce-eager", action="store_true", help="skip CUDA graphs (saves memory on small GPUs)")
+    parser.add_argument("--text-only", action="store_true", help="vLLM: do not load a vision tower (Qwen3.5)")
+    parser.add_argument("--max-num-seqs", type=int, default=None, help="vLLM concurrent sequences (default: vLLM's)")
+    parser.add_argument("--max-hours", type=float, default=None,
+                        help="stop starting new chunks after this long, so a Kaggle session ends cleanly")
     parser.add_argument("--local-files-only", action="store_true")
     parser.add_argument("--allow-lossy-tokenizer", action="store_true", help="debug only; see tokenizer_check.py")
     parser.add_argument("--chunk", type=int, default=32, help="items per generate call; also the flush interval")
@@ -281,7 +293,11 @@ def main() -> None:
 
     items, info = build_items(args)
     assignment = assign_shards([i["item_id"] for i in items], args.num_shards, "roundrobin")
-    shard = sorted((i for i in items if assignment[i["item_id"]] == args.shard_index), key=lambda i: i["item_id"])
+    # Hash order mixes tiers and sources, so a run stopped by --max-hours is still a fair sample.
+    shard = sorted(
+        (i for i in items if assignment[i["item_id"]] == args.shard_index),
+        key=lambda i: hashlib.sha1(i["item_id"].encode()).hexdigest(),
+    )
     if args.limit:
         shard = shard[: args.limit]
 
@@ -324,6 +340,9 @@ def main() -> None:
     generated_tokens = 0
     loop_started = time.time()
     for start in range(0, len(todo), args.chunk):
+        if args.max_hours and time.time() - started > args.max_hours * 3600:
+            print(f"time budget of {args.max_hours} h reached; stopping (resumable)", flush=True)
+            break
         chunk = todo[start : start + args.chunk]
         completions = backend.generate([encode_prompt(tokenizer, item["problem"]) for item in chunk])
         with records_path.open("a", encoding="utf-8") as handle:

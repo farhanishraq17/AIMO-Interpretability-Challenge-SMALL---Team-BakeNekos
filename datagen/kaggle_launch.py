@@ -42,6 +42,9 @@ PROBE_ARTIFACT = (
 
 DEEPSEEK = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
 OLMO = "allenai/Olmo-3-7B-Instruct"
+QWEN35 = "Qwen/Qwen3.5-4B"
+SKYWORK = "Skywork/Skywork-OR1-Math-7B"
+OLMO_THINK = "allenai/Olmo-3-7B-Think"
 
 # Written into the bundle at build time from the probe artifact, the single source of truth.
 SYSTEM_PROMPT_PATH = "data/probe_system_prompt.txt"
@@ -66,6 +69,9 @@ BUNDLE_FILES = [
     "datagen/extract_generation_features.py",
     "datagen/extract_trace_states.py",
     "datagen/merge_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_agreement.py",
+    "datagen/perturb/transforms.py",
     "data/small_track/instances.parquet",
     "data/small_track/instances_train.parquet",
     "data/small_track/splits.json",
@@ -121,6 +127,84 @@ def trace_states(model_id: str, traces_glob: str, out_name: str, *extra: str) ->
         "--out-dir", f"{KAGGLE_FEATURES}/{out_name}",
         *extra,
     )
+
+
+def label_free(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
+    return (
+        "datagen/extract_label_free.py",
+        "--model-id", model_id,
+        "--system-prompt-file", SYSTEM_PROMPT_PATH,
+        "--out-dir", f"{KAGGLE_FEATURES}/{out_name}",
+        *extra,
+    )
+
+
+def describe_model(model_id: str) -> tuple[str, ...]:
+    """Download the checkpoint and print what transformers makes of it; never fails the run."""
+    return ("-c", (
+        "from huggingface_hub import snapshot_download; from transformers import AutoConfig\n"
+        f"print(snapshot_download('{model_id}'))\n"
+        "try:\n"
+        f"    c = AutoConfig.from_pretrained('{model_id}'); print(type(c).__name__, c.architectures)\n"
+        "except Exception as exc:\n"
+        "    print('AutoConfig failed:', type(exc).__name__, exc)"
+    ))
+
+
+def plumbing_and_label_free(model_id: str, short: str) -> tuple[tuple[str, ...], ...]:
+    """E13: does the model load and run on T4x2 under the pins, then E12 scores for every train problem."""
+    return (
+        describe_model(model_id),
+        stage_a(model_id, f"stagea-{short}-smoke", "--no-filter-model", "--limit", "20"),
+        label_free(model_id, f"labelfree-{short}", "--no-filter-model"),
+    )
+
+
+VLLM_INSTALL = ("-m", "pip", "install", "-q", "vllm")
+E7_FILES = ("datagen/perturb/*.py", "data/olympiad_pool/pool.parquet")
+
+
+def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
+    return (
+        "datagen/extract_agreement.py",
+        "--model-id", model_id,
+        "--out-dir", f"{KAGGLE_FEATURES}/{out_name}",
+        *extra,
+    )
+
+
+def base_sampling(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
+    """E7 base phase over the bundled olympiad pool: k samples per problem, 16k cap, 10 h budget."""
+    return (
+        "datagen/perturb/sample.py", "--phase", "base",
+        "--model-id", model_id,
+        "--backend", "vllm",
+        "--k", "4", "--max-new-tokens", "16384", "--max-hours", "10",
+        "--out-dir", f"/kaggle/working/{out_name}",
+        *extra,
+    )
+
+
+def per_gpu(*argvs: tuple[str, ...]) -> tuple[str, ...]:
+    """Run one argv per GPU in parallel (CUDA_VISIBLE_DEVICES=i); fails if any of them fails.
+
+    For models that fit on one T4, two independent engines beat tensor parallelism over PCIe.
+    """
+    return ("-c", (
+        "import os, subprocess, sys\n"
+        f"argvs = {[list(a) for a in argvs]!r}\n"
+        "procs = [subprocess.Popen([sys.executable, *a], env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(i)})\n"
+        "         for i, a in enumerate(argvs)]\n"
+        "sys.exit(max(p.wait() for p in procs))"
+    ))
+
+
+def qwen_base_pair(first_shard: int) -> tuple[str, ...]:
+    return per_gpu(*(
+        base_sampling(QWEN35, "e15-qwen35", "--tensor-parallel", "1", "--text-only", "--max-num-seqs", "64",
+                      "--num-shards", "4", "--shard-index", str(first_shard + gpu))
+        for gpu in (0, 1)
+    ))
 
 
 def merge(features_dir: str) -> tuple[str, ...]:
@@ -246,6 +330,74 @@ EXPERIMENTS: dict[str, Experiment] = {
             stage_a(OLMO, "stagea-olmo-smoke", "--no-filter-model"),
             merge(f"{KAGGLE_FEATURES}/stagea-olmo-smoke"),
         ),
+    ),
+    "e12-labelfree-deepseek": Experiment(
+        account="ISHMAM1",
+        purpose="E12 label-free signals on DeepSeek's 138 labelled problems: immediate-answer confidence, "
+        "answer stability under latex_to_plaintext / premise_reorder rewrites, problem NLL. Validates "
+        "the signals before they are used for models without labels.",
+        steps=(label_free(DEEPSEEK, "labelfree-deepseek"),),
+    ),
+    "e13-qwen35-plumbing": Experiment(
+        account="TASHIN",
+        purpose="Qwen3.5-4B (the model the leaderboard appears to score, Finding 21): loads under "
+        "transformers 5.13 on T4x2? Stage A smoke on 20 problems, then E12 label-free scores for all "
+        "train problems. Labels are NOT Qwen's (--no-filter-model).",
+        steps=plumbing_and_label_free(QWEN35, "qwen35"),
+    ),
+    "e13-skywork-plumbing": Experiment(
+        account="ISHRAQ",
+        purpose="Skywork-OR1-Math-7B plumbing check plus E12 label-free scores (labels are NOT Skywork's).",
+        steps=plumbing_and_label_free(SKYWORK, "skywork"),
+    ),
+    "e13-olmo-think-plumbing": Experiment(
+        account="DESIKALAKAR",
+        purpose="Olmo-3-7B-Think plumbing check plus E12 label-free scores (labels are NOT Olmo's).",
+        steps=plumbing_and_label_free(OLMO_THINK, "olmo-think"),
+    ),
+    "e14-agreement-deepseek-s0": Experiment(
+        account="ISHRAQ",
+        purpose="E14 test-time answer agreement, shard 0/2: DeepSeek reasons (k=2, 8k cap) on each labelled "
+        "problem and on up to four rewrites (latex_to_plaintext, premise_reorder, typos, distract). Does "
+        "the answer survive? Validates a label-free, model-specific signal against DeepSeek's labels.",
+        steps=(VLLM_INSTALL, agreement(DEEPSEEK, "agreement-deepseek", "--num-shards", "2", "--shard-index", "0",
+                                       "--max-hours", "10")),
+        bundle_globs=E7_FILES,
+    ),
+    "e14-agreement-deepseek-s1": Experiment(
+        account="DIDHITI",
+        purpose="E14 test-time answer agreement, shard 1/2 (see shard 0).",
+        steps=(VLLM_INSTALL, agreement(DEEPSEEK, "agreement-deepseek", "--num-shards", "2", "--shard-index", "1",
+                                       "--max-hours", "10")),
+        bundle_globs=E7_FILES,
+    ),
+    "e15-base-qwen35-a": Experiment(
+        account="TASHIN",
+        purpose="E15 Qwen3.5-4B labelling, step 1 (E7 base phase) on the 505-problem olympiad pool, shards "
+        "0-1 of 4: one vLLM engine per T4 (the model fits in fp16), k=4, 16k cap. Finds the problems Qwen "
+        "always solves, which are the only ones that can be labelled.",
+        steps=(VLLM_INSTALL, qwen_base_pair(0)),
+        bundle_globs=E7_FILES,
+    ),
+    "e15-base-qwen35-b": Experiment(
+        account="SALAM",
+        purpose="E15 Qwen3.5-4B base phase, shards 2-3 of 4 (see e15-base-qwen35-a).",
+        steps=(VLLM_INSTALL, qwen_base_pair(2)),
+        bundle_globs=E7_FILES,
+    ),
+    "e16-base-skywork": Experiment(
+        account="TASHIN",
+        purpose="E16 Skywork-OR1-Math-7B labelling, step 1 (E7 base phase) on the olympiad pool: TP=2, "
+        "k=4, 16k cap, 10 h budget (resumable).",
+        steps=(VLLM_INSTALL, base_sampling(SKYWORK, "e16-skywork")),
+        bundle_globs=E7_FILES,
+    ),
+    "e17-base-olmo-think": Experiment(
+        account="ISHRAQ",
+        purpose="E17 Olmo-3-7B-Think labelling, step 1 (E7 base phase) on the olympiad pool: TP=2, k=4, "
+        "16k cap, 10 h budget (resumable).",
+        steps=(VLLM_INSTALL, base_sampling(OLMO_THINK, "e17-olmo-think")),
+        bundle_globs=E7_FILES,
     ),
     "e4-tracestate-deepseek": Experiment(
         account="SALAM",

@@ -9,7 +9,7 @@ Companion documents:
 - `RESULTS.md`: generated metrics.
 - `CLAUDE.md`: working conventions and commands.
 
-Last updated: 15 September 2026.
+Last updated: 17 September 2026.
 
 ---
 
@@ -17,19 +17,21 @@ Last updated: 15 September 2026.
 
 | Area | Status |
 | --- | --- |
-| Competition brief and rules | Done: `COMPETITION.md` |
-| Execution plan | Redrafted 15 Sep: `PLAN.md` |
-| Repo guide | Done: `CLAUDE.md` |
-| Kaggle fleet (6 accounts) | **Verified 15 Sep**. Experiments run through `datagen/kaggle_launch.py` |
-| Local dev environment | Working, 25/25 starter tests pass |
-| Submission bundles | 6 ZIPs built and validated locally |
-| Training set | Built: 187 instances, 138 for DeepSeek-8B |
-| Stage A (prompt hidden states) | **E1 done** on Kaggle T4x2 in bf16, analysed (Finding 11) |
-| Stage B (generation traces) | **E2 running** (2 shards, ISHRAQ + DIDHITI) |
-| Olmo-3-7B plumbing | **E3 done**: loads and runs clean (Finding 12) |
+| Competition brief, plan, repo guide | Done: `COMPETITION.md`, `PLAN.md`, `CLAUDE.md` |
+| Kaggle fleet (6 accounts) | E14–E17 running on 17 Sep; **ISHMAM1 and DESIKALAKAR tokens rejected** (Finding 23) |
+| Training set | 187 instances, 138 for DeepSeek-8B (36 robust); no labels for the other three small-track models |
 | Text-only floor | 0.6732 balanced accuracy from problem text alone |
-| Codabench entry | **Not created yet**: blocked on your account |
-| Organizer questions | **Not sent yet** |
+| Stage A, prompt hidden states (E1b) | Done: layer ensembles out-rank text (Finding 11) |
+| Stage B, trace uncertainty (E2f) | Done: near chance (Finding 15) |
+| E10 fusion | Done: text + Stage A beats text alone on both metrics (Findings 11, 16) |
+| E4, trace-state probes | Done: the signal sits in the prompt state (Finding 18) |
+| E7, olympiad labelling runner | Built; smoke run E7b done, expensive on T4 (Finding 19) |
+| E11 submission | v1 0.47; **v2 (Qwen default `True`) 0.64**, best so far (Findings 20, 23) |
+| Leaderboard probes | Done: hidden set is about 53% robust, and only Qwen3.5-4B moves the score (Finding 21) |
+| E12, label-free signals | Done: the signals that work are problem-text proxies (Finding 22) |
+| E13, unlabelled-model plumbing | Done: Qwen3.5-4B, Skywork-OR1-Math-7B and Olmo-3-7B-Think all run on T4 (Finding 22) |
+| Codabench entry | Active: 9 submissions (8 on 16 Sep, one of them on the wrong task; v2 on 17 Sep) |
+| Organizer questions | Drafted 17 Sep (labels for the new models, validation-set composition, tokenizer bug); **not sent yet** |
 
 The track target is to beat the published baselines, 58.4% (trained probe) and 69.2%
 (uncertainty profiling), on the Codabench leaderboard for competition 16180.
@@ -96,7 +98,7 @@ model-dependent run goes to Kaggle.
 
 ## 4. Submission pipeline validated end to end
 
-The starter kit is cloned at `getting-started/` (commit `e98c489`). All 25 tests pass under
+The starter kit is a submodule at `getting-started/` (originally `e98c489`, now upstream `995f992`). All 25 tests pass under
 the pinned runtime (transformers 5.13.0, torch ~2.12.1, scikit-learn 1.8.0).
 
 All six bundles build, and `small.txt` placement is correct in each:
@@ -542,24 +544,146 @@ transformers 5.13, scikit-learn 1.8.0; the exact ZIP mounted from a private Kagg
      text-only; the check caught this as 4 flips. The check now pre-downloads the model, as
      the evaluation workers' warm cache does.
 
-**21. On the live leaderboard, E11 v1 scores no better than a constant.** (Codabench 16180,
-Small Model Track, 16 Sep; scores are accuracy over all hidden cases, with invalid cases
-counted wrong. Probe ZIPs come from `submission/make_probes.py`.)
+**21. The live validation set is small, about 53% robust, and only Qwen3.5-4B moves the score.**
+(Codabench 16180, Small Model Track, 16 Sep. Scores are accuracy over all hidden cases,
+with invalid cases counted wrong. Probe ZIPs come from `submission/make_probes.py`.)
 
 | Submission | Predicts | Score |
 | --- | --- | --- |
-| 927865 `e11-text-stagea` | E11 fusion for DeepSeek, `False` for the other three models | 0.47 |
-| 927882 `probe-true-deepseek` | `True` for every DeepSeek case, `False` otherwise | 0.47 |
+| 927967 `probe-all-false` | `False` everywhere | 0.47 |
+| 927882, 927968 `probe-true-deepseek` | `True` for DeepSeek only | 0.47 |
+| 927889 `probe-true-qwen35-4b` | `True` for Qwen3.5-4B only | **0.53** |
+| 927893 `probe-true-skywork-7b` | `True` for Skywork only | 0.47 |
+| 927883 `probe-true-olmo3-think` | `True` for Olmo-3-Think only | 0.47 |
+| 927865 `e11-text-stagea` (v1) | E11 fusion for DeepSeek, `False` otherwise | 0.47 |
 
-- **E11 matches "always True for DeepSeek".** With its 0.188 decision threshold, it most
-  likely predicts `True` for almost every olympiad problem.
-- **Robust DeepSeek cases make up 47% of the hidden set**, since a DeepSeek-only `True`
-  scores only on those.
-- **Four probes went to the Main Track by mistake** (927935 all-false; 927883, 927889 and
-  927893 true-olmo3/qwen35/skywork). That task rejects `small.txt` at ingestion ("small.txt
-  is not allowed for a main-track submission"), so their 0.00 carries no information. They
-  are being resubmitted to the Small Model Track to measure the per-model base rates E11 v2
-  needs.
+- **All-false scores 0.47, so about 53% of hidden cases are robust.** Our training data is
+  74% spurious.
+- **A probe that doesn't move the score from 0.47 tells us that model is absent or exactly
+  balanced.** That applies to DeepSeek, Skywork and Olmo, and to E11 v1's DeepSeek
+  predictions.
+- **The simplest reading is a set made only of Qwen3.5-4B cases.**
+  - True-for-Qwen gains exactly as much as the overall robust surplus (0.53 − 0.47).
+  - The two-decimal scores fit a set of 15–19 cases, so one case moves the score by about 0.06.
+- **Consequences:**
+  - The leaderboard cannot rank DeepSeek methods.
+  - E11 v2 therefore changes only the Qwen default, to `True`.
+  - Treat further leaderboard gains as noise, not evidence.
+- **Main Track ingestion rejects `small.txt`.**
+  Submission 927935, an all-false probe, scored 0.00 on that task with "small.txt is not allowed for a main-track submission".
+
+**22. The label-free signals mostly read problem text; all three unlabelled models run on T4.**
+(`e12-labelfree-deepseek`, `e13-{qwen35,skywork,olmo-think}-plumbing`, 17 Sep, T4x2 in bf16,
+transformers 5.13. Every number below is in the `RESULTS.md` section generated by
+`train/eval_label_free.py`, including the length control and cross-model transfer.)
+
+- **Plumbing passes for all three.**
+  - `Qwen/Qwen3.5-4B` is saved as `Qwen3_5ForConditionalGeneration`, but `AutoModelForCausalLM`
+    loads it as `Qwen3_5ForCausalLM` with no missing-weight warnings: 33 hidden-state layers,
+    2560 dimensions.
+  - Its linear-attention layers fall back to the torch implementation, since `fla` and
+    `causal-conv1d` are absent here, as they are in the evaluation image.
+  - Skywork is `Qwen2` (29 hidden-state layers, 3584 dimensions); Olmo-3-Think is `Olmo3`
+    (33 layers, 4096 dimensions).
+  - Every tokenizer round-trips, and the 20-problem Stage A smoke tests show 0 non-finite
+    activations.
+  - Label-free scoring takes 3.3 s (Qwen), 3.8 s (Skywork), 4.8 s (Olmo) and 5.3 s (DeepSeek)
+    per problem on T4s.
+- **The immediate-answer stability signals are null.** `variant_agree` AUC is 0.51 and
+  `variant_kl` 0.56, both with CIs spanning 0.5. Without reasoning, the models mostly guess,
+  so their guesses say nothing about robustness.
+- **The signals that work are text proxies.**
+  - `next_token_entropy` reaches AUC 0.736 [0.64, 0.82], but problem length alone reaches
+    0.734, and the two correlate at Spearman 0.67.
+  - Counting only pairs within the same problem-length quintile, the entropy signal drops
+    to 0.587. `problem_nll` and `next_token_logit_margin` keep a weak reversed signal (0.42),
+    and every other signal sits at 0.49–0.57.
+  - An earlier version regressed ranks on length. It reported 0.615 here, but it inflates
+    tied signals (Finding 24).
+  - `problem_nll` (AUC 0.32, i.e. 0.68 flipped: more familiar problems are more often robust)
+    works just as well when another model computes it: 0.33 (Qwen), 0.29 (Skywork),
+    0.30 (Olmo) against DeepSeek's labels. It is a property of the problem, not of DeepSeek.
+  - Other models' `next_token_entropy` does not transfer (AUC 0.43–0.59). It barely
+    correlates with DeepSeek's, except for Olmo (Spearman +0.55).
+- **Implication.** Nothing here measures a model-specific mechanism. For the unlabelled
+  models, the best available transfer is the problem-level text signal learned on DeepSeek,
+  which assumes robustness is largely a property of the problem.
+
+**23. E11 v2 scores 0.64, more than the probes predicted.** (Codabench submission 929596,
+17 Sep 11:24: E11 v1 plus `True` for every Qwen3.5-4B case.)
+
+- **Predicted 0.53.** v2 differs from v1 (0.47) only in the Qwen predictions, exactly as the
+  true-Qwen probe (0.53) differs from all-false (0.47).
+- **The +0.11 gap cannot come from the predictions alone.** On a fixed hidden set, the two
+  pairs would change by the same amount. The set or its scoring must have changed
+  between 16 Sep 23:33 and 17 Sep 11:24.
+  - Supporting sign: submission 927935, an all-false probe that showed 0.00, now shows 0.50,
+    while an identical later all-false shows 0.47.
+- **Consequences.**
+  - Finding 21's per-model reading needs re-measuring: all-false and true-Qwen, resubmitted
+    once each.
+  - v2 is the fallback for every later submission.
+- **Launched in response** (`PLAN.md` §4–§5):
+  - E14 (test-time answer agreement, DeepSeek);
+  - E15–E17 (base phase toward labels for Qwen3.5-4B, Skywork and Olmo-3-Think).
+- **Two Kaggle tokens stopped working.** On 17 Sep, ISHMAM1's and DESIKALAKAR's tokens were
+  rejected ("Authentication required"; their own kernels return permission denied). Their runs
+  moved to second slots on ISHRAQ and TASHIN.
+- **vLLM's custom all-reduce crashes on some Kaggle T4 pairs.**
+  - E14 (both shards) and E16 died during CUDA graph capture with `custom_all_reduce.cuh:164
+    'invalid argument'`.
+  - E7b and E17 ran the same TP=2 setup without error, so it depends on the host.
+  - `sample.py` now passes `disable_custom_all_reduce=True` (NCCL), and the three runs were
+    relaunched.
+- **vLLM 0.29 runs Qwen3.5-4B on a single T4** (Triton attention, fp16, text-only). Engine
+  start took about 10 minutes, but it then refused to start with its default 256 concurrent
+  sequences: "max_num_seqs (256) exceeds available Mamba cache blocks (157)".
+  - The hybrid linear-attention layers need one state block per sequence.
+  - E15 now runs with `--max-num-seqs 64`.
+
+**24. Test-time answer agreement does not predict robustness; gate G-D is a no-go.**
+(`e14-agreement-deepseek-s0/s1`, 138 labelled problems.)
+
+- **Setup.** DeepSeek reasoned in full, 2 samples per prompt with an 8k cap (vLLM, fp16, T4s),
+  on each problem and on up to four rewrites (447 prompts, 309 of them rewrites). The
+  measure is how often a rewrite's final answer matched the original's modal answer.
+  `train/eval_agreement.py` and `train/train_fusion.py` generate the tables in `RESULTS.md`.
+- **Answers barely change.** An anchor answer was found for 121 problems, and every rewrite
+  sample matched it for 78.5% of them. Our rewrites rarely trip the model, spurious cases
+  included (mean agreement 0.93 spurious vs 0.85 robust on shard 0).
+- **No agreement signal is above chance.**
+
+  | Signal | ROC-AUC [95% CI] | Within length quintiles |
+  | --- | --- | --- |
+  | rewrite answers match the original | 0.458 [0.363, 0.549] | 0.543 |
+  | worst rewrite kind | 0.468 [0.375, 0.555] | 0.566 |
+  | original samples agree | 0.455 [0.373, 0.524] | 0.484 |
+  | tokens spent on the original | 0.652 [0.557, 0.744] | 0.497 |
+  | share of samples hitting the cap | 0.606 [0.511, 0.704] | 0.488 |
+  | problem length (reference) | 0.734 [0.646, 0.810] | — |
+
+  The raw agreement AUCs sit below 0.5 because harder, longer problems both truncate more
+  and are more often robust. Reasoning length is **entirely** problem length.
+- **Fusion (nested, in-fold thresholds).**
+
+  | Row | Balanced acc. | ROC-AUC |
+  | --- | --- | --- |
+  | text + stagea (E11) | **0.7173** | 0.7230 |
+  | agreement block alone | 0.6626 | 0.6955 |
+  | text + stagea + agreement | 0.6928 | **0.7320** |
+
+  Adding the block costs 0.025 balanced accuracy and gains 0.009 AUC. Its own strength
+  comes from the length features.
+- **A measurement bug caught on the way.** The length control used in Finding 22 regressed a
+  signal's rank on length rank. For heavily tied signals (79% of agreement values are
+  exactly 1.0), that residual *is* length, so every agreement signal appeared to reach
+  0.64–0.73. It was replaced by a within-quintile Mann-Whitney AUC. On synthetic data, that
+  leaves a real signal intact and cuts a pure length proxy from about 0.8 to 0.56.
+- **Cost.** 3.86M tokens, about 28,000 per problem and 10.1 GPU-hours on T4s. That is far
+  beyond the 3600 s evaluation budget with HF `generate`, even before the result.
+- **Decision.** Lane D closes. Mild answer-preserving rewrites do not reproduce what the
+  official perturbations do to this model. Remaining routes to a model-specific signal for
+  the unlabelled models are self-generated labels (E15–E17) or organizer labels.
 
 ---
 
@@ -590,16 +714,42 @@ from the problem statement only, which is all inference provides. Full detail in
 Interpretable direction of the surface features: brace count, word count, and the keyword
 "integer" push toward robust; backslash density, `\frac`, and `\pmod` push toward spurious.
 
-### Stage A hidden states
+### Model internals and fusion (DeepSeek, nested, in-fold thresholds)
 
-See Finding 11 and the generated section in `RESULTS.md`.
+| Method | Balanced acc. | ROC-AUC | Source |
+| --- | --- | --- | --- |
+| Text alone, learned threshold | 0.6389 | 0.6481 | Finding 16 |
+| Stage A layer ensemble alone | 0.6046 | 0.7059 | Finding 16 |
+| **Text + Stage A (E11)** | **0.7173** | 0.7230 | Findings 11, 16 |
+| Text + Stage A + trace states | 0.7116 | **0.7391** | Finding 18 |
+| Best label-free signal (`next_token_entropy`, no fitting) | — | 0.7361 | Finding 22 |
+
+Full tables are in `RESULTS.md`.
+
+### Leaderboard (Codabench 16180, Small Model Track)
+
+| Submission | Score |
+| --- | --- |
+| E11 v1 | 0.47 |
+| Constant: all `False` | 0.47 |
+| Constant: `True` for Qwen3.5-4B only | 0.53 |
+| **E11 v2 (v1 + Qwen `True`)** | **0.64** |
+
+On 16 Sep the hidden set looked like about 17 Qwen3.5-4B cases (Finding 21). v2's 0.64
+(Finding 23) suggests it changed since, so the per-model reading is being re-measured.
 
 ### The measurement we cannot yet make
 
-After filtering, the DeepSeek train set contains **exactly one olympiad-level instance**
-alongside 137 Hendrycks MATH problems, while the private test set is entirely olympiad.
-Transfer from MATH to olympiad, which is precisely what the competition scores, cannot be
-measured with current data. This remains the highest-value gap to close.
+Two gaps remain:
+
+1. **Olympiad difficulty.** The DeepSeek train set contains **exactly one olympiad-level
+   instance** alongside 137 Hendrycks MATH problems, while the private test set is entirely
+   olympiad.
+2. **No labels for the other three small-track models.** The leaderboard appears to score
+   Qwen3.5-4B. Nothing we have trained applies to it, unless robustness is mostly a property
+   of the problem.
+
+Closing either gap needs new labels, from the organizers or from E7.
 
 ---
 
@@ -613,8 +763,12 @@ measured with current data. This remains the highest-value gap to close.
 | `extract_features.py` | Stage A: one forward pass per problem; pooled hidden states at every layer (`last`/`mean`/`max`) plus next-token uncertainty and non-finite counts. Shardable, resumable, multi-GPU safe |
 | `extract_generation_features.py` | Stage B: greedy generation through the starter kit's `uncertainty_profile` (unchanged). Adds the 14 trace-uncertainty features, generated text, and a token-cap flag. Aborts on non-finite preflight logits |
 | `merge_features.py` | Merges Stage A shards, refusing any that disagree on dtype, layer count, or prompt hash |
+| `extract_trace_states.py` | E4: teacher-forced pass over prompt + E2 trace; segment-pooled states via hooks |
+| `extract_label_free.py` | E12: label-free signals (immediate-answer confidence, stability under rewrites, problem NLL, next-token uncertainty) |
+| `tokenizer_check.py` | Loads `PreTrainedTokenizerFast` and refuses any tokenizer that does not round-trip (Finding 14) |
+| `perturb/` | E7: olympiad pool, answer-aware transforms, variant generation, base/variant sampling (HF or vLLM), labelling; with tests |
 | `plan_shards.py` | Reports shard workload and balance without loading a model (default 1.0 s per instance, measured) |
-| `kaggle_launch.py` | Experiment registry; renders self-contained private GPU kernels (embedded 63 KB code bundle) and runs `push` / `status` / `logs` / `output` per account |
+| `kaggle_launch.py` | Experiment registry; renders self-contained private GPU kernels (embedded code bundle, optional private dataset mounts) and runs `push` / `status` / `logs` / `output` per account |
 | `README.md` | Runbook |
 
 ### `train/`: modelling
@@ -625,7 +779,19 @@ measured with current data. This remains the highest-value gap to close.
 | `check_dataset_confound.py` | Tests whether the text signal is really dataset detection; appends to `RESULTS.md` |
 | `train_stagea_probes.py` | Nested probe, layer ensembles, text fusion, and bootstrap CIs on Stage A features; upserts its `RESULTS.md` section and saves out-of-fold probabilities |
 | `train_stageb_features.py` | Trace-uncertainty and trace-shape classifiers, univariate AUCs, and text fusion on Stage B records; upserts its section |
+| `train_fusion.py` | E10: nested fusion of text / stagea / tracestate / trace blocks, with in-fold thresholds and paired CIs |
+| `eval_label_free.py` | E12: per-signal AUC against DeepSeek labels, length control, cross-model transfer |
+| `build_e11_artifact.py`, `check_e11_artifact.py` | Fit the E11 artifact in the pinned venv and verify it locally |
 | `results_io.py` | Shared metrics, paired bootstrap AUC difference, section upsert |
+
+### `submission/`: Codabench bundles
+
+| File | Purpose |
+| --- | --- |
+| `e11-text-stagea/` | E11: text + Stage A fusion for DeepSeek, constant defaults for the other models (v2: `True` for Qwen3.5-4B) |
+| `package.py` | Builds `dist/solution-<name>-small.zip` with the starter kit's archiver |
+| `make_probes.py` | Constant-prediction leaderboard probes (Finding 21) |
+| `gpu_check.py` | Runs a packaged ZIP on Kaggle GPUs against the artifact's reference decisions |
 
 ### `scripts/`: setup and one-off audits
 
@@ -666,15 +832,22 @@ $py = "getting-started\.venv\Scripts\python.exe"
 & $py train\train_text_baseline.py
 & $py train\check_dataset_confound.py
 
-# GPU stages on the Kaggle fleet
-& $py datagen\kaggle_launch.py push e1-stagea-deepseek
+# GPU stages on the Kaggle fleet (push, wait, download)
+& $py datagen\kaggle_launch.py push e1b-stagea-deepseek
 & $py datagen\kaggle_launch.py status
-& $py datagen\kaggle_launch.py output e1-stagea-deepseek
+& $py datagen\kaggle_launch.py output e1b-stagea-deepseek
+# likewise: e2f-stageb-fp16-s0/s1, e4-tracestate-deepseek, e12-labelfree-deepseek, e13-*-plumbing
 
 # Analysis (each upserts its own RESULTS.md section)
-& $py train\train_stagea_probes.py --features-dir runs\e1-stagea-deepseek\features\stagea-deepseek
-& $py datagen\kaggle_launch.py output e2-stageb-deepseek-s0 e2-stageb-deepseek-s1
+& $py train\train_stagea_probes.py
 & $py train\train_stageb_features.py
+& $py train\train_fusion.py
+& $py train\eval_label_free.py
+
+# Submission
+& $py train\build_e11_artifact.py
+& $py submission\package.py e11-text-stagea
+& $py submission\make_probes.py
 ```
 
 `data/`, `features/`, `runs/`, and `kaggle_runs/` are git-ignored; all regenerate
@@ -684,19 +857,23 @@ deterministically.
 
 ## 10. Open questions and blockers
 
-**For the organizers** (none sent yet; batch them into one message, drafted in `PLAN.md` §10):
+**For the organizers** (drafted 17 Sep, not sent yet):
 
-1. Is Olmo-3-7B in the small-track test set, and under which alias?
-2. Can we get access to `problems-public`?
-3. Do labels for non-official perturbation categories satisfy the extra-data rule?
-4. Is olympiad-difficulty labelled data for small models coming, and when is the train split
-   released?
+1. Will labelled training data be released for Qwen3.5-4B, Skywork-OR1-Math-7B and
+   Olmo-3-7B-Think? If not, may we label them ourselves with non-official perturbation types?
+2. How many cases does the Competition Phase validation set hold, and for which models?
+3. Does the final test set cover all four small-track models, and in what proportions? Does
+   `reasoning_effort` apply to the small track?
+4. Bug report: under transformers 5.13, `AutoTokenizer` strips whitespace for DeepSeek
+   (Finding 14). This affects `solutions/trained-probe` and
+   `aimo-interp/baselines/scripts/encode.py`.
+5. Still open from earlier: access to `problems-public`.
 
 **Requiring your accounts:**
 
-- Create a Codabench account, enter competition 16180, and upload
-  `getting-started/dist/solution-trained-probe-small.zip` and
-  `solution-uncertainty-profiling-small.zip`.
+- Upload `dist/solution-e11-v2-qwen-true-small.zip` to the **Small Model Track** task; the
+  Main Track task rejects `small.txt`. Expected score: about 0.53.
+- Send the organizer message above.
 - Submit the Fields Model compute-grant form (`https://forms.gle/oYkYDN1EtSVeSfMd9`).
 
 **Housekeeping:**
@@ -712,14 +889,16 @@ deterministically.
 
 ## 11. Next steps
 
-Ranked by value:
+Ranked by value (17 Sep):
 
-1. **Analyse E2** when both shards finish: `kaggle_launch.py output`, then
-   `train_stageb_features.py`. Together with E1 this decides gate G1.
-2. **Close the olympiad-difficulty gap.** Filter the locally cached AIME/OlympiadBench pool
-   and build the generator for non-official perturbation categories (`PLAN.md` §3.4).
-3. **Trace-state probes (E4).** Run Stage A over prompt + generated trace using E2's text, to
-   test whether states during reasoning carry more than prompt states (Finding 11).
-4. **Fusion v1.** Combine text, the layer ensemble, and trace features, with in-fold
-   thresholds and bootstrap CIs against text.
-5. **Send the organizer questions** and **get a baseline onto Codabench** (needs your accounts).
+1. **Upload E11 v2 and send the organizer message.** Both need your accounts. The answer on
+   labels decides whether step 3 is needed.
+2. **Test problem-level transfer on the leaderboard (one submission).** Apply E11's DeepSeek
+   text model to Qwen3.5-4B problems, with the threshold set so about 53% are predicted
+   robust. The result only counts if the score moves by two or more cases (±0.12).
+3. **Label Qwen3.5-4B with E7** if no labels are coming. It is the fastest of the four models
+   (3.3 s per problem in E13), and labelling would use only non-official perturbation types.
+4. **Close the olympiad gap for DeepSeek** with E7 on the Fields compute grant. On T4s it would
+   cost about 45–175 GPU-hours (Finding 19).
+5. **Keep DeepSeek modelling light** until the leaderboard or the organizers show that
+   DeepSeek is scored.

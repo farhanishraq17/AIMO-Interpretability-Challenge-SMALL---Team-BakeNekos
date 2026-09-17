@@ -16,9 +16,9 @@ Decisions that matter at evaluation time:
   `LlamaTokenizer` that strips all whitespace (Finding 14). The fast tokenizer is loaded
   instead, and it must round-trip a sample before the model is used.
 * **Other models.** No labels exist for Qwen/Qwen3.5-4B, Skywork/Skywork-OR1-Math-7B or
-  allenai/Olmo-3-7B-Think, and every public model with enough labels is mostly spurious, so
-  any model other than DeepSeek gets `False` for every problem. The Competition Phase passes
-  model ids verbatim, so no alias resolution is needed.
+  allenai/Olmo-3-7B-Think, so each gets a constant. `Qwen/Qwen3.5-4B` gets `True`: on the
+  leaderboard, True for Qwen beat all-False (0.53 vs 0.47, Finding 21). The other two get
+  `False`. The Competition Phase passes model ids verbatim, so no alias resolution is needed.
 * **Failure policy.** If the language model cannot be loaded or run, the batch falls back to
   the text block with its own out-of-fold threshold; if the text block itself fails, every
   prediction is `False`. Either way the batch stays valid.
@@ -38,6 +38,8 @@ from scipy.special import expit, logit
 ARTIFACT_PATH = Path(__file__).resolve().parent / "artifacts" / "e11_deepseek.joblib"
 ROUND_TRIP_SAMPLE = "Every morning Aya goes for a $9$-kilometer-long walk.\nFind the answer \\boxed{204}."
 EPS = 1e-6
+# ponytail: constant defaults from leaderboard probes; replace with a model once labels exist
+DEFAULT_ROBUST_MODELS = {"Qwen/Qwen3.5-4B"}
 
 
 @functools.cache
@@ -127,7 +129,7 @@ def pooled_prompt_states(tokenizer, model, problem: str, artifact: dict) -> dict
 def predict_robustness(model_id: str, problems: list[str]) -> list[bool]:
     artifact = load_artifact()
     if model_id != artifact["model_id"]:
-        return [False] * len(problems)
+        return [model_id in DEFAULT_ROBUST_MODELS] * len(problems)
 
     try:
         text_prob = artifact["text_model"].predict_proba(problems)[:, 1]

@@ -22,6 +22,8 @@ Blocks:
     stagea      mean probability of per-layer probes over every layer x pooling (E1)
     tracestate  the same layer ensemble over hidden states during the trace (E4)
     trace       logistic regression on 14 uncertainty + length + trace-shape features (E2)
+    agreement   logistic regression on E14 test-time agreement features: does the answer
+                survive rewrites, and how long does the model reason (median-imputed in-fold)
 
 The default block set, `text stagea trace`, is E10 v1 as declared in PLAN.md. Add
 `tracestate` once E4 has run. Rows cover each block alone, every pair (as ablations), and
@@ -33,6 +35,7 @@ Run (after the E1 and E2 outputs are downloaded):
     uv run python ../train/train_fusion.py
     uv run python ../train/train_fusion.py --blocks text stagea                    # before E2 lands
     uv run python ../train/train_fusion.py --blocks text stagea tracestate trace   # after E4
+    uv run python ../train/train_fusion.py --blocks text stagea agreement --section "E14: fusion with test-time agreement"
 """
 
 from __future__ import annotations
@@ -61,7 +64,14 @@ SPLITS = ROOT / "data" / "small_track" / "splits.json"
 DEFAULT_STAGEA = ROOT / "runs" / "e1b-stagea-deepseek" / "features" / "stagea-deepseek"
 DEFAULT_TRACESTATE = ROOT / "runs" / "e4-tracestate-deepseek" / "features" / "tracestate-deepseek"
 DEFAULT_OUT = ROOT / "runs" / "e10-fusion"
-BLOCKS = ("text", "stagea", "tracestate", "trace")
+DEFAULT_AGREEMENT = str(
+    ROOT / "runs" / "e14-agreement-deepseek-s*" / "features" / "agreement-deepseek" / "*" / "records.jsonl"
+)
+AGREEMENT_FEATURES = [
+    "rewrite_agree", "rewrite_min_agree", "orig_self_agree", "orig_answered",
+    "log_orig_tokens", "rewrite_token_ratio", "hit_length_frac",
+]
+BLOCKS = ("text", "stagea", "tracestate", "trace", "agreement")
 LAYER_BLOCKS = ("stagea", "tracestate")
 DEFAULT_BLOCKS = ["text", "stagea", "trace"]
 EPS = 1e-6
@@ -116,6 +126,17 @@ def load_trace(records_glob: str, model_id: str) -> pd.DataFrame:
     df["hit_token_cap"] = df["hit_token_cap"].astype(float)
     columns = [*FEATURE_NAMES, "log_generation_num_tokens", "hit_token_cap", *traces.columns]
     return df.set_index("problem_key")[columns]
+
+
+def load_agreement(records_glob: str, model_id: str) -> pd.DataFrame:
+    paths = sorted(glob.glob(records_glob))
+    if not paths:
+        raise SystemExit(f"no E14 records match {records_glob}; download E14 or drop the agreement block")
+    df = pd.concat([pd.read_json(path, lines=True) for path in paths]).drop_duplicates("problem_key", keep="last")
+    if (df["scored_model_id"] != model_id).any() or (df["label_model_id"] != model_id).any():
+        raise SystemExit("E14 records hold features or labels for another model")
+    df["log_orig_tokens"] = np.log1p(df["orig_tokens"].astype(float))
+    return df.set_index("problem_key")[AGREEMENT_FEATURES].astype(float)
 
 
 # ---------------------------------------------------------------------------
@@ -227,6 +248,7 @@ def main() -> None:
     parser.add_argument("--stagea-dir", type=Path, default=DEFAULT_STAGEA)
     parser.add_argument("--tracestate-dir", type=Path, default=DEFAULT_TRACESTATE)
     parser.add_argument("--records-glob", default=DEFAULT_GLOB)
+    parser.add_argument("--agreement-glob", default=DEFAULT_AGREEMENT)
     parser.add_argument("--c", type=float, default=0.01, help="L2 strength of the per-layer probes")
     parser.add_argument("--n-jobs", type=int, default=-1)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
@@ -242,9 +264,13 @@ def main() -> None:
         if block in blocks:
             layer_features[block] = load_layer_features(directory, args.model_id)
             available &= set(layer_features[block][0])
+    matrices: dict[str, pd.DataFrame] = {}
     if "trace" in blocks:
-        trace = load_trace(args.records_glob, args.model_id)
-        available &= set(trace.index)
+        matrices["trace"] = load_trace(args.records_glob, args.model_id)
+    if "agreement" in blocks:
+        matrices["agreement"] = load_agreement(args.agreement_glob, args.model_id)
+    for matrix in matrices.values():
+        available &= set(matrix.index)
     n_expected = len(table)
     table = table[table["problem_key"].isin(available)].sort_values("problem_key").reset_index(drop=True)
     y = table["is_robust"].astype(bool).to_numpy()
@@ -263,7 +289,7 @@ def main() -> None:
             index = [order[k] for k in table["problem_key"]]
             preds[block] = layer_ensemble_block({p: v[index] for p, v in X.items()}, y, splits, args.c, args.n_jobs)
         else:
-            features = trace.loc[table["problem_key"]].to_numpy(dtype=np.float64)
+            features = matrices[block].loc[table["problem_key"]].to_numpy(dtype=np.float64)
             preds[block] = matrix_block(MODELS["logreg"], features, y, splits)
         print(f"  block {block}: {len(splits)} fits in {time.time() - started:.0f}s")
 
