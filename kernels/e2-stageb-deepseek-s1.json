@@ -1,0 +1,62 @@
+{
+  "name": "e2-stageb-deepseek-s1",
+  "account": "DIDHITI",
+  "kernel": "didhitinahid/aimo-small-e2-stageb-deepseek-s1",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "Stage B shard 1/2 on DeepSeek-R1-0528-Qwen3-8B (see shard 0).",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "datagen/extract_generation_features.py",
+      "--model-id",
+      "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+      "--out-dir",
+      "/kaggle/working/features/stageb-deepseek",
+      "--num-shards",
+      "2",
+      "--shard-index",
+      "1"
+    ]
+  ],
+  "dataset_sources": [],
+  "bundle_sha1": "fccff57f3edb36618e7918352d5837a4878fb639",
+  "bundle_files": [
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py"
+  ],
+  "downloaded_run": {
+    "files": [
+      "runs/e2-stageb-deepseek-s1/features/stageb-deepseek/shard_01_of_02/metadata.json",
+      "runs/e2-stageb-deepseek-s1/run_manifest.json"
+    ],
+    "seconds": 10034.9,
+    "returncodes": [
+      1
+    ]
+  }
+}

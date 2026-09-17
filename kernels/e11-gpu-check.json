@@ -1,0 +1,63 @@
+{
+  "name": "e11-gpu-check",
+  "account": "ISHMAM1",
+  "kernel": "ishmamahmid/aimo-small-e11-gpu-check",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "Pre-submission check of dist/solution-e11-text-stagea-small.zip on a real GPU: runs the packaged are_robust on the 138 DeepSeek training problems, compares decisions and stagea probabilities with the artifact's reference, and times the call.",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "-c",
+      "from huggingface_hub import snapshot_download; print(snapshot_download('deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'))"
+    ],
+    [
+      "submission/gpu_check.py",
+      "--search-root",
+      "/kaggle/input"
+    ]
+  ],
+  "dataset_sources": [
+    "ishmamahmid/aimo-small-e11-bundle"
+  ],
+  "bundle_sha1": "30cbee271d572eaf400d1f0604700a3cc1297a14",
+  "bundle_files": [
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py",
+    "submission/gpu_check.py"
+  ],
+  "downloaded_run": {
+    "files": [
+      "runs/e11-gpu-check/run_manifest.json"
+    ],
+    "seconds": 421.0,
+    "returncodes": [
+      0,
+      0
+    ]
+  }
+}

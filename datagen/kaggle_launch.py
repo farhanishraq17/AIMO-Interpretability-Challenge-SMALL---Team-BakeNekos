@@ -82,7 +82,8 @@ BUNDLE_DIRS = ["getting-started/solutions/uncertainty-profiling/uncertainty_prof
 # Kaggle rejects very large script sources; past this, ship inputs as a private dataset instead.
 BUNDLE_WARN_BYTES = 900_000
 
-ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR"]
+# ISHMAM1 and DESIKALAKAR stopped authenticating on 17 Sep; RSD and Labib were added on 18 Sep.
+ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR", "RSD", "Labib"]
 
 # Stage B traces used downstream (E4). fp16 only: the dtype benchmark showed bf16 and fp16
 # greedy traces diverge, so the two sets must never be mixed.
@@ -162,6 +163,9 @@ def plumbing_and_label_free(model_id: str, short: str) -> tuple[tuple[str, ...],
 
 VLLM_INSTALL = ("-m", "pip", "install", "-q", "vllm")
 E7_FILES = ("datagen/perturb/*.py", "data/olympiad_pool/pool.parquet")
+# Base-phase records already sampled, shipped back so a new session resumes instead of redoing them.
+QWEN_RECORDS = "runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl"
+SKYWORK_RECORDS = "runs/e16-base-skywork/e16-skywork/base/shard_*/records.jsonl"
 
 
 def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
@@ -174,15 +178,40 @@ def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
 
 
 def base_sampling(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
-    """E7 base phase over the bundled olympiad pool: k samples per problem, 16k cap, 10 h budget."""
+    """E7 base phase over the olympiad pool: k samples per problem, flushed every 4 problems.
+
+    Sizing is the thing to get right. A chunk is one generate call and one flush, and Kaggle
+    kills a session at 12 h, so a chunk that does not finish is work thrown away. The first
+    attempt asked for 32 problems x 4 samples at a 16k cap, roughly 2M tokens per call:
+    Qwen managed one chunk per GPU, Skywork five, and Olmo-3-Think none at all in 11.5 h
+    (Finding 25). Four problems per call (16 sequences, about what a T4's KV cache holds
+    anyway) flushes every 20-45 minutes, and an 8.5 h budget leaves room to exit cleanly.
+    """
     return (
         "datagen/perturb/sample.py", "--phase", "base",
         "--model-id", model_id,
         "--backend", "vllm",
-        "--k", "4", "--max-new-tokens", "16384", "--max-hours", "10",
+        "--k", "4", "--max-new-tokens", "16384", "--max-hours", "8.5", "--chunk", "4",
         "--out-dir", f"/kaggle/working/{out_name}",
         *extra,
     )
+
+
+def restore(out_name: str, records_glob: str) -> tuple[str, ...]:
+    """Copy already-sampled records back into the Kaggle output directory, so a session resumes.
+
+    Kernels start empty, but the sampler skips items whose records it already has. Downloaded
+    records travel in the bundle and are put back before sampling starts.
+    """
+    return ("-c", (
+        "import glob, pathlib, shutil\n"
+        f"for src in sorted(glob.glob({records_glob!r})):\n"
+        "    path = pathlib.Path(src)\n"
+        f"    dst = pathlib.Path('/kaggle/working/{out_name}/base') / path.parent.name / path.name\n"
+        "    dst.parent.mkdir(parents=True, exist_ok=True)\n"
+        "    shutil.copy(src, dst)\n"
+        "    print('restored', dst, sum(1 for _ in open(dst)), 'records')"
+    ))
 
 
 def per_gpu(*argvs: tuple[str, ...]) -> tuple[str, ...]:
@@ -373,29 +402,35 @@ EXPERIMENTS: dict[str, Experiment] = {
     ),
     "e15-base-qwen35-a": Experiment(
         account="TASHIN",
-        purpose="E15 Qwen3.5-4B labelling, step 1 (E7 base phase) on the 505-problem olympiad pool, shards "
-        "0-1 of 4: one vLLM engine per T4 (the model fits in fp16), k=4, 16k cap. Finds the problems Qwen "
-        "always solves, which are the only ones that can be labelled.",
-        steps=(VLLM_INSTALL, qwen_base_pair(0)),
-        bundle_globs=E7_FILES,
+        purpose="E15 Qwen3.5-4B labelling, step 1 (E7 base phase) over the 505-problem olympiad pool, "
+        "shards 0-1 of 4: one vLLM engine per T4 (the model fits in fp16), k=4, 16k cap. Finds the "
+        "problems Qwen always solves, the only ones that can be labelled. Session 1 measured 27% "
+        "eligible over 128 problems; this session resumes from those records.",
+        steps=(VLLM_INSTALL, restore("e15-qwen35", QWEN_RECORDS), qwen_base_pair(0)),
+        bundle_globs=(*E7_FILES, QWEN_RECORDS),
     ),
     "e15-base-qwen35-b": Experiment(
-        account="SALAM",
+        account="RSD",
         purpose="E15 Qwen3.5-4B base phase, shards 2-3 of 4 (see e15-base-qwen35-a).",
-        steps=(VLLM_INSTALL, qwen_base_pair(2)),
-        bundle_globs=E7_FILES,
+        steps=(VLLM_INSTALL, restore("e15-qwen35", QWEN_RECORDS), qwen_base_pair(2)),
+        bundle_globs=(*E7_FILES, QWEN_RECORDS),
     ),
     "e16-base-skywork": Experiment(
-        account="TASHIN",
-        purpose="E16 Skywork-OR1-Math-7B labelling, step 1 (E7 base phase) on the olympiad pool: TP=2, "
-        "k=4, 16k cap, 10 h budget (resumable).",
-        steps=(VLLM_INSTALL, base_sampling(SKYWORK, "e16-skywork")),
-        bundle_globs=E7_FILES,
+        account="ISHRAQ",
+        purpose="E16 Skywork-OR1-Math-7B base phase: TP=2, k=4, 16k cap. Session 1 covered 160 problems "
+        "at 63% eligible and 150 tok/s, the best yield of the three; this session resumes from it.",
+        steps=(
+            VLLM_INSTALL,
+            restore("e16-skywork", SKYWORK_RECORDS),
+            base_sampling(SKYWORK, "e16-skywork"),
+        ),
+        bundle_globs=(*E7_FILES, SKYWORK_RECORDS),
     ),
     "e17-base-olmo-think": Experiment(
-        account="ISHRAQ",
-        purpose="E17 Olmo-3-7B-Think labelling, step 1 (E7 base phase) on the olympiad pool: TP=2, k=4, "
-        "16k cap, 10 h budget (resumable).",
+        account="Labib",
+        purpose="E17 Olmo-3-7B-Think base phase: TP=2, k=4, 16k cap. Session 1 produced nothing because "
+        "no 32-problem chunk finished in 11.5 h (Finding 25); with 4-problem chunks it flushes as it "
+        "goes, which also measures how slow this model really is.",
         steps=(VLLM_INSTALL, base_sampling(OLMO_THINK, "e17-olmo-think")),
         bundle_globs=E7_FILES,
     ),

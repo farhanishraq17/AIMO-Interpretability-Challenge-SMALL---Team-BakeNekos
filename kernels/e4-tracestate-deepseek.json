@@ -1,0 +1,70 @@
+{
+  "name": "e4-tracestate-deepseek",
+  "account": "SALAM",
+  "kernel": "salam2026/aimo-small-e4-tracestate-deepseek",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "E4 on DeepSeek-R1-0528-Qwen3-8B: teacher-forced forward pass over prompt + the fp16 E2 greedy trace; hidden states at every layer pooled over prompt_last, trace_mean, trace thirds, and trace_last. Needs the e2f outputs downloaded to runs/ first.",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "datagen/extract_trace_states.py",
+      "--model-id",
+      "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+      "--traces",
+      "runs/e2f-stageb-fp16-s*/features/stageb-fp16-deepseek/shard_*/records.jsonl",
+      "--out-dir",
+      "/kaggle/working/features/tracestate-deepseek",
+      "--dtype",
+      "float16"
+    ],
+    [
+      "datagen/merge_features.py",
+      "--features-dir",
+      "/kaggle/working/features/tracestate-deepseek"
+    ]
+  ],
+  "dataset_sources": [],
+  "bundle_sha1": "1da493fee31aacf896d6b8a3e0f611e9f1ebcc4b",
+  "bundle_files": [
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py",
+    "runs/e2f-stageb-fp16-s0/features/stageb-fp16-deepseek/shard_00_of_02/records.jsonl",
+    "runs/e2f-stageb-fp16-s1/features/stageb-fp16-deepseek/shard_01_of_02/records.jsonl"
+  ],
+  "downloaded_run": {
+    "files": [
+      "runs/e4-tracestate-deepseek/features/tracestate-deepseek/shard_00_of_01/metadata.json",
+      "runs/e4-tracestate-deepseek/run_manifest.json"
+    ],
+    "seconds": 1435.5,
+    "returncodes": [
+      0,
+      0
+    ]
+  }
+}

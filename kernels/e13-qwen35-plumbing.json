@@ -1,0 +1,80 @@
+{
+  "name": "e13-qwen35-plumbing",
+  "account": "TASHIN",
+  "kernel": "tashintahir/aimo-small-e13-qwen35-plumbing",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "Qwen3.5-4B (the model the leaderboard appears to score, Finding 21): loads under transformers 5.13 on T4x2? Stage A smoke on 20 problems, then E12 label-free scores for all train problems. Labels are NOT Qwen's (--no-filter-model).",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "-c",
+      "from huggingface_hub import snapshot_download; from transformers import AutoConfig\nprint(snapshot_download('Qwen/Qwen3.5-4B'))\ntry:\n    c = AutoConfig.from_pretrained('Qwen/Qwen3.5-4B'); print(type(c).__name__, c.architectures)\nexcept Exception as exc:\n    print('AutoConfig failed:', type(exc).__name__, exc)"
+    ],
+    [
+      "datagen/extract_features.py",
+      "--model-id",
+      "Qwen/Qwen3.5-4B",
+      "--system-prompt-file",
+      "data/probe_system_prompt.txt",
+      "--out-dir",
+      "/kaggle/working/features/stagea-qwen35-smoke",
+      "--no-filter-model",
+      "--limit",
+      "20"
+    ],
+    [
+      "datagen/extract_label_free.py",
+      "--model-id",
+      "Qwen/Qwen3.5-4B",
+      "--system-prompt-file",
+      "data/probe_system_prompt.txt",
+      "--out-dir",
+      "/kaggle/working/features/labelfree-qwen35",
+      "--no-filter-model"
+    ]
+  ],
+  "dataset_sources": [],
+  "bundle_sha1": "fccff57f3edb36618e7918352d5837a4878fb639",
+  "bundle_files": [
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py"
+  ],
+  "downloaded_run": {
+    "files": [
+      "runs/e13-qwen35-plumbing/features/labelfree-qwen35/shard_00_of_01/metadata.json",
+      "runs/e13-qwen35-plumbing/features/stagea-qwen35-smoke/shard_00_of_01/metadata.json",
+      "runs/e13-qwen35-plumbing/run_manifest.json"
+    ],
+    "seconds": 662.1,
+    "returncodes": [
+      0,
+      0,
+      0
+    ]
+  }
+}

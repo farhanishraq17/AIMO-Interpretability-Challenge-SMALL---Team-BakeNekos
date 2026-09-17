@@ -1,0 +1,118 @@
+{
+  "name": "e7-sample-smoke",
+  "account": "ISHMAM1",
+  "kernel": "ishmamahmid/aimo-small-e7-sample-smoke",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "E7 plumbing and throughput check: installs vLLM, rebuilds the olympiad pool and variants from pinned revisions and a fixed seed, then samples AMC and AIME originals (k=4, 4,096-token cap) in fp16 with tensor parallelism across the two T4s. Measures tokens/s and base-eligibility yield.",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "-m",
+      "pip",
+      "install",
+      "-q",
+      "vllm"
+    ],
+    [
+      "datagen/perturb/pool.py"
+    ],
+    [
+      "datagen/perturb/generate.py",
+      "--examples",
+      "0"
+    ],
+    [
+      "datagen/perturb/sample.py",
+      "--phase",
+      "base",
+      "--model-id",
+      "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+      "--backend",
+      "vllm",
+      "--tiers",
+      "amc",
+      "--limit",
+      "16",
+      "--k",
+      "4",
+      "--max-new-tokens",
+      "4096",
+      "--out-dir",
+      "/kaggle/working/e7-amc"
+    ],
+    [
+      "datagen/perturb/sample.py",
+      "--phase",
+      "base",
+      "--model-id",
+      "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+      "--backend",
+      "vllm",
+      "--tiers",
+      "aime",
+      "--limit",
+      "8",
+      "--k",
+      "4",
+      "--max-new-tokens",
+      "4096",
+      "--out-dir",
+      "/kaggle/working/e7-aime"
+    ]
+  ],
+  "dataset_sources": [],
+  "bundle_sha1": "22b367a84037eb3aa6a5e0eb7a1a1e1c10ff2f3e",
+  "bundle_files": [
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/ingest_public.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/answers.py",
+    "datagen/perturb/generate.py",
+    "datagen/perturb/label.py",
+    "datagen/perturb/pool.py",
+    "datagen/perturb/sample.py",
+    "datagen/perturb/test_agreement.py",
+    "datagen/perturb/test_answers.py",
+    "datagen/perturb/test_transforms.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py"
+  ],
+  "downloaded_run": {
+    "files": [
+      "runs/e7-sample-smoke/e7-aime/base/shard_00_of_01/metadata.json",
+      "runs/e7-sample-smoke/e7-amc/base/shard_00_of_01/metadata.json",
+      "runs/e7-sample-smoke/run_manifest.json"
+    ],
+    "seconds": 3104.3,
+    "returncodes": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}

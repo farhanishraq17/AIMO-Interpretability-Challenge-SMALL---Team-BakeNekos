@@ -1,10 +1,11 @@
 # Experiment log
 
 Every experiment run for the Small Models Track, in the order it was run. Configurations
-live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); measurements live in `RESULTS.md`; the
-reasoning behind each result is the numbered Finding in `PROGRESS.md`.
+live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with each run's
+manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
+result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 17 September 2026, 18:30 UTC.
+Last updated: 18 September 2026, 01:00 UTC.
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.
@@ -32,34 +33,45 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E12 | Label-free signals from one forward pass | Kaggle | Done | They are problem-text proxies, not model-specific |
 | E13 | Do the three unlabelled models run? | Kaggle | Done | All three run on T4s under the pins |
 | E14 | Does the answer survive rewrites at test time? | Kaggle | Done | **No.** At chance, and too expensive. Approach dropped |
-| E15 | Qwen3.5-4B: which problems can be labelled? | Kaggle | **Running** | — |
-| E16 | Skywork-OR1-Math-7B: same | Kaggle | **Running** | — |
-| E17 | Olmo-3-7B-Think: same | Kaggle | **Running** | — |
+| E15 | Qwen3.5-4B: which problems can be labelled? | Kaggle | **Running**, session 2 | Session 1: 27% of 128 problems labellable |
+| E16 | Skywork-OR1-Math-7B: same | Kaggle | **Running**, session 2 | Session 1: **63% of 160** labellable, the best yield |
+| E17 | Olmo-3-7B-Think: same | Kaggle | **Running**, session 2 | Session 1 produced nothing: batches too large (Finding 25) |
 
 ---
 
 ## 2. Running now
 
-All four started on 17 Sep between 07:50 and 08:15 UTC, each with a 10 h budget. They write
-one record per problem, so a stopped run resumes where it left off.
+Session 2, relaunched 18 Sep around 00:40 UTC after the first session's sizing failure
+(Finding 25). Each run saves every 4 problems, stops itself at 8.5 h, and restores the records
+of everything already sampled, so no problem is done twice.
 
-| Run | Account | Configuration | What it produces |
+| Run | Account | Configuration | Carried over |
 | --- | --- | --- | --- |
-| `e15-base-qwen35-a` | TASHIN | Qwen3.5-4B, pool shards 0–1 of 4, one vLLM engine per T4, `--max-num-seqs 64`, k=4, 16k cap | Per-problem solve rates |
-| `e15-base-qwen35-b` | SALAM | Same, shards 2–3 of 4 | Same |
-| `e16-base-skywork` | TASHIN | Skywork-OR1-Math-7B, tensor parallel 2, k=4, 16k cap | Same |
-| `e17-base-olmo-think` | ISHRAQ | Olmo-3-7B-Think, tensor parallel 2, k=4, 16k cap | Same |
+| `e15-base-qwen35-a` | TASHIN | Qwen3.5-4B, shards 0–1 of 4, one vLLM engine per T4, `--max-num-seqs 64`, k=4, 16k cap | 128 problems |
+| `e15-base-qwen35-b` | **RSD** | Same, shards 2–3 of 4 | (same records) |
+| `e16-base-skywork` | ISHRAQ | Skywork-OR1-Math-7B, tensor parallel 2, k=4, 16k cap | 160 problems |
+| `e17-base-olmo-think` | **Labib** | Olmo-3-7B-Think, tensor parallel 2, k=4, 16k cap | nothing |
 
 **Why:** a problem can only be labelled if the model solves it every time (the organizers'
 eligibility rule). These runs find those problems over the 505-problem olympiad pool (83 AMC,
 60 AIME, 362 olympiad), in shuffled order so a partial run still covers every tier.
 
+**Yields so far** (session 1, `n_correct == n_samples` at k=4):
+
+| Model | Sampled | Labellable | Samples hitting the cap | Tokens per problem | Speed |
+| --- | --- | --- | --- | --- | --- |
+| Skywork-OR1-Math-7B | 160 | **101 (63%)** | 18% | 33,000 | 150 tok/s (TP=2) |
+| Qwen3.5-4B | 128 | 35 (27%) | 62% | 54,000 | 75 tok/s per GPU |
+| Olmo-3-7B-Think | 0 | — | — | — | — |
+
+Qwen's eligibility by tier: AMC 33%, olympiad 28%, AIME 9%.
+
 **Next step, per model (gate G-E, 21 Sep):** sample the `answer_modulus` variants of every
 eligible problem, then `label.py` turns the accuracy drop into labels. `answer_modulus` is
 outside the official perturbation types, so labelling it is allowed (`PLAN.md` §3.3).
 
-**Blocked:** ISHMAM1 and DESIKALAKAR are idle. Their Kaggle tokens stopped authenticating on
-17 Sep and need replacing in `Secrets.env` (Finding 23).
+**Fleet:** ISHMAM1 and DESIKALAKAR stopped authenticating on 17 Sep; RSD and Labib replaced
+them on 18 Sep. SALAM and DIDHITI have spent their 30 GPU-hours for this week.
 
 ---
 

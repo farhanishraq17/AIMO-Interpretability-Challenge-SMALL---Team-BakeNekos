@@ -18,7 +18,7 @@ Last updated: 17 September 2026.
 | Area | Status |
 | --- | --- |
 | Competition brief, plan, repo guide | Done: `COMPETITION.md`, `PLAN.md`, `CLAUDE.md` |
-| Kaggle fleet (6 accounts) | E14–E17 running on 17 Sep; **ISHMAM1 and DESIKALAKAR tokens rejected** (Finding 23) |
+| Kaggle fleet (8 accounts) | E15–E17 running; ISHMAM1 and DESIKALAKAR rejected, **RSD and Labib added 18 Sep** (Findings 23, 25) |
 | Training set | 187 instances, 138 for DeepSeek-8B (36 robust); no labels for the other three small-track models |
 | Text-only floor | 0.6732 balanced accuracy from problem text alone |
 | Stage A, prompt hidden states (E1b) | Done: layer ensembles out-rank text (Finding 11) |
@@ -684,6 +684,30 @@ transformers 5.13. Every number below is in the `RESULTS.md` section generated b
 - **Decision.** Lane D closes. Mild answer-preserving rewrites do not reproduce what the
   official perturbations do to this model. Remaining routes to a model-specific signal for
   the unlabelled models are self-generated labels (E15–E17) or organizer labels.
+
+**25. Chunk size decides what survives a Kaggle session; the first labelling session mostly
+did not.** (`e15`, `e16`, `e17`, 17–18 Sep. A chunk is one generate call and one flush.)
+
+- **What happened.** The base phase asked for 32 problems x 4 samples at a 16k cap per call,
+  roughly 2M tokens. In 11.5 h Qwen completed one chunk per GPU, Skywork five, and
+  Olmo-3-Think none, so Olmo produced nothing at all.
+- **Output does survive a kill.** Kaggle saved `/kaggle/working` even for the sessions it
+  cancelled at 12 h, so only the unfinished chunk was lost, not the finished ones.
+- **First-session yields**, eligible meaning the model solved the problem in all 4 samples:
+
+  | Model | Sampled | Eligible | Hit the cap | Tokens per problem | Speed |
+  | --- | --- | --- | --- | --- | --- |
+  | Skywork-OR1-Math-7B | 160 | **101 (63%)** | 18% | 33,000 | 150 tok/s (TP=2) |
+  | Qwen3.5-4B | 128 | 35 (27%) | 62% | 54,000 | 75 tok/s per GPU |
+  | Olmo-3-7B-Think | 0 | — | — | — | — |
+
+  Skywork is much the cheapest to label: it is both faster and more often eligible. Qwen's
+  62% truncation rate at a 16k cap is what holds its yield down.
+- **Fix.** 4 problems per chunk (16 sequences, about what a T4's KV cache holds anyway), an
+  8.5 h budget so the run exits on its own, and a restore step that copies previously
+  downloaded records back into the kernel, so a session continues instead of restarting.
+- **Fleet.** RSD and Labib were added on 18 Sep with full weekly quota, replacing ISHMAM1 and
+  DESIKALAKAR. SALAM and DIDHITI hit Kaggle's 30 GPU-hours per week during the failed session.
 
 ---
 
