@@ -31,7 +31,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "270888b0dc11dc2b3f0afb72b011ca4cc7d204f2",
+  "bundle_sha1": "01b075bc160c9ddcb20aabc745bce05e11fcc04c",
   "bundle_files": [
     "data/olympiad_pool/pool.parquet",
     "data/probe_system_prompt.txt",
@@ -63,6 +63,10 @@
     "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py",
     "runs/e15-base-qwen35-a/e15-qwen35/base/shard_00_of_04/records.jsonl",
     "runs/e15-base-qwen35-a/e15-qwen35/base/shard_01_of_04/records.jsonl",
+    "runs/e15-base-qwen35-a/e15-qwen35/base/shard_02_of_04/records.jsonl",
+    "runs/e15-base-qwen35-a/e15-qwen35/base/shard_03_of_04/records.jsonl",
+    "runs/e15-base-qwen35-b/e15-qwen35/base/shard_00_of_04/records.jsonl",
+    "runs/e15-base-qwen35-b/e15-qwen35/base/shard_01_of_04/records.jsonl",
     "runs/e15-base-qwen35-b/e15-qwen35/base/shard_02_of_04/records.jsonl",
     "runs/e15-base-qwen35-b/e15-qwen35/base/shard_03_of_04/records.jsonl"
   ],
@@ -72,10 +76,11 @@
       "runs/e15-base-qwen35-a/e15-qwen35/base/shard_01_of_04/metadata.json",
       "runs/e15-base-qwen35-a/run_manifest.json"
     ],
-    "seconds": 984.8,
+    "seconds": 33685.5,
     "returncodes": [
       0,
-      1
+      0,
+      0
     ]
   }
 }

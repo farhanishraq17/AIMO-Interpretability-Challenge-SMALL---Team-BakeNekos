@@ -9,7 +9,7 @@ Companion documents:
 - `RESULTS.md`: generated metrics.
 - `CLAUDE.md`: working conventions and commands.
 
-Last updated: 17 September 2026.
+Last updated: 19 September 2026.
 
 ---
 
@@ -18,7 +18,7 @@ Last updated: 17 September 2026.
 | Area | Status |
 | --- | --- |
 | Competition brief, plan, repo guide | Done: `COMPETITION.md`, `PLAN.md`, `CLAUDE.md` |
-| Kaggle fleet (8 accounts) | E15–E17 running; ISHMAM1 and DESIKALAKAR rejected, **RSD and Labib added 18 Sep** (Findings 23, 25) |
+| Kaggle fleet (8 accounts) | E18/E19 (variants phase) running; ISHMAM1 and DESIKALAKAR rejected, **RSD and Labib added 18 Sep** (Findings 23, 25, 26) |
 | Training set | 187 instances, 138 for DeepSeek-8B (36 robust); no labels for the other three small-track models |
 | Text-only floor | 0.6732 balanced accuracy from problem text alone |
 | Stage A, prompt hidden states (E1b) | Done: layer ensembles out-rank text (Finding 11) |
@@ -709,6 +709,71 @@ did not.** (`e15`, `e16`, `e17`, 17–18 Sep. A chunk is one generate call and o
 - **Fleet.** RSD and Labib were added on 18 Sep with full weekly quota, replacing ISHMAM1 and
   DESIKALAKAR. SALAM and DIDHITI hit Kaggle's 30 GPU-hours per week during the failed session.
 
+**26. After two base-phase sessions, Qwen and Skywork pass gate G-E; the variants phase is
+running.** (`e15`, `e16`, `e17` session 2, 18 Sep; each exited cleanly at its 8.5 h budget.)
+
+| Model | Sampled (of 505) | Eligible | Rate | Hit the cap | Median tokens per sample |
+| --- | --- | --- | --- | --- | --- |
+| Skywork-OR1-Math-7B | 246 | **157** | 64% | 19% | 7,318 |
+| Qwen3.5-4B | 285 | **90** | 32% | 58% | 16,384 (the cap) |
+| Olmo-3-7B-Think | 30 | 17 | 57% | 38% | 8,266 |
+
+- **By tier.** Skywork: AMC 20/23, AIME 9/26, olympiad 128/197. Qwen: AMC 8/25, AIME 2/29,
+  olympiad 80/231. AIME is hard for both, and Qwen is limited by truncation more than by skill.
+- **Olmo-3-Think fits on a T4 pair only at a 12k cap.** It keeps a full KV cache (4.5 GiB for
+  one 18k-token sequence, against 4.12 GiB free), so it runs one or two sequences at a time:
+  30 problems in 9.6 h. At that rate, labelling it belongs on the Fields grant.
+- **Gate G-E (≥ 60 eligible): Qwen and Skywork pass.**
+- **Not every eligible problem can be labelled.** `answer_modulus` needs an answer of at least
+  13, so only some problems have compliant variants.
+
+  | Model | Compliant variants | Problems covered |
+  | --- | --- | --- |
+  | Qwen3.5-4B | 109 | 53 of 90 |
+  | Skywork-OR1-Math-7B | 205 | 101 of 157 |
+
+  That caps the labels this round at about 53 for Qwen and 101 for Skywork.
+- **Launched:** `e18-variants-qwen35` (RSD, one engine per T4) and `e19-variants-skywork`
+  (Labib, TP=2), with k=4, a 16k cap and 4-problem chunks. `label.py` then turns base and
+  variant accuracy into labels.
+
+**27. Re-measured per-model defaults confirm E11 v2; the hidden set is about 14 cases.**
+(Codabench, Small Model Track, 18 Sep 00:13-00:15, same task as v2. Probe ZIPs from
+`submission/make_probes.py`.)
+
+| Submission | Predicts | Score | vs all-False |
+| --- | --- | --- | --- |
+| 930707 `probe-all-false` | `False` everywhere | 0.50 | — |
+| 930709 `probe-true-qwen35-4b` | `True` for Qwen3.5-4B only | **0.57** | **+0.07** |
+| 930710 `probe-true-skywork-7b` | `True` for Skywork only | 0.43 | −0.07 |
+| 930708 `probe-true-olmo3-think` | `True` for Olmo-3-Think only | 0.43 | −0.07 |
+| 929596 E11 v2 (17 Sep) | DeepSeek fusion, Qwen `True`, others `False` | 0.64 | +0.14 |
+
+- **Score steps of 0.07 put the hidden set at about 14–15 cases.** Every gap in this table is
+  one or two cases.
+- **E11 v2's defaults are the best constants available.** Qwen gains with `True`, while
+  Skywork and Olmo-3-Think each lose one case with it, so v2 needs no change.
+- **E11's DeepSeek predictions appear worth one case over `False`** (v2 0.64 vs true-Qwen 0.57),
+  though the two were scored on different days and all-False moved 0.47 → 0.50 in between.
+- **Beyond 0.64, gains must come from per-case predictions, not defaults.** That means labels
+  for the unlabelled models (E15–E19).
+
+**28. Changes ported from branch `nakib` (commit 2570baa), without merging.**
+
+- **`kaggle_launch.py --account <ALIAS>`** runs a registered experiment on another account
+  without editing its registry entry, so outputs keep their `runs/<experiment>/` paths. It
+  would have avoided three registry edits this week when accounts ran out of quota.
+- **`scripts/_setup_kaggle_accounts.py`** resolves `ROOT` from its own location instead of a
+  hard-coded path to one machine.
+- **`train_stagea_probes.py`** now writes a repo-relative features path into `RESULTS.md`,
+  and the existing absolute path was corrected.
+- **Docs:**
+  - `COMPETITION.md`: model ids are passed verbatim (no alias table), and a worker has one
+    RTX PRO 6000, not eight.
+  - `CLAUDE.md`: the submodule commit is `995f992`, and three of four models are unlabelled.
+- The branch also registers three more fleet aliases (NAKIB, CHOTON, MEDIUM); each needs its
+  token in `Secrets.env` before use.
+
 ---
 
 ## 7. Results so far
@@ -758,9 +823,20 @@ Full tables are in `RESULTS.md`.
 | Constant: all `False` | 0.47 |
 | Constant: `True` for Qwen3.5-4B only | 0.53 |
 | **E11 v2 (v1 + Qwen `True`)** | **0.64** |
+| Re-measured 18 Sep: all `False` / `True` for Qwen / Skywork / Olmo-Think | 0.50 / 0.57 / 0.43 / 0.43 |
 
-On 16 Sep the hidden set looked like about 17 Qwen3.5-4B cases (Finding 21). v2's 0.64
-(Finding 23) suggests it changed since, so the per-model reading is being re-measured.
+The hidden set is about 14–15 cases, so one case moves the score by about 0.07. v2's
+defaults are the best constants (Finding 27).
+
+### Self-labelling (E15–E19)
+
+| Model | Eligible problems | Compliant variants | Status |
+| --- | --- | --- | --- |
+| Skywork-OR1-Math-7B | 157 of 246 sampled | 205 over 101 problems | Variants phase running (E19) |
+| Qwen3.5-4B | 90 of 285 sampled | 109 over 53 problems | Variants phase running (E18) |
+| Olmo-3-7B-Think | 17 of 30 sampled | 29 over 13 problems | Paused: too slow on T4s |
+
+Generated table: `RESULTS.md`, section "E15-E19: self-labelling progress" (Findings 25–26).
 
 ### The measurement we cannot yet make
 
@@ -804,7 +880,9 @@ Closing either gap needs new labels, from the organizers or from E7.
 | `train_stagea_probes.py` | Nested probe, layer ensembles, text fusion, and bootstrap CIs on Stage A features; upserts its `RESULTS.md` section and saves out-of-fold probabilities |
 | `train_stageb_features.py` | Trace-uncertainty and trace-shape classifiers, univariate AUCs, and text fusion on Stage B records; upserts its section |
 | `train_fusion.py` | E10: nested fusion of text / stagea / tracestate / trace blocks, with in-fold thresholds and paired CIs |
-| `eval_label_free.py` | E12: per-signal AUC against DeepSeek labels, length control, cross-model transfer |
+| `eval_label_free.py` | E12: per-signal AUC against DeepSeek labels, within-length-quintile control, cross-model transfer |
+| `eval_agreement.py` | E14: agreement signals against DeepSeek labels, and their generation cost |
+| `summarize_labelling.py` | E15–E19: base-phase eligibility and variants-phase labels per model, deduplicated across sessions |
 | `build_e11_artifact.py`, `check_e11_artifact.py` | Fit the E11 artifact in the pinned venv and verify it locally |
 | `results_io.py` | Shared metrics, paired bootstrap AUC difference, section upsert |
 
@@ -821,7 +899,8 @@ Closing either gap needs new labels, from the organizers or from E7.
 
 | File | Purpose |
 | --- | --- |
-| `_setup_kaggle_accounts.py` | Verifies and installs the six Kaggle access tokens |
+| `_setup_kaggle_accounts.py` | Verifies and installs the Kaggle access tokens in `Secrets.env` |
+| `export_kernels.py` | Writes every kernel as pushed, and each run's manifest, to `kernels/` |
 | `use_kaggle_account.py` | Switches the default Kaggle account |
 | `check_hf_access.py` | Reports which datasets are reachable with current credentials |
 | `profile_hf_datasets.py` | Schema, size, and model coverage for every public dataset |
@@ -913,16 +992,19 @@ deterministically.
 
 ## 11. Next steps
 
-Ranked by value (17 Sep):
+Ranked by value (18 Sep):
 
-1. **Upload E11 v2 and send the organizer message.** Both need your accounts. The answer on
-   labels decides whether step 3 is needed.
-2. **Test problem-level transfer on the leaderboard (one submission).** Apply E11's DeepSeek
-   text model to Qwen3.5-4B problems, with the threshold set so about 53% are predicted
-   robust. The result only counts if the score moves by two or more cases (±0.12).
-3. **Label Qwen3.5-4B with E7** if no labels are coming. It is the fastest of the four models
-   (3.3 s per problem in E13), and labelling would use only non-official perturbation types.
-4. **Close the olympiad gap for DeepSeek** with E7 on the Fields compute grant. On T4s it would
-   cost about 45–175 GPU-hours (Finding 19).
-5. **Keep DeepSeek modelling light** until the leaderboard or the organizers show that
-   DeepSeek is scored.
+1. **Finish the first labels.** When E18 (Qwen) and E19 (Skywork) finish, run `label.py`, then
+   `train/summarize_labelling.py`. That gives up to about 53 Qwen and 101 Skywork labels.
+2. **Train per-model models on them** the way E11 was trained for DeepSeek: text + Stage A
+   hidden states under grouped CV. Stage A features for the pool problems need one forward
+   pass per problem (about 1 s each).
+3. **Check that self-labels mean something.** `answer_modulus` robustness is not the official
+   perturbations' robustness. Run the same pipeline on DeepSeek, where official labels exist,
+   and compare.
+4. **Submit E11 v3 only where a per-model model beats its constant** under CV. The leaderboard
+   is about 14 cases, so it cannot settle small differences.
+5. **Send the organizer message** (drafted 17 Sep). Official labels for the three models would
+   replace steps 1–3.
+6. **Olmo-3-Think labelling** moves to the Fields compute grant; on T4s it runs one or two
+   sequences at a time.

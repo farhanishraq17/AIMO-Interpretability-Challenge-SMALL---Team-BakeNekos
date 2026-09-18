@@ -39,7 +39,7 @@ is the actual filename.
   - Branch `main`, remote
     `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Small-Model-Track`.
   - `getting-started/` is a **submodule** pinned to upstream `aimo-interp/getting-started` at
-    `e98c489`; clone with `--recurse-submodules`.
+    `995f992` (12 Sep README update: competition-phase model list); clone with `--recurse-submodules`.
   - `.gitignore` excludes `Secrets.env` (and `*.env`), `data/`, `features/`, `runs/`,
     `kaggle_runs/`, and `dist/`.
   - Before every commit, `git grep --cached -n "KGAT_"` must print nothing.
@@ -105,7 +105,7 @@ python -m uv run scripts/run_local.py dist/solution-always-true-small.zip --smal
 ```
 COMPETITION.md PLAN.md PROGRESS.md RESULTS.md CLAUDE.md
 Secrets.env                  Kaggle tokens (KGAT_…) per alias. NEVER print, commit, or bundle.
-getting-started/             Upstream starter kit: git submodule at e98c489 (+ local pinned venv). Don't edit.
+getting-started/             Upstream starter kit: git submodule at 995f992 (+ local pinned venv). Don't edit.
   solutions/trained-probe/          last-prompt-token linear probe baseline (+ probe_artifact.pkl)
   solutions/uncertainty-profiling/  14 trace-uncertainty features -> RF regressor baseline
   solutions/always-true/            packaging check
@@ -159,8 +159,11 @@ Recovered or measured facts that the pipeline depends on (evidence in `PROGRESS.
   A method that cannot clear 0.6732 is reading surface form, not robustness.
 - **Biggest known risk:** the DeepSeek train set has **one** olympiad instance; the private
   test set is entirely olympiad (AIMO/AIME/JMO).
-- **Olmo-3-7B-Instruct has zero labels** in every public dataset, yet it is cached on the
-  evaluation workers. Labelling it is blocked on an organizer answer (see `PLAN.md`).
+- **Three of the four small-track models have no public labels:** `Qwen/Qwen3.5-4B`,
+  `Skywork/Skywork-OR1-Math-7B`, `allenai/Olmo-3-7B-Think`. Only DeepSeek is labelled. E11 v2
+  answers `True` for Qwen and `False` for the other two (Finding 21), and E15–E19 are building
+  our own labels (`answer_modulus` only). `Olmo-3-7B-Instruct`, used in E3, was a warm-up model
+  and is not evaluated.
 - `aimo-interp/problems-public` (symbolic chains) returns 401 and is unavailable.
 
 ## Competition contract (submission code)

@@ -46,7 +46,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "8025a05531e89594d01d146876981a7d302aca8e",
+  "bundle_sha1": "49d5a38751e65c9b8fbc04aa6f0843d7ce2e485e",
   "bundle_files": [
     "data/olympiad_pool/pool.parquet",
     "data/probe_system_prompt.txt",
@@ -83,10 +83,11 @@
       "runs/e16-base-skywork/e16-skywork/base/shard_00_of_01/metadata.json",
       "runs/e16-base-skywork/run_manifest.json"
     ],
-    "seconds": 512.2,
+    "seconds": 31239.7,
     "returncodes": [
       0,
-      1
+      0,
+      0
     ]
   }
 }

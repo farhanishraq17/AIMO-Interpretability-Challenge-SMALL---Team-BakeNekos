@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(r"D:\Project Based Learning\AIMO - Interpretablity")
+ROOT = Path(__file__).resolve().parents[1]
 SECRETS = ROOT / "Secrets.env"
 KAGGLE_DIR = Path.home() / ".kaggle"
 ACCOUNTS_DIR = KAGGLE_DIR / "accounts"

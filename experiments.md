@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 18 September 2026, 01:00 UTC.
+Last updated: 18 September 2026, 21:00 UTC.
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.
@@ -29,49 +29,42 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E7b | Olympiad sampling at 8k/16k caps | Kaggle | Done | About 25% of problems are labellable; 300–1,250 s each |
 | E10 | Fuse text + hidden states + traces | local | Done | Text + prompt states is the model; traces dilute it |
 | E11 | Package that as a submission | local + GPU check | Done | v1 0.47, **v2 0.64** on the leaderboard |
-| Probes | What is in the hidden validation set? | Codabench | Done, needs redoing | Only the Qwen default moved the score |
+| Probes | What is in the hidden validation set? | Codabench | Done (re-measured 18 Sep) | About 14 cases; v2's defaults are the best constants (Finding 27) |
 | E12 | Label-free signals from one forward pass | Kaggle | Done | They are problem-text proxies, not model-specific |
 | E13 | Do the three unlabelled models run? | Kaggle | Done | All three run on T4s under the pins |
 | E14 | Does the answer survive rewrites at test time? | Kaggle | Done | **No.** At chance, and too expensive. Approach dropped |
-| E15 | Qwen3.5-4B: which problems can be labelled? | Kaggle | **Running**, session 2 | Session 1: 27% of 128 problems labellable |
-| E16 | Skywork-OR1-Math-7B: same | Kaggle | **Running**, session 2 | Session 1: **63% of 160** labellable, the best yield |
-| E17 | Olmo-3-7B-Think: same | Kaggle | **Running**, session 2 | Session 1 produced nothing: batches too large (Finding 25) |
+| E15 | Qwen3.5-4B: which problems can be labelled? | Kaggle | Done (2 sessions) | **90 of 285** eligible (32%) |
+| E16 | Skywork-OR1-Math-7B: same | Kaggle | Done (2 sessions) | **157 of 246** eligible (64%) |
+| E17 | Olmo-3-7B-Think: same | Kaggle | Paused | 17 of 30 eligible; too slow on T4s (Finding 26) |
+| E18 | Qwen3.5-4B: sample the variants of eligible problems | Kaggle | **Running** | — |
+| E19 | Skywork-OR1-Math-7B: same | Kaggle | **Running** | — |
 
 ---
 
 ## 2. Running now
 
-Session 2, relaunched 18 Sep around 00:40 UTC after the first session's sizing failure
-(Finding 25). Each run saves every 4 problems, stops itself at 8.5 h, and restores the records
-of everything already sampled, so no problem is done twice.
+Step 2 of labelling, launched 18 Sep around 20:45 UTC. For every problem the model solved in all
+4 base samples, sample each compliant (`answer_modulus`) variant 4 times; `label.py` then marks
+the case robust if accuracy does not drop.
 
-| Run | Account | Configuration | Carried over |
+| Run | Account | Configuration | Work |
 | --- | --- | --- | --- |
-| `e15-base-qwen35-a` | TASHIN | Qwen3.5-4B, shards 0–1 of 4, one vLLM engine per T4, `--max-num-seqs 64`, k=4, 16k cap | 128 problems |
-| `e15-base-qwen35-b` | **RSD** | Same, shards 2–3 of 4 | (same records) |
-| `e16-base-skywork` | ISHRAQ | Skywork-OR1-Math-7B, tensor parallel 2, k=4, 16k cap | 160 problems |
-| `e17-base-olmo-think` | **Labib** | Olmo-3-7B-Think, tensor parallel 2, k=4, 16k cap | nothing |
+| `e18-variants-qwen35` | RSD | Qwen3.5-4B, one vLLM engine per T4 (2 shards), k=4, 16k cap, 4-problem chunks, 8.5 h budget | 109 variants over 53 problems |
+| `e19-variants-skywork` | Labib | Skywork-OR1-Math-7B, tensor parallel 2, same settings | 205 variants over 101 problems |
 
-**Why:** a problem can only be labelled if the model solves it every time (the organizers'
-eligibility rule). These runs find those problems over the 505-problem olympiad pool (83 AMC,
-60 AIME, 362 olympiad), in shuffled order so a partial run still covers every tier.
+**Base-phase yields that feed this** (Findings 25–26):
 
-**Yields so far** (session 1, `n_correct == n_samples` at k=4):
+| Model | Sampled (of 505) | Eligible | Rate | By tier (eligible/sampled) |
+| --- | --- | --- | --- | --- |
+| Skywork-OR1-Math-7B | 246 | 157 | 64% | AMC 20/23, AIME 9/26, olympiad 128/197 |
+| Qwen3.5-4B | 285 | 90 | 32% | AMC 8/25, AIME 2/29, olympiad 80/231 |
+| Olmo-3-7B-Think | 30 | 17 | 57% | AMC 3/4, AIME 1/3, olympiad 13/23 |
 
-| Model | Sampled | Labellable | Samples hitting the cap | Tokens per problem | Speed |
-| --- | --- | --- | --- | --- | --- |
-| Skywork-OR1-Math-7B | 160 | **101 (63%)** | 18% | 33,000 | 150 tok/s (TP=2) |
-| Qwen3.5-4B | 128 | 35 (27%) | 62% | 54,000 | 75 tok/s per GPU |
-| Olmo-3-7B-Think | 0 | — | — | — | — |
+**Why Olmo is paused:** it needs a full KV cache and fits a T4 pair only at a 12k cap, so it
+runs one or two sequences at a time (30 problems in 9.6 h). It moves to the Fields grant.
 
-Qwen's eligibility by tier: AMC 33%, olympiad 28%, AIME 9%.
-
-**Next step, per model (gate G-E, 21 Sep):** sample the `answer_modulus` variants of every
-eligible problem, then `label.py` turns the accuracy drop into labels. `answer_modulus` is
-outside the official perturbation types, so labelling it is allowed (`PLAN.md` §3.3).
-
-**Fleet:** ISHMAM1 and DESIKALAKAR stopped authenticating on 17 Sep; RSD and Labib replaced
-them on 18 Sep. SALAM and DIDHITI have spent their 30 GPU-hours for this week.
+**Fleet:** RSD and Labib hold this week's remaining quota. SALAM, DIDHITI, TASHIN and ISHRAQ
+have used theirs; ISHMAM1 and DESIKALAKAR are still unreachable.
 
 ---
 

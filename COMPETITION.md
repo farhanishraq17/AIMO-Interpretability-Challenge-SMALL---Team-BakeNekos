@@ -79,13 +79,9 @@ Hard constraints:
 - The harness passes only `model_id` and problem strings. No case IDs, no labels, no permutation-type metadata at inference.
 - Load weights only from the worker cache, with `local_files_only=True`.
 
-Codabench aliases must be resolved to cached checkpoints. The starter kit already maps:
+**Competition phase (upstream README, 12 Sep 2026, submodule `995f992`):** `are_robust` receives Hugging Face IDs **verbatim**. There are no aliases to resolve; the `:low`-suffixed names in the public datasets are never passed. The four small-track IDs are listed in §8.
 
-| Codabench alias | Hugging Face checkpoint | Track relevance |
-| --- | --- | --- |
-| `qwen3-8b:low` | `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | **Small / open-weight (primary)** |
-
-Unknown aliases should still return a valid `list[bool]` (the uncertainty baseline returns all `False` rather than crashing).
+Unknown model IDs should still return a valid `list[bool]` (the uncertainty baseline returns all `False` rather than crashing).
 
 ---
 
@@ -210,9 +206,9 @@ The public `val-sample` mixes **closed APIs** and **open-weight** systems. White
   `are_robust(model_id, reasoning_effort, problems)`. It detects the parameter by name and
   keeps the legacy two-argument call working.
 
-Anything outside this cache cannot be loaded during evaluation. Contact organizers if another checkpoint must be mounted.
+Anything outside this list cannot be loaded during evaluation. Contact organizers if another checkpoint must be mounted.
 
-### Aliases seen in public data (not all are cached / open)
+### Aliases seen in public data (never passed in the Competition phase)
 
 | `model_id` in val-sample | Notes |
 | --- | --- |
@@ -224,7 +220,7 @@ Anything outside this cache cannot be loaded during evaluation. Contact organize
 | `gemini-3.1-pro-preview:low` | Closed. |
 | `lukealonso/GLM-5.1-NVFP4:low` | Not a worker-cached small open-weight target. |
 
-Small-track scoring will subset to <10B. For white-box work, treat **DeepSeek-R1-0528-Qwen3-8B** and **Olmo-3-7B-Instruct** as the models we can actually inspect.
+These names only identify rows in the public datasets; `qwen3-8b:low` rows are DeepSeek-R1-0528-Qwen3-8B. For white-box work, all four small-track checkpoints above can be inspected, but only DeepSeek has labels.
 
 ---
 
@@ -283,9 +279,9 @@ data/val-sample/
 
 | Resource | Spec |
 | --- | --- |
-| GPU | 8× NVIDIA RTX PRO 6000 (Blackwell, sm_120), 96 GB each |
+| GPU | **1×** NVIDIA RTX PRO 6000 (Blackwell, sm_120), 96 GB. `torch.cuda.device_count()` is 1 (was 8 before the 12 Sep README update) |
 | CPU / RAM | 192 cores, ample RAM, no per-container memory cap |
-| Time | 3600 s for prediction and 3600 s for scoring, separately. Loading the 8B model ≈ 1 minute |
+| Time | 3600 s for prediction and 3600 s for scoring, separately. The limit covers the whole run, every model batch together. Loading a cached 4–8B checkpoint takes ~2 s from the warm cache |
 | Network | Disabled. `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` |
 | Cache | Read-only HF cache at `/app/data/huggingface` (`HF_HOME` already set) |
 | Install | No `pip`, no `uv`, no `requirements.txt` at eval time |
@@ -463,7 +459,7 @@ Primary contacts: Discord and **aimo.interp@gmail.com** (they aim to reply withi
 
 ## 18. Working notes for the Small / open-weight track
 
-- Prefer methods that read **internals** of `DeepSeek-R1-0528-Qwen3-8B` and `Olmo-3-7B-Instruct`.
+- Prefer methods that read **internals** of the four small-track checkpoints (§8). Only DeepSeek-R1-0528-Qwen3-8B has public labels; the other three need our own labels (E15–E19) or a model-agnostic method.
 - Keep a black-box fallback (uncertainty / trace stats) so unknown `model_id`s still return valid bools.
 - SAE / transcoder training happens **offline** on our machines or Fields Model GPUs; only compact artifacts go in the ZIP.
 - Do not depend on closed-model APIs at evaluation time — the container has no network.

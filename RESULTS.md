@@ -73,7 +73,7 @@ Regenerate with `train_text_baseline.py` followed by `check_dataset_confound.py`
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
 Instances: 138 (36 robust / 102 spurious), 37 hidden-state layers x 4096 dims, poolings last, max, mean  
-Features: `D:/Project Based Learning/AIMO - Interpretablity/runs/e1b-stagea-deepseek/features/stagea-deepseek`  
+Features: `runs/e1b-stagea-deepseek/features/stagea-deepseek`  
 Probe: standardised L2 logistic regression, class-balanced, C searched over [0.01]
 
 | Method | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
@@ -368,3 +368,25 @@ Protocol: nested grouped CV; block scores standardised on inner folds; threshold
 **Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0839 [+0.0229, +0.1463] (established gain) and balanced accuracy by +0.0539 [-0.0255, +0.1405] (not established) at n=138.
 
 Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
+
+## E15-E19: self-labelling progress
+
+Olympiad pool: 505 problems (AMC, AIME, OlympiadBench). k=4 samples per problem; vLLM, fp16, 2x T4. Eligible means all 4 base samples correct, the organizers' rule. Only `answer_modulus` variants (compliance `distinct`) are sampled for labels, per the extra-data rule.
+
+### Base phase
+
+| Model | Sampled | Eligible | Rate | Samples hitting the cap | Median tokens per sample | AMC eligible/sampled | AIME eligible/sampled | Olympiad eligible/sampled |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 285 of 505 | 90 | 32% | 58% | 16,384 | 8/25 | 2/29 | 80/231 |
+| `Skywork/Skywork-OR1-Math-7B` | 246 of 505 | 157 | 64% | 19% | 7,318 | 20/23 | 9/26 | 128/197 |
+| `allenai/Olmo-3-7B-Think` | 30 of 505 | 17 | 57% | 38% | 8,266 | 3/4 | 1/3 | 13/23 |
+
+### Variants phase and labels
+
+| Model | Compliant variants of eligible problems | Problems covered | Variants sampled | Labelled | Robust |
+| --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 109 | 53 | 0 | 0 | — |
+| `Skywork/Skywork-OR1-Math-7B` | 205 | 101 | 0 | 0 | — |
+| `allenai/Olmo-3-7B-Think` | 29 | 13 | 0 | 0 | — |
+
+A problem counts as labelled once all its compliant variants are sampled, and as robust when no variant loses accuracy against the base (decay <= 0). Olmo-3-7B-Think has no variants run: on 2x T4 it fits only at a 12k cap and runs one or two sequences at a time (Finding 26). Regenerate with `train/summarize_labelling.py`.

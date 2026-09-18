@@ -1,0 +1,71 @@
+{
+  "name": "e18-variants-qwen35",
+  "account": "RSD",
+  "kernel": "rsdaiyan/aimo-small-e18-variants-qwen35",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "E18 Qwen3.5-4B labelling, step 2 (E7 variants phase): k=4 samples of each answer_modulus variant of the 90 problems Qwen always solved in E15 (109 variants over 53 problems). Two single-GPU vLLM engines. With E15, gives Qwen's first robustness labels.",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "-m",
+      "pip",
+      "install",
+      "-q",
+      "vllm"
+    ],
+    [
+      "-c",
+      "import os, subprocess, sys\nargvs = [['datagen/perturb/sample.py', '--phase', 'variants', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--base-records', 'runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl', '--k', '4', '--max-new-tokens', '16384', '--max-hours', '8.5', '--chunk', '4', '--out-dir', '/kaggle/working/e18-qwen35', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '2', '--shard-index', '0'], ['datagen/perturb/sample.py', '--phase', 'variants', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--base-records', 'runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl', '--k', '4', '--max-new-tokens', '16384', '--max-hours', '8.5', '--chunk', '4', '--out-dir', '/kaggle/working/e18-qwen35', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '2', '--shard-index', '1']]\nprocs = [subprocess.Popen([sys.executable, *a], env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(i)})\n         for i, a in enumerate(argvs)]\nsys.exit(max(p.wait() for p in procs))"
+    ]
+  ],
+  "dataset_sources": [],
+  "bundle_sha1": "149f9fa0533faf291791cd3ccbe3a640cf9de44d",
+  "bundle_files": [
+    "data/olympiad_pool/pool.parquet",
+    "data/perturbations/variants.parquet",
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/answers.py",
+    "datagen/perturb/generate.py",
+    "datagen/perturb/label.py",
+    "datagen/perturb/pool.py",
+    "datagen/perturb/sample.py",
+    "datagen/perturb/test_agreement.py",
+    "datagen/perturb/test_answers.py",
+    "datagen/perturb/test_transforms.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py",
+    "runs/e15-base-qwen35-a/e15-qwen35/base/shard_00_of_04/records.jsonl",
+    "runs/e15-base-qwen35-a/e15-qwen35/base/shard_01_of_04/records.jsonl",
+    "runs/e15-base-qwen35-a/e15-qwen35/base/shard_02_of_04/records.jsonl",
+    "runs/e15-base-qwen35-a/e15-qwen35/base/shard_03_of_04/records.jsonl",
+    "runs/e15-base-qwen35-b/e15-qwen35/base/shard_00_of_04/records.jsonl",
+    "runs/e15-base-qwen35-b/e15-qwen35/base/shard_01_of_04/records.jsonl",
+    "runs/e15-base-qwen35-b/e15-qwen35/base/shard_02_of_04/records.jsonl",
+    "runs/e15-base-qwen35-b/e15-qwen35/base/shard_03_of_04/records.jsonl"
+  ],
+  "downloaded_run": {}
+}

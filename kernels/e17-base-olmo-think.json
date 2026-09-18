@@ -32,13 +32,15 @@
       "--k",
       "4",
       "--max-new-tokens",
-      "16384",
+      "12288",
       "--max-hours",
       "8.5",
       "--chunk",
       "4",
       "--out-dir",
-      "/kaggle/working/e17-olmo-think"
+      "/kaggle/working/e17-olmo-think",
+      "--gpu-memory-utilization",
+      "0.95"
     ]
   ],
   "dataset_sources": [],
@@ -73,5 +75,15 @@
     "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
     "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py"
   ],
-  "downloaded_run": {}
+  "downloaded_run": {
+    "files": [
+      "runs/e17-base-olmo-think/e17-olmo-think/base/shard_00_of_01/metadata.json",
+      "runs/e17-base-olmo-think/run_manifest.json"
+    ],
+    "seconds": 34788.3,
+    "returncodes": [
+      0,
+      0
+    ]
+  }
 }

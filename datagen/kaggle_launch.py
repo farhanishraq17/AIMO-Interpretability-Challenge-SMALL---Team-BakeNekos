@@ -83,7 +83,8 @@ BUNDLE_DIRS = ["getting-started/solutions/uncertainty-profiling/uncertainty_prof
 BUNDLE_WARN_BYTES = 900_000
 
 # ISHMAM1 and DESIKALAKAR stopped authenticating on 17 Sep; RSD and Labib were added on 18 Sep.
-ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR", "RSD", "Labib"]
+# NAKIB, CHOTON and MEDIUM come from the `nakib` branch; each alias needs its token in Secrets.env.
+ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR", "RSD", "Labib", "NAKIB", "CHOTON", "MEDIUM"]
 
 # Stage B traces used downstream (E4). fp16 only: the dtype benchmark showed bf16 and fp16
 # greedy traces diverge, so the two sets must never be mixed.
@@ -166,6 +167,7 @@ E7_FILES = ("datagen/perturb/*.py", "data/olympiad_pool/pool.parquet")
 # Base-phase records already sampled, shipped back so a new session resumes instead of redoing them.
 QWEN_RECORDS = "runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl"
 SKYWORK_RECORDS = "runs/e16-base-skywork/e16-skywork/base/shard_*/records.jsonl"
+VARIANTS = "data/perturbations/variants.parquet"
 
 
 def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
@@ -177,7 +179,7 @@ def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
     )
 
 
-def base_sampling(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
+def base_sampling(model_id: str, out_name: str, *extra: str, max_new_tokens: int = 16384) -> tuple[str, ...]:
     """E7 base phase over the olympiad pool: k samples per problem, flushed every 4 problems.
 
     Sizing is the thing to get right. A chunk is one generate call and one flush, and Kaggle
@@ -191,6 +193,23 @@ def base_sampling(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
         "datagen/perturb/sample.py", "--phase", "base",
         "--model-id", model_id,
         "--backend", "vllm",
+        "--k", "4", "--max-new-tokens", str(max_new_tokens), "--max-hours", "8.5", "--chunk", "4",
+        "--out-dir", f"/kaggle/working/{out_name}",
+        *extra,
+    )
+
+
+def variant_sampling(model_id: str, out_name: str, base_records: str, *extra: str) -> tuple[str, ...]:
+    """E7 variants phase: k samples of every compliant variant of each problem the model always solves.
+
+    Only `compliance == "distinct"` categories (today `answer_modulus`) are sampled, the ones the
+    extra-data rule lets us label. Eligibility comes from the base-phase records in the bundle.
+    """
+    return (
+        "datagen/perturb/sample.py", "--phase", "variants",
+        "--model-id", model_id,
+        "--backend", "vllm",
+        "--base-records", base_records,
         "--k", "4", "--max-new-tokens", "16384", "--max-hours", "8.5", "--chunk", "4",
         "--out-dir", f"/kaggle/working/{out_name}",
         *extra,
@@ -431,8 +450,34 @@ EXPERIMENTS: dict[str, Experiment] = {
         purpose="E17 Olmo-3-7B-Think base phase: TP=2, k=4, 16k cap. Session 1 produced nothing because "
         "no 32-problem chunk finished in 11.5 h (Finding 25); with 4-problem chunks it flushes as it "
         "goes, which also measures how slow this model really is.",
-        steps=(VLLM_INSTALL, base_sampling(OLMO_THINK, "e17-olmo-think")),
+        steps=(VLLM_INSTALL, base_sampling(
+            OLMO_THINK, "e17-olmo-think",
+            # Olmo-3 keeps a full KV cache: 4.5 GiB for one 18k-token sequence, against 4.12 GiB
+            # free on a T4 pair, so the engine refused to start (18 Sep). 12k fits, barely.
+            "--gpu-memory-utilization", "0.95",
+            max_new_tokens=12288,
+        )),
         bundle_globs=E7_FILES,
+    ),
+    "e18-variants-qwen35": Experiment(
+        account="RSD",
+        purpose="E18 Qwen3.5-4B labelling, step 2 (E7 variants phase): k=4 samples of each answer_modulus "
+        "variant of the 90 problems Qwen always solved in E15 (109 variants over 53 problems). Two "
+        "single-GPU vLLM engines. With E15, gives Qwen's first robustness labels.",
+        steps=(VLLM_INSTALL, per_gpu(*(
+            variant_sampling(QWEN35, "e18-qwen35", QWEN_RECORDS, "--tensor-parallel", "1", "--text-only",
+                             "--max-num-seqs", "64", "--num-shards", "2", "--shard-index", str(gpu))
+            for gpu in (0, 1)
+        ))),
+        bundle_globs=(*E7_FILES, VARIANTS, QWEN_RECORDS),
+    ),
+    "e19-variants-skywork": Experiment(
+        account="Labib",
+        purpose="E19 Skywork-OR1-Math-7B labelling, step 2 (E7 variants phase): k=4 samples of each "
+        "answer_modulus variant of the 157 problems Skywork always solved in E16 (205 variants over 101 "
+        "problems). TP=2.",
+        steps=(VLLM_INSTALL, variant_sampling(SKYWORK, "e19-skywork", SKYWORK_RECORDS)),
+        bundle_globs=(*E7_FILES, VARIANTS, SKYWORK_RECORDS),
     ),
     "e4-tracestate-deepseek": Experiment(
         account="SALAM",
@@ -602,17 +647,18 @@ def build_bundle(extra_globs: tuple[str, ...] = ()) -> tuple[bytes, str]:
     return data, hashlib.sha1(data).hexdigest()
 
 
-def kernel_ref(name: str) -> str:
-    username, _ = load_accounts()[EXPERIMENTS[name].account]
+def kernel_ref(name: str, account: str | None = None) -> str:
+    username, _ = load_accounts()[account or EXPERIMENTS[name].account]
     return f"{username}/aimo-small-{name}"
 
 
-def build(name: str) -> Path:
+def build(name: str, account: str | None = None) -> Path:
     experiment = EXPERIMENTS[name]
+    account = account or experiment.account
     bundle, sha1 = build_bundle(experiment.bundle_globs)
     payload = {
         "name": name,
-        "account": experiment.account,
+        "account": account,
         "pip": PIP_PINS,
         "steps": [list(step) for step in experiment.steps],
     }
@@ -623,7 +669,7 @@ def build(name: str) -> Path:
         .replace("__BUNDLE_SHA1__", sha1)
         .replace("__BUNDLE_B64__", base64.b64encode(bundle).decode("ascii"))
     )
-    ref = kernel_ref(name)
+    ref = kernel_ref(name, account)
     metadata = {
         "id": ref,
         "title": ref.split("/", 1)[1],
@@ -656,10 +702,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("list")
-    for command in ("build", "push", "output"):
-        sub.add_parser(command).add_argument("experiments", nargs="+", choices=sorted(EXPERIMENTS))
-    for command in ("status", "logs"):
-        sub.add_parser(command).add_argument("experiments", nargs="*", choices=sorted(EXPERIMENTS))
+    # --account runs a registered experiment on another fleet account without editing its
+    # registry entry, so outputs keep the runs/<experiment>/ paths the train/ scripts expect.
+    for command, nargs in (("build", "+"), ("push", "+"), ("output", "+"), ("status", "*"), ("logs", "*")):
+        command_parser = sub.add_parser(command)
+        command_parser.add_argument("experiments", nargs=nargs, choices=sorted(EXPERIMENTS))
+        command_parser.add_argument("--account", choices=ACCOUNTS, help="override the registered account")
     args = parser.parse_args()
 
     if args.command == "list":
@@ -669,32 +717,31 @@ def main() -> None:
 
     for name in args.experiments or list(EXPERIMENTS):
         experiment = EXPERIMENTS[name]
+        account = args.account or experiment.account
         if args.command == "build":
-            build(name)
+            build(name, account)
         elif args.command == "push":
-            out = build(name)
-            code, text = kaggle(
-                experiment.account, "kernels", "push", "-p", str(out), "--accelerator", experiment.accelerator
-            )
-            print(f"[{experiment.account}] push exit={code}\n{text}\n")
+            out = build(name, account)
+            code, text = kaggle(account, "kernels", "push", "-p", str(out), "--accelerator", experiment.accelerator)
+            print(f"[{account}] push exit={code}\n{text}\n")
         elif args.command == "status":
-            code, text = kaggle(experiment.account, "kernels", "status", kernel_ref(name))
-            print(f"{name:26s} [{experiment.account}] {text}")
+            code, text = kaggle(account, "kernels", "status", kernel_ref(name, account))
+            print(f"{name:26s} [{account}] {text}")
         elif args.command == "logs":
-            code, text = kaggle(experiment.account, "kernels", "logs", kernel_ref(name))
+            code, text = kaggle(account, "kernels", "logs", kernel_ref(name, account))
             tail = [line for line in text.splitlines() if line.strip()][-40:]
-            print(f"===== {name} [{experiment.account}] exit={code}\n" + "\n".join(tail) + "\n")
+            print(f"===== {name} [{account}] exit={code}\n" + "\n".join(tail) + "\n")
         elif args.command == "output":
             destination = RUNS_DIR / name
             destination.mkdir(parents=True, exist_ok=True)
             # The CLI fetches a single page per call. Per-instance vectors are redundant
             # once merged on Kaggle, so skip them and ask for the maximum page size.
             code, text = kaggle(
-                experiment.account, "kernels", "output", kernel_ref(name),
+                account, "kernels", "output", kernel_ref(name, account),
                 "-p", str(destination), "-o",
                 "--page-size", "200", "--file-pattern", r"^(?!.*/vectors/)",
             )
-            print(f"[{experiment.account}] output exit={code} -> {destination}\n{text[-2000:]}\n")
+            print(f"[{account}] output exit={code} -> {destination}\n{text[-2000:]}\n")
 
 
 if __name__ == "__main__":

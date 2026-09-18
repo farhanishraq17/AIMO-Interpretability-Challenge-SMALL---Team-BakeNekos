@@ -255,7 +255,8 @@ def main() -> None:
         f"Model: `{model_id}`  ",
         f"Instances: {n} ({int(y.sum())} robust / {int((~y).sum())} spurious), "
         f"{n_layers} hidden-state layers x {hidden} dims, poolings {', '.join(poolings)}  ",
-        f"Features: `{args.features_dir.as_posix()}`  ",
+        # Repo-relative, so RESULTS.md does not carry one machine's absolute path.
+        f"Features: `{(args.features_dir.resolve().relative_to(ROOT) if args.features_dir.resolve().is_relative_to(ROOT) else args.features_dir).as_posix()}`  ",
         f"Probe: standardised L2 logistic regression, class-balanced, C searched over {args.c_grid}",
         "",
         *METRICS_HEADER,
