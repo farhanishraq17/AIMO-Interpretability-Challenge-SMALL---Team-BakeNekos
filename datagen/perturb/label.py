@@ -57,14 +57,21 @@ def main() -> None:
 
     base = load_records(args.base_glob)
     sampled = load_records(args.variants_glob)
-    pool = pd.read_parquet(args.pool).set_index("pool_id")
+    pool = pd.read_parquet(args.pool)
+    # Pools built before the pool.py fix reuse 34 AMC ids for two different problems; a record
+    # under such an id cannot say which problem it measured, so it is dropped (Finding 29).
+    ambiguous = set(pool.loc[pool["pool_id"].duplicated(keep=False), "pool_id"])
+    pool = pool[~pool["pool_id"].isin(ambiguous)].set_index("pool_id")
     variants = pd.read_parquet(args.variants).set_index("variant_id")
     model_ids = {r["model_id"] for r in [*base.values(), *sampled.values()]}
     if len(model_ids) != 1:
         raise SystemExit(f"records mix models: {sorted(model_ids)}")
     model_id = model_ids.pop()
 
-    base_accuracy = {r["pool_id"]: (r["n_correct"] / r["n_samples"], r["n_samples"]) for r in base.values() if r["n_samples"]}
+    base_accuracy = {
+        r["pool_id"]: (r["n_correct"] / r["n_samples"], r["n_samples"])
+        for r in base.values() if r["n_samples"] and r["pool_id"] in pool.index
+    }
     missing_variants = [vid for vid in sampled if vid not in variants.index]
     if missing_variants:
         raise SystemExit(f"{len(missing_variants)} sampled variants are not in {args.variants}; regenerate with the same seed")
@@ -124,6 +131,7 @@ def main() -> None:
     summary = {
         "model_id": model_id,
         "base_problems": len(base_accuracy),
+        "records_dropped_ambiguous_pool_id": sum(r["pool_id"] in ambiguous for r in [*base.values(), *sampled.values()]),
         "base_eligible": eligible,
         "base_eligible_rate": round(eligible / len(base_accuracy), 4),
         "base_eligible_per_tier": dict(Counter(

@@ -41,8 +41,9 @@ The account only decides where a kernel runs. To run one elsewhere, change its
 | `e15-base-qwen35-b` | RSD | https://www.kaggle.com/code/rsdaiyan/aimo-small-e15-base-qwen35-b | 8.7 h, exit [0, 0, 0] |
 | `e16-base-skywork` | ISHRAQ | https://www.kaggle.com/code/farhanishraqq/aimo-small-e16-base-skywork | 8.7 h, exit [0, 0, 0] |
 | `e17-base-olmo-think` | Labib | https://www.kaggle.com/code/gmnoorlabib/aimo-small-e17-base-olmo-think | 9.7 h, exit [0, 0] |
-| `e18-variants-qwen35` | RSD | https://www.kaggle.com/code/rsdaiyan/aimo-small-e18-variants-qwen35 | not downloaded |
-| `e19-variants-skywork` | Labib | https://www.kaggle.com/code/gmnoorlabib/aimo-small-e19-variants-skywork | not downloaded |
+| `e18-variants-qwen35` | RSD | https://www.kaggle.com/code/rsdaiyan/aimo-small-e18-variants-qwen35 | 8.7 h, exit [0, 0] |
+| `e19-variants-skywork` | Labib | https://www.kaggle.com/code/gmnoorlabib/aimo-small-e19-variants-skywork | 9.8 h, exit [0, 0] |
+| `e20-validate-deepseek` | ISHRAQ | https://www.kaggle.com/code/farhanishraqq/aimo-small-e20-validate-deepseek | not downloaded |
 | `e4-tracestate-deepseek` | SALAM | https://www.kaggle.com/code/salam2026/aimo-small-e4-tracestate-deepseek | 0.4 h, exit [0, 0] |
 
 There are no Jupyter notebooks in this project: every Kaggle run is a script kernel

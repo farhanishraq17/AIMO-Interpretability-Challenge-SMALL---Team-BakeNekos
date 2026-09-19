@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e7-sample-smoke\", \"account\": \"ISHMAM1\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-m\", \"pip\", \"install\", \"-q\", \"vllm\"], [\"datagen/perturb/pool.py\"], [\"datagen/perturb/generate.py\", \"--examples\", \"0\"], [\"datagen/perturb/sample.py\", \"--phase\", \"base\", \"--model-id\", \"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B\", \"--backend\", \"vllm\", \"--tiers\", \"amc\", \"--limit\", \"16\", \"--k\", \"4\", \"--max-new-tokens\", \"4096\", \"--out-dir\", \"/kaggle/working/e7-amc\"], [\"datagen/perturb/sample.py\", \"--phase\", \"base\", \"--model-id\", \"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B\", \"--backend\", \"vllm\", \"--tiers\", \"aime\", \"--limit\", \"8\", \"--k\", \"4\", \"--max-new-tokens\", \"4096\", \"--out-dir\", \"/kaggle/working/e7-aime\"]]}")
-BUNDLE_SHA1 = "22b367a84037eb3aa6a5e0eb7a1a1e1c10ff2f3e"
+BUNDLE_SHA1 = "09004919cdb118e60bf253bf3be2fcf0ec22025b"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/probe_system_prompt.txt
   data/small_track/instances.parquet
@@ -31,6 +31,7 @@ BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tra
   datagen/ingest_public.py
   datagen/merge_features.py
   datagen/perturb/answers.py
+  datagen/perturb/deepseek_check_pool.py
   datagen/perturb/generate.py
   datagen/perturb/label.py
   datagen/perturb/pool.py

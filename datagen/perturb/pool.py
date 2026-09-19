@@ -161,6 +161,12 @@ def load_source(source: Source, offline: bool) -> tuple[pd.DataFrame, dict]:
             "problem_key": problem_key(problem),
         })
     out = pd.DataFrame(rows)
+    # AI-MO/aimo-validation-amc reuses `id` across contests: 34 ids named two different problems,
+    # which made eligibility and labels ambiguous (Finding 29). Only colliding ids change, so
+    # records keyed by every other pool_id stay valid.
+    clash = out["pool_id"].duplicated(keep=False)
+    out.loc[clash, "pool_id"] = out.loc[clash, "pool_id"] + ":" + out.loc[clash, "problem_key"].str[:8]
+    stats["id_collisions_disambiguated"] = int(clash.sum())
     stats["integer_answer"] = int(out["answer"].notna().sum())
     return out[out["answer"].notna()].astype({"answer": "int64"}), stats
 

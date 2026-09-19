@@ -774,6 +774,59 @@ running.** (`e15`, `e16`, `e17` session 2, 18 Sep; each exited cleanly at its 8.
 - The branch also registers three more fleet aliases (NAKIB, CHOTON, MEDIUM); each needs its
   token in `Secrets.env` before use.
 
+**29. First self-generated labels for Qwen3.5-4B and Skywork, after fixing a pool-id
+collision.** (`e18-variants-qwen35` on RSD, 8.7 h; `e19-variants-skywork` on Labib, 9.8 h;
+`datagen/perturb/label.py`, then `train/summarize_labelling.py`. Tables in `RESULTS.md`.)
+
+- **A data bug, found when `label.py` first ran on real records.**
+  - `AI-MO/aimo-validation-amc` reuses its `id` column across contests, so 34 AMC `pool_id`s
+    each named two different problems (68 pool rows). AIME and OlympiadBench are unaffected.
+  - The sampler keys records by `pool_id`. A record under a shared id cannot say which problem
+    it measured, and a variant could have been selected on the other problem's eligibility.
+  - `label.py` and `summarize_labelling.py` now drop those records: 33 for Qwen and 18 for
+    Skywork, across both phases.
+  - `pool.py` now suffixes colliding ids with the problem key. That renames only the 68
+    colliding rows, so records under all 437 other ids stay valid.
+- **Corrected base-phase yields**, replacing Findings 25–26:
+
+  | Model | Eligible | Rate |
+  | --- | --- | --- |
+  | Qwen3.5-4B | 84 of 270 | 31% |
+  | Skywork-OR1-Math-7B | 143 of 232 | 62% |
+  | Olmo-3-7B-Think | 15 of 28 | 54% |
+
+- **Variants phase.**
+  - E18 sampled 89 of Qwen's 91 compliant variants.
+  - E19 sampled only 24 of Skywork's 176, at 19.9 tok/s. Its previous base session reached
+    111 tok/s with the same settings, and the log shows both GPUs and no errors, so this looks
+    like a slow host (engine load also took 919 s against 196 s).
+- **The labels:**
+
+  | Model | Problems labelled | Robust (all) | Clear-cut (training) | Robust (clear-cut) |
+  | --- | --- | --- | --- | --- |
+  | Qwen3.5-4B | 47 | 19 (40%) | 26 | 19 |
+  | Skywork-OR1-Math-7B | 21 | 17 (81%) | 19 | 17 |
+
+- **The ambiguous band bites at this sample size.** 21 of Qwen's 47 problems fall in
+  0 < decay <= 0.3 and are dropped. With 4 samples per variant, a single wrong sample is enough.
+  The clear-cut training set therefore leans robust (19 of 26), unlike the raw 40%.
+- **A warning sign.** Skywork looks mostly robust under `answer_modulus` (81%), but on the
+  leaderboard `True` for Skywork lost a case (Finding 27). Either `answer_modulus` robustness
+  differs from the official perturbations' robustness, or the one or two hidden Skywork cases
+  are unrepresentative. That comparison is the check PLAN.md calls for before trusting
+  self-labels.
+- **Too few to train on yet:** 26 Qwen and 19 Skywork training instances, against 138 for
+  DeepSeek.
+- **Launched 19 Sep:**
+  - `e20-validate-deepseek` runs the same pipeline on DeepSeek's 66 officially labelled MATH
+    problems with an integer answer >= 13 (19 officially robust), from
+    `datagen/perturb/deepseek_check_pool.py`.
+  - Skywork's variants resume (`e19`, session 2).
+  - Qwen's base phase continues over the ~235 untried pool problems (`e15`, session 3).
+- **More samples per variant were considered and dropped.** Robust requires every variant
+  sample correct, so extra samples sharpen the decay estimate but cannot lift a problem out of
+  the ambiguous band. More problems add labels; more samples do not.
+
 ---
 
 ## 7. Results so far

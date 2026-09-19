@@ -46,7 +46,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "49d5a38751e65c9b8fbc04aa6f0843d7ce2e485e",
+  "bundle_sha1": "c05d298886294cdf577f42860f646a76b3b10861",
   "bundle_files": [
     "data/olympiad_pool/pool.parquet",
     "data/probe_system_prompt.txt",
@@ -61,6 +61,7 @@
     "datagen/extract_trace_states.py",
     "datagen/merge_features.py",
     "datagen/perturb/answers.py",
+    "datagen/perturb/deepseek_check_pool.py",
     "datagen/perturb/generate.py",
     "datagen/perturb/label.py",
     "datagen/perturb/pool.py",

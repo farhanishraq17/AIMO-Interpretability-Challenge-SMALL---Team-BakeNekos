@@ -80,6 +80,9 @@ def load_records(pattern: str) -> dict[str, dict]:
 
 def build_items(args: argparse.Namespace) -> tuple[list[dict], dict]:
     pool = pd.read_parquet(args.pool)
+    # Pools built before the pool.py fix reuse 34 AMC ids for two different problems; their records
+    # could never be labelled, so do not sample them (PROGRESS.md Finding 29).
+    pool = pool[~pool["pool_id"].duplicated(keep=False)]
     if args.tiers:
         pool = pool[pool["tier"].isin(args.tiers)]
     info: dict = {"pool_problems": len(pool)}

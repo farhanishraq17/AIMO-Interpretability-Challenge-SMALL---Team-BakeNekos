@@ -69,7 +69,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "22b367a84037eb3aa6a5e0eb7a1a1e1c10ff2f3e",
+  "bundle_sha1": "09004919cdb118e60bf253bf3be2fcf0ec22025b",
   "bundle_files": [
     "data/probe_system_prompt.txt",
     "data/small_track/instances.parquet",
@@ -84,6 +84,7 @@
     "datagen/ingest_public.py",
     "datagen/merge_features.py",
     "datagen/perturb/answers.py",
+    "datagen/perturb/deepseek_check_pool.py",
     "datagen/perturb/generate.py",
     "datagen/perturb/label.py",
     "datagen/perturb/pool.py",

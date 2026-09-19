@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 18 September 2026, 21:00 UTC.
+Last updated: 19 September 2026, 18:40 UTC.
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.
@@ -36,35 +36,34 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E15 | Qwen3.5-4B: which problems can be labelled? | Kaggle | Done (2 sessions) | **90 of 285** eligible (32%) |
 | E16 | Skywork-OR1-Math-7B: same | Kaggle | Done (2 sessions) | **157 of 246** eligible (64%) |
 | E17 | Olmo-3-7B-Think: same | Kaggle | Paused | 17 of 30 eligible; too slow on T4s (Finding 26) |
-| E18 | Qwen3.5-4B: sample the variants of eligible problems | Kaggle | **Running** | — |
-| E19 | Skywork-OR1-Math-7B: same | Kaggle | **Running** | — |
+| E18 | Qwen3.5-4B: sample the variants of eligible problems | Kaggle | Done | 89 of 91 variants; **47 problems labelled**, 19 robust; 26 clear-cut (Finding 29) |
+| E19 | Skywork-OR1-Math-7B: same | Kaggle | **Running**, session 2 | Session 1: 24 of 176 variants (slow host); 21 labelled, 17 robust (Finding 29) |
+| E20 | Do self-labels agree with official labels? (DeepSeek, 66 MATH problems) | Kaggle | **Running** | — |
 
 ---
 
 ## 2. Running now
 
-Step 2 of labelling, launched 18 Sep around 20:45 UTC. For every problem the model solved in all
-4 base samples, sample each compliant (`answer_modulus`) variant 4 times; `label.py` then marks
-the case robust if accuracy does not drop.
+Launched 19 Sep around 18:30 UTC. Each run saves every 4-8 problems and stops itself on
+budget.
 
-| Run | Account | Configuration | Work |
+| Run | Account | What it does | Why |
 | --- | --- | --- | --- |
-| `e18-variants-qwen35` | RSD | Qwen3.5-4B, one vLLM engine per T4 (2 shards), k=4, 16k cap, 4-problem chunks, 8.5 h budget | 109 variants over 53 problems |
-| `e19-variants-skywork` | Labib | Skywork-OR1-Math-7B, tensor parallel 2, same settings | 205 variants over 101 problems |
+| `e20-validate-deepseek` | ISHRAQ | E7 pipeline (base, then `answer_modulus` variants; k=4, 8k cap) on DeepSeek's 66 officially labelled MATH problems with an integer answer >= 13 (19 officially robust) | **Do self-labels agree with official labels?** Decides whether E15–E19 labels can be trained on |
+| `e19-variants-skywork` (session 2) | Labib | Resumes Skywork's variants from the 24 done (176 in all) | The first session hit a slow host |
+| `e15-base-qwen35-a` / `-b` (session 3) | TASHIN, RSD | Resumes Qwen's base phase over the ~235 pool problems not yet tried | More eligible problems, so more Qwen labels |
 
-**Base-phase yields that feed this** (Findings 25–26):
+**Why not more samples per variant:** robust requires every variant sample to be correct.
+More samples would sharpen each problem's decay estimate but would not move problems out of
+the ambiguous 0 < decay <= 0.3 band, so they would not add usable labels. More problems do.
 
-| Model | Sampled (of 505) | Eligible | Rate | By tier (eligible/sampled) |
-| --- | --- | --- | --- | --- |
-| Skywork-OR1-Math-7B | 246 | 157 | 64% | AMC 20/23, AIME 9/26, olympiad 128/197 |
-| Qwen3.5-4B | 285 | 90 | 32% | AMC 8/25, AIME 2/29, olympiad 80/231 |
-| Olmo-3-7B-Think | 30 | 17 | 57% | AMC 3/4, AIME 1/3, olympiad 13/23 |
+**Labelling so far** (generated: `RESULTS.md`, "E15-E19: self-labelling progress"):
 
-**Why Olmo is paused:** it needs a full KV cache and fits a T4 pair only at a 12k cap, so it
-runs one or two sequences at a time (30 problems in 9.6 h). It moves to the Fields grant.
-
-**Fleet:** RSD and Labib hold this week's remaining quota. SALAM, DIDHITI, TASHIN and ISHRAQ
-have used theirs; ISHMAM1 and DESIKALAKAR are still unreachable.
+| Model | Eligible (base) | Variants sampled | Problems labelled | Robust | Clear-cut for training |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 84 of 270 | 89 of 91 | 47 | 19 (40%) | 26 (19 robust) |
+| Skywork-OR1-Math-7B | 143 of 232 | 24 of 176 | 21 | 17 (81%) | 19 (17 robust) |
+| Olmo-3-7B-Think | 15 of 28 | — | — | — | — |
 
 ---
 

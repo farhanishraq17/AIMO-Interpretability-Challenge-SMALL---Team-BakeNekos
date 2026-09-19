@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e17-base-olmo-think\", \"account\": \"Labib\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-m\", \"pip\", \"install\", \"-q\", \"vllm\"], [\"datagen/perturb/sample.py\", \"--phase\", \"base\", \"--model-id\", \"allenai/Olmo-3-7B-Think\", \"--backend\", \"vllm\", \"--k\", \"4\", \"--max-new-tokens\", \"12288\", \"--max-hours\", \"8.5\", \"--chunk\", \"4\", \"--out-dir\", \"/kaggle/working/e17-olmo-think\", \"--gpu-memory-utilization\", \"0.95\"]]}")
-BUNDLE_SHA1 = "794a331d6d50f400afc87d23fa70e11b1388ec56"
+BUNDLE_SHA1 = "377f79040110cdbe4511543e8142c772da3bcf0b"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/olympiad_pool/pool.parquet
   data/probe_system_prompt.txt
@@ -31,6 +31,7 @@ BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tra
   datagen/extract_trace_states.py
   datagen/merge_features.py
   datagen/perturb/answers.py
+  datagen/perturb/deepseek_check_pool.py
   datagen/perturb/generate.py
   datagen/perturb/label.py
   datagen/perturb/pool.py

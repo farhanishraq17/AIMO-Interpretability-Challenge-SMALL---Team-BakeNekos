@@ -168,6 +168,10 @@ E7_FILES = ("datagen/perturb/*.py", "data/olympiad_pool/pool.parquet")
 QWEN_RECORDS = "runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl"
 SKYWORK_RECORDS = "runs/e16-base-skywork/e16-skywork/base/shard_*/records.jsonl"
 VARIANTS = "data/perturbations/variants.parquet"
+SKYWORK_VARIANT_RECORDS = "runs/e19-variants-skywork/e19-skywork/variants/shard_*/records.jsonl"
+# E20: DeepSeek's officially labelled MATH problems in pool form (datagen/perturb/deepseek_check_pool.py).
+CHECK_POOL = "data/deepseek_check/pool.parquet"
+CHECK_VARIANTS = "data/deepseek_check/variants.parquet"
 
 
 def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
@@ -179,7 +183,9 @@ def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
     )
 
 
-def base_sampling(model_id: str, out_name: str, *extra: str, max_new_tokens: int = 16384) -> tuple[str, ...]:
+def base_sampling(
+    model_id: str, out_name: str, *extra: str, max_new_tokens: int = 16384, chunk: int = 4, max_hours: float = 8.5,
+) -> tuple[str, ...]:
     """E7 base phase over the olympiad pool: k samples per problem, flushed every 4 problems.
 
     Sizing is the thing to get right. A chunk is one generate call and one flush, and Kaggle
@@ -193,13 +199,16 @@ def base_sampling(model_id: str, out_name: str, *extra: str, max_new_tokens: int
         "datagen/perturb/sample.py", "--phase", "base",
         "--model-id", model_id,
         "--backend", "vllm",
-        "--k", "4", "--max-new-tokens", str(max_new_tokens), "--max-hours", "8.5", "--chunk", "4",
+        "--k", "4", "--max-new-tokens", str(max_new_tokens), "--max-hours", str(max_hours), "--chunk", str(chunk),
         "--out-dir", f"/kaggle/working/{out_name}",
         *extra,
     )
 
 
-def variant_sampling(model_id: str, out_name: str, base_records: str, *extra: str) -> tuple[str, ...]:
+def variant_sampling(
+    model_id: str, out_name: str, base_records: str, *extra: str,
+    max_new_tokens: int = 16384, chunk: int = 4, max_hours: float = 8.5,
+) -> tuple[str, ...]:
     """E7 variants phase: k samples of every compliant variant of each problem the model always solves.
 
     Only `compliance == "distinct"` categories (today `answer_modulus`) are sampled, the ones the
@@ -210,13 +219,13 @@ def variant_sampling(model_id: str, out_name: str, base_records: str, *extra: st
         "--model-id", model_id,
         "--backend", "vllm",
         "--base-records", base_records,
-        "--k", "4", "--max-new-tokens", "16384", "--max-hours", "8.5", "--chunk", "4",
+        "--k", "4", "--max-new-tokens", str(max_new_tokens), "--max-hours", str(max_hours), "--chunk", str(chunk),
         "--out-dir", f"/kaggle/working/{out_name}",
         *extra,
     )
 
 
-def restore(out_name: str, records_glob: str) -> tuple[str, ...]:
+def restore(out_name: str, records_glob: str, phase: str = "base") -> tuple[str, ...]:
     """Copy already-sampled records back into the Kaggle output directory, so a session resumes.
 
     Kernels start empty, but the sampler skips items whose records it already has. Downloaded
@@ -226,7 +235,7 @@ def restore(out_name: str, records_glob: str) -> tuple[str, ...]:
         "import glob, pathlib, shutil\n"
         f"for src in sorted(glob.glob({records_glob!r})):\n"
         "    path = pathlib.Path(src)\n"
-        f"    dst = pathlib.Path('/kaggle/working/{out_name}/base') / path.parent.name / path.name\n"
+        f"    dst = pathlib.Path('/kaggle/working/{out_name}/{phase}') / path.parent.name / path.name\n"
         "    dst.parent.mkdir(parents=True, exist_ok=True)\n"
         "    shutil.copy(src, dst)\n"
         "    print('restored', dst, sum(1 for _ in open(dst)), 'records')"
@@ -474,10 +483,31 @@ EXPERIMENTS: dict[str, Experiment] = {
     "e19-variants-skywork": Experiment(
         account="Labib",
         purpose="E19 Skywork-OR1-Math-7B labelling, step 2 (E7 variants phase): k=4 samples of each "
-        "answer_modulus variant of the 157 problems Skywork always solved in E16 (205 variants over 101 "
-        "problems). TP=2.",
-        steps=(VLLM_INSTALL, variant_sampling(SKYWORK, "e19-skywork", SKYWORK_RECORDS)),
-        bundle_globs=(*E7_FILES, VARIANTS, SKYWORK_RECORDS),
+        "answer_modulus variant of the problems Skywork always solved in E16 (176 variants over 91 "
+        "problems once ambiguous pool ids are dropped). TP=2. Session 1 ran on a slow host (19.9 tok/s) "
+        "and covered 24; this session resumes from those records.",
+        steps=(
+            VLLM_INSTALL,
+            restore("e19-skywork", SKYWORK_VARIANT_RECORDS, phase="variants"),
+            variant_sampling(SKYWORK, "e19-skywork", SKYWORK_RECORDS),
+        ),
+        bundle_globs=(*E7_FILES, VARIANTS, SKYWORK_RECORDS, SKYWORK_VARIANT_RECORDS),
+    ),
+    "e20-validate-deepseek": Experiment(
+        account="ISHRAQ",
+        purpose="E20: do our self-labels agree with official ones? The E7 pipeline (base phase, then "
+        "answer_modulus variants, k=4, 8k cap) on DeepSeek's 66 officially labelled MATH problems with an "
+        "integer answer >= 13 (19 officially robust). label.py output is then compared with the official "
+        "labels before any model is trained on E15-E19 labels.",
+        steps=(
+            VLLM_INSTALL,
+            base_sampling(DEEPSEEK, "e20-deepseek", "--pool", CHECK_POOL,
+                          max_new_tokens=8192, chunk=8, max_hours=3.5),
+            variant_sampling(DEEPSEEK, "e20-deepseek", "/kaggle/working/e20-deepseek/base/shard_*/records.jsonl",
+                             "--pool", CHECK_POOL, "--variants", CHECK_VARIANTS,
+                             max_new_tokens=8192, chunk=8, max_hours=4.5),
+        ),
+        bundle_globs=(*E7_FILES, CHECK_POOL, CHECK_VARIANTS),
     ),
     "e4-tracestate-deepseek": Experiment(
         account="SALAM",

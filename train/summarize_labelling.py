@@ -2,9 +2,10 @@
 
 The E7 pipeline labels a (model, problem) pair in two steps: a base phase finds the problems
 the model solves in every sample (the organizers' eligibility rule), and a variants phase
-samples the compliant `answer_modulus` variants of those problems. This summarises both from
-the downloaded records, deduplicating across sessions and shards by item id, so the yields
-quoted in PROGRESS.md (Findings 25-26) regenerate from the data.
+samples the compliant `answer_modulus` variants of those problems. This summarises the base
+phase from the downloaded records (deduplicated across sessions and shards by item id), and
+the labels from `datagen/perturb/label.py`'s output, so the label rule lives in one place.
+Records under pool ids the old pool reused for two problems are excluded (Finding 29).
 
 Run:  python train/summarize_labelling.py
 """
@@ -25,10 +26,11 @@ from results_io import upsert_section
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
 VARIANTS = ROOT / "data" / "perturbations" / "variants.parquet"
-MODELS = {
-    "Qwen/Qwen3.5-4B": ("e15-base-qwen35-*/e15-qwen35", "e18-variants-qwen35/e18-qwen35"),
-    "Skywork/Skywork-OR1-Math-7B": ("e16-base-skywork/e16-skywork", "e19-variants-skywork/e19-skywork"),
-    "allenai/Olmo-3-7B-Think": ("e17-base-olmo-think/e17-olmo-think", None),
+LABELS = ROOT / "data" / "e7_labels"  # label.py --out-dir data/e7_labels/<short>
+MODELS = {  # base-phase runs, variants-phase runs, label.py output
+    "Qwen/Qwen3.5-4B": ("e15-base-qwen35-*/e15-qwen35", "e18-variants-qwen35/e18-qwen35", "qwen35"),
+    "Skywork/Skywork-OR1-Math-7B": ("e16-base-skywork/e16-skywork", "e19-variants-skywork/e19-skywork", "skywork"),
+    "allenai/Olmo-3-7B-Think": ("e17-base-olmo-think/e17-olmo-think", None, None),
 }
 TIERS = ("amc", "aime", "olympiad")
 
@@ -49,7 +51,9 @@ def main() -> None:
     parser.add_argument("--results", type=Path, default=ROOT / "RESULTS.md")
     args = parser.parse_args()
 
-    pool_size = len(pd.read_parquet(ROOT / "data" / "olympiad_pool" / "pool.parquet"))
+    pool = pd.read_parquet(ROOT / "data" / "olympiad_pool" / "pool.parquet")
+    pool_size = len(pool)
+    ambiguous = set(pool.loc[pool["pool_id"].duplicated(keep=False), "pool_id"])
     variants = pd.read_parquet(VARIANTS)
     variants = variants[variants["compliance"] == "distinct"]
 
@@ -59,11 +63,12 @@ def main() -> None:
         "| --- |" + " --- |" * (5 + len(TIERS)),
     ]
     label_lines = [
-        "| Model | Compliant variants of eligible problems | Problems covered | Variants sampled | Labelled | Robust |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| Model | Compliant variants of eligible problems | Problems covered | Variants sampled | "
+        "Problems labelled | Robust (all) | Clear-cut (training) | Robust (clear-cut) |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
-    for model_id, (base_dir, variant_dir) in MODELS.items():
-        base = load(f"{base_dir}/base")
+    for model_id, (base_dir, variant_dir, label_dir) in MODELS.items():
+        base = [r for r in load(f"{base_dir}/base") if r["pool_id"] not in ambiguous]
         if not base:
             base_lines.append(f"| `{model_id}` | 0 | — | — | — | — |" + " — |" * len(TIERS))
             continue
@@ -81,17 +86,17 @@ def main() -> None:
         )
 
         selected = variants[variants["pool_id"].isin(eligible)]
-        sampled = load(f"{variant_dir}/variants") if variant_dir else []
-        # A problem is labelled once every one of its compliant variants has been sampled.
-        done = defaultdict(list)
-        for r in sampled:
-            done[r["pool_id"]].append(r["n_correct"] / r["n_samples"])
-        expected = selected.groupby("pool_id").size()
-        labelled = {p: accs for p, accs in done.items() if len(accs) == expected.get(p, -1)}
-        robust = sum(min(accs) >= 1.0 for accs in labelled.values())  # decay <= 0 against a base accuracy of 1
+        sampled = [r for r in load(f"{variant_dir}/variants") if r["pool_id"] not in ambiguous] if variant_dir else []
+        labels = LABELS / label_dir / "instances.parquet" if label_dir else None
+        if labels and labels.is_file():
+            instances = pd.read_parquet(labels)
+            train = pd.read_parquet(labels.with_name("instances_train.parquet"))
+            counts = (f"{len(instances)} | {int(instances['is_robust'].sum())} ({instances['is_robust'].mean():.0%}) | "
+                      f"{len(train)} | {int(train['is_robust'].sum())}")
+        else:
+            counts = "— | — | — | —"
         label_lines.append(
-            f"| `{model_id}` | {len(selected)} | {selected['pool_id'].nunique()} | {len(sampled)} | "
-            f"{len(labelled)} | {robust if labelled else '—'} |"
+            f"| `{model_id}` | {len(selected)} | {selected['pool_id'].nunique()} | {len(sampled)} | {counts} |"
         )
 
     body = "\n".join([
@@ -107,10 +112,12 @@ def main() -> None:
         "",
         *label_lines,
         "",
-        "A problem counts as labelled once all its compliant variants are sampled, and as robust when "
-        "no variant loses accuracy against the base (decay <= 0). Olmo-3-7B-Think has no variants run: "
-        "on 2x T4 it fits only at a 12k cap and runs one or two sequences at a time (Finding 26). "
-        "Regenerate with `train/summarize_labelling.py`.",
+        "Labels come from `datagen/perturb/label.py`: robust iff decay <= 0, where decay pools every "
+        "sample of every variant; clear-cut drops the ambiguous 0 < decay <= 0.3 band, as the public data "
+        "does. With 4 samples per variant, one wrong sample already lands a problem in that band. "
+        f"{len(ambiguous)} AMC pool ids that the old pool reused for two problems are excluded (Finding 29). "
+        "Olmo-3-7B-Think has no variants run: on 2x T4 it fits only at a 12k cap (Finding 26). "
+        "Regenerate with `label.py`, then `train/summarize_labelling.py`.",
     ])
     print(body)
     upsert_section(args.results, "E15-E19: self-labelling progress", body)

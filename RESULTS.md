@@ -377,16 +377,16 @@ Olympiad pool: 505 problems (AMC, AIME, OlympiadBench). k=4 samples per problem;
 
 | Model | Sampled | Eligible | Rate | Samples hitting the cap | Median tokens per sample | AMC eligible/sampled | AIME eligible/sampled | Olympiad eligible/sampled |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `Qwen/Qwen3.5-4B` | 285 of 505 | 90 | 32% | 58% | 16,384 | 8/25 | 2/29 | 80/231 |
-| `Skywork/Skywork-OR1-Math-7B` | 246 of 505 | 157 | 64% | 19% | 7,318 | 20/23 | 9/26 | 128/197 |
-| `allenai/Olmo-3-7B-Think` | 30 of 505 | 17 | 57% | 38% | 8,266 | 3/4 | 1/3 | 13/23 |
+| `Qwen/Qwen3.5-4B` | 270 of 505 | 84 | 31% | 58% | 16,384 | 2/10 | 2/29 | 80/231 |
+| `Skywork/Skywork-OR1-Math-7B` | 232 of 505 | 143 | 62% | 21% | 7,378 | 6/9 | 9/26 | 128/197 |
+| `allenai/Olmo-3-7B-Think` | 28 of 505 | 15 | 54% | 41% | 9,278 | 1/2 | 1/3 | 13/23 |
 
 ### Variants phase and labels
 
-| Model | Compliant variants of eligible problems | Problems covered | Variants sampled | Labelled | Robust |
-| --- | --- | --- | --- | --- | --- |
-| `Qwen/Qwen3.5-4B` | 109 | 53 | 0 | 0 | — |
-| `Skywork/Skywork-OR1-Math-7B` | 205 | 101 | 0 | 0 | — |
-| `allenai/Olmo-3-7B-Think` | 29 | 13 | 0 | 0 | — |
+| Model | Compliant variants of eligible problems | Problems covered | Variants sampled | Problems labelled | Robust (all) | Clear-cut (training) | Robust (clear-cut) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 91 | 48 | 89 | 47 | 19 (40%) | 26 | 19 |
+| `Skywork/Skywork-OR1-Math-7B` | 176 | 91 | 24 | 21 | 17 (81%) | 19 | 17 |
+| `allenai/Olmo-3-7B-Think` | 21 | 11 | 0 | — | — | — | — |
 
-A problem counts as labelled once all its compliant variants are sampled, and as robust when no variant loses accuracy against the base (decay <= 0). Olmo-3-7B-Think has no variants run: on 2x T4 it fits only at a 12k cap and runs one or two sequences at a time (Finding 26). Regenerate with `train/summarize_labelling.py`.
+Labels come from `datagen/perturb/label.py`: robust iff decay <= 0, where decay pools every sample of every variant; clear-cut drops the ambiguous 0 < decay <= 0.3 band, as the public data does. With 4 samples per variant, one wrong sample already lands a problem in that band. 34 AMC pool ids that the old pool reused for two problems are excluded (Finding 29). Olmo-3-7B-Think has no variants run: on 2x T4 it fits only at a 12k cap (Finding 26). Regenerate with `label.py`, then `train/summarize_labelling.py`.

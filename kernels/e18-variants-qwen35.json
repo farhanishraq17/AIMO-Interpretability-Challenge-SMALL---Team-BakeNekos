@@ -27,7 +27,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "149f9fa0533faf291791cd3ccbe3a640cf9de44d",
+  "bundle_sha1": "0eb1145067d39c38c07f42757aa82c3886033756",
   "bundle_files": [
     "data/olympiad_pool/pool.parquet",
     "data/perturbations/variants.parquet",
@@ -43,6 +43,7 @@
     "datagen/extract_trace_states.py",
     "datagen/merge_features.py",
     "datagen/perturb/answers.py",
+    "datagen/perturb/deepseek_check_pool.py",
     "datagen/perturb/generate.py",
     "datagen/perturb/label.py",
     "datagen/perturb/pool.py",
@@ -67,5 +68,16 @@
     "runs/e15-base-qwen35-b/e15-qwen35/base/shard_02_of_04/records.jsonl",
     "runs/e15-base-qwen35-b/e15-qwen35/base/shard_03_of_04/records.jsonl"
   ],
-  "downloaded_run": {}
+  "downloaded_run": {
+    "files": [
+      "runs/e18-variants-qwen35/e18-qwen35/variants/shard_00_of_02/metadata.json",
+      "runs/e18-variants-qwen35/e18-qwen35/variants/shard_01_of_02/metadata.json",
+      "runs/e18-variants-qwen35/run_manifest.json"
+    ],
+    "seconds": 31390.2,
+    "returncodes": [
+      0,
+      0
+    ]
+  }
 }
