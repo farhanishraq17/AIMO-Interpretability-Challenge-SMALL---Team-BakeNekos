@@ -37,13 +37,13 @@ The account only decides where a kernel runs. To run one elsewhere, change its
 | `e13-olmo-think-plumbing` | DESIKALAKAR | https://www.kaggle.com/code/fatkhato/aimo-small-e13-olmo-think-plumbing | 0.3 h, exit [0, 0, 0] |
 | `e14-agreement-deepseek-s0` | ISHRAQ | https://www.kaggle.com/code/farhanishraqq/aimo-small-e14-agreement-deepseek-s0 | 4.5 h, exit [0, 0] |
 | `e14-agreement-deepseek-s1` | DIDHITI | https://www.kaggle.com/code/didhitinahid/aimo-small-e14-agreement-deepseek-s1 | 5.8 h, exit [0, 0] |
-| `e15-base-qwen35-a` | TASHIN | https://www.kaggle.com/code/tashintahir/aimo-small-e15-base-qwen35-a | 9.4 h, exit [0, 0, 0] |
-| `e15-base-qwen35-b` | RSD | https://www.kaggle.com/code/rsdaiyan/aimo-small-e15-base-qwen35-b | 8.7 h, exit [0, 0, 0] |
+| `e15-base-qwen35-a` | TASHIN | https://www.kaggle.com/code/tashintahir/aimo-small-e15-base-qwen35-a | 9.1 h, exit [0, 0, 0] |
+| `e15-base-qwen35-b` | RSD | https://www.kaggle.com/code/rsdaiyan/aimo-small-e15-base-qwen35-b | 9.3 h, exit [0, 0, 0] |
 | `e16-base-skywork` | ISHRAQ | https://www.kaggle.com/code/farhanishraqq/aimo-small-e16-base-skywork | 8.7 h, exit [0, 0, 0] |
 | `e17-base-olmo-think` | Labib | https://www.kaggle.com/code/gmnoorlabib/aimo-small-e17-base-olmo-think | 9.7 h, exit [0, 0] |
 | `e18-variants-qwen35` | RSD | https://www.kaggle.com/code/rsdaiyan/aimo-small-e18-variants-qwen35 | 8.7 h, exit [0, 0] |
-| `e19-variants-skywork` | Labib | https://www.kaggle.com/code/gmnoorlabib/aimo-small-e19-variants-skywork | 9.8 h, exit [0, 0] |
-| `e20-validate-deepseek` | ISHRAQ | https://www.kaggle.com/code/farhanishraqq/aimo-small-e20-validate-deepseek | not downloaded |
+| `e19-variants-skywork` | Labib | https://www.kaggle.com/code/gmnoorlabib/aimo-small-e19-variants-skywork | 8.3 h, exit [0, 0, 0] |
+| `e20-validate-deepseek` | ISHRAQ | https://www.kaggle.com/code/farhanishraqq/aimo-small-e20-validate-deepseek | 6.1 h, exit [0, 0, 0] |
 | `e4-tracestate-deepseek` | SALAM | https://www.kaggle.com/code/salam2026/aimo-small-e4-tracestate-deepseek | 0.4 h, exit [0, 0] |
 
 There are no Jupyter notebooks in this project: every Kaggle run is a script kernel

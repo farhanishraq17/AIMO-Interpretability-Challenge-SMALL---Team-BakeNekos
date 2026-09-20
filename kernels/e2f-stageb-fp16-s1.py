@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e2f-stageb-fp16-s1\", \"account\": \"DIDHITI\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"datagen/extract_generation_features.py\", \"--model-id\", \"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B\", \"--out-dir\", \"/kaggle/working/features/stageb-fp16-deepseek\", \"--num-shards\", \"2\", \"--shard-index\", \"1\", \"--batch-size\", \"4\", \"--dtype\", \"float16\"]]}")
-BUNDLE_SHA1 = "fccff57f3edb36618e7918352d5837a4878fb639"
+BUNDLE_SHA1 = "b2187d02a332750ee6f8ac642a8f71e02fad2b9f"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/probe_system_prompt.txt
   data/small_track/instances.parquet

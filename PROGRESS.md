@@ -827,6 +827,68 @@ collision.** (`e18-variants-qwen35` on RSD, 8.7 h; `e19-variants-skywork` on Lab
   sample correct, so extra samples sharpen the decay estimate but cannot lift a problem out of
   the ambiguous band. More problems add labels; more samples do not.
 
+**30. The organizers published their own training split, and our label rule was wrong.**
+(`aimo-interp/train-main-v2`, published 17 Sep 2026, found 20 Sep. Ingested by
+`datagen/ingest_public.py`, which enumerates the author's datasets.)
+
+- **82 rows over 28 problems, covering every evaluated configuration**, including the first
+  labels anywhere for three of our four models:
+
+  | Configuration | Labelled | Robust |
+  | --- | --- | --- |
+  | `Qwen/Qwen3.5-4B` | 12 | 8 |
+  | `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 10 | 7 |
+  | `allenai/Olmo-3-7B-Think` | 9 | 7 |
+  | `Skywork/Skywork-OR1-Math-7B` | 3 | 2 |
+  | `openai/gpt-oss-120b` (low/medium/high) | 37 | 28 |
+
+- **Their label rule, stated exactly, is not the one we recovered.**
+  - robust iff `max_drop <= 0.10`; spurious iff `max_drop >= 0.25`;
+  - **no label at all** in between, in training, validation and test.
+  - Ours was `decay <= 0`, with an ambiguous band of `0 < decay <= 0.3`, recovered from older
+    tables that happen to contain nothing between 0 and 0.3 (§5.2). Both agree on every
+    published row; they differ on rows we derive.
+- **Effect on our training set:** DeepSeek goes from 138 train-ready instances (36 robust) to
+  **152 (44 robust)**, and Qwen (12), Olmo-3-Think (9) and Skywork (3) enter with official
+  labels. Stage A results are unchanged, because the 6 newly-labelled DeepSeek instances are
+  ones the old rule dropped as ambiguous and they have no features yet.
+- **They confirm the leaderboard is balanced.** The README says this split is 72% robust while
+  "the validation set is close to balanced", and warns against calibrating a threshold on it.
+  That matches the probes exactly (Finding 27: all-False 0.50).
+- **The olympiad transfer test is now possible, and it fails.** Char tf-idf trained on the 142
+  MATH instances and tested on the 10 olympiad ones scores **balanced accuracy 0.30, AUC
+  0.28**: below chance. Our text signal does not survive the difficulty shift the private test
+  set asks for. Small sample, so it is a warning rather than a measurement, but it points the
+  same way as the leaderboard, where E11's DeepSeek predictions are worth about one case.
+- **Also merged upstream:** the starter kit now carries `reasoning_effort` on main. Only
+  `gpt-oss-120b` varies it; the four small-track models are always `default`, and the E11
+  signature already accepts both call styles.
+
+**31. Self-generated `answer_modulus` labels do not measure official robustness; gate G-V
+fails.** (E20: the full E7 pipeline on 66 of DeepSeek's officially labelled MATH problems,
+6.1 h; base 66 of 66, variants 91 of 124.)
+
+| Self-label vs official label | All 49 labelled | Clear-cut only (45) |
+| --- | --- | --- |
+| Agreement | 0.29 | 0.27 |
+| Balanced accuracy | 0.391 | 0.422 |
+| Cohen's kappa | **-0.135** | -0.085 |
+| Spearman, our drop vs official drop | **-0.25** | -0.28 |
+
+- **Not merely different: mildly inverted.** Our pipeline calls 38 of 49 robust where the
+  organizers call 13 robust, and the ranking correlation is negative.
+- **Why this is plausible.** `answer_modulus` changes what is asked (report the answer modulo
+  m), whereas every official type preserves the answer and rewords the problem. A model can be
+  fragile to one and not the other.
+- **Consequences.**
+  - **E15-E19 labels are not training data.** The 26 Qwen and 19 Skywork self-labels are set
+    aside, and the labelling program stops. The base-phase and variants records stay for the
+    report as a negative result.
+  - The compliant category we were allowed to label turns out not to measure the target, so
+    self-labelling under the extra-data rule has no cheap path left.
+  - Official labels (34 small-track rows) plus DeepSeek's 152 are now the whole training set.
+- **What it saves.** About 40 GPU-hours a week that E15-E19 would have consumed.
+
 ---
 
 ## 7. Results so far

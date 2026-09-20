@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e13-qwen35-plumbing\", \"account\": \"TASHIN\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-c\", \"from huggingface_hub import snapshot_download; from transformers import AutoConfig\\nprint(snapshot_download('Qwen/Qwen3.5-4B'))\\ntry:\\n    c = AutoConfig.from_pretrained('Qwen/Qwen3.5-4B'); print(type(c).__name__, c.architectures)\\nexcept Exception as exc:\\n    print('AutoConfig failed:', type(exc).__name__, exc)\"], [\"datagen/extract_features.py\", \"--model-id\", \"Qwen/Qwen3.5-4B\", \"--system-prompt-file\", \"data/probe_system_prompt.txt\", \"--out-dir\", \"/kaggle/working/features/stagea-qwen35-smoke\", \"--no-filter-model\", \"--limit\", \"20\"], [\"datagen/extract_label_free.py\", \"--model-id\", \"Qwen/Qwen3.5-4B\", \"--system-prompt-file\", \"data/probe_system_prompt.txt\", \"--out-dir\", \"/kaggle/working/features/labelfree-qwen35\", \"--no-filter-model\"]]}")
-BUNDLE_SHA1 = "fccff57f3edb36618e7918352d5837a4878fb639"
+BUNDLE_SHA1 = "b2187d02a332750ee6f8ac642a8f71e02fad2b9f"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/probe_system_prompt.txt
   data/small_track/instances.parquet

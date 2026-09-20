@@ -3,23 +3,23 @@
 ## Text-only baseline (no GPU)
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 (36 robust / 102 spurious)  
+Instances: 152 (44 robust / 108 spurious)  
 Evaluation: out-of-fold over the 5 problem-grouped folds in `data/small_track/splits.json`  
 Features: problem text only, since inference exposes just `{id, model_id, problem}`
 
 | Method | Accuracy | Balanced acc. | ROC-AUC | F1 (robust) | Predicted robust |
 | --- | --- | --- | --- | --- | --- |
-| always-spurious (majority) | 0.7391 | 0.5000 | 0.5000 | 0.0000 | 0 |
-| logreg on handcrafted | 0.6014 | 0.5417 | 0.5417 | 0.3529 | 49 |
-| hist-gradient-boosting on handcrafted | 0.7101 | 0.5882 | 0.6757 | 0.3750 | 28 |
-| logreg on tf-idf words | 0.6812 | 0.6315 | 0.6773 | 0.4634 | 46 |
-| logreg on tf-idf chars | 0.7029 | 0.6732 | 0.6686 | 0.5176 | 49 |
+| always-spurious (majority) | 0.7105 | 0.5000 | 0.5000 | 0.0000 | 0 |
+| logreg on handcrafted | 0.6118 | 0.5787 | 0.5814 | 0.4272 | 59 |
+| hist-gradient-boosting on handcrafted | 0.7237 | 0.6372 | 0.7024 | 0.4750 | 36 |
+| logreg on tf-idf words | 0.6711 | 0.6406 | 0.6625 | 0.5000 | 56 |
+| logreg on tf-idf chars | 0.6711 | 0.6406 | 0.6294 | 0.5000 | 56 |
 
 ### Reading these numbers
 
-Our training split is 73.9% spurious, so predicting *always spurious* already scores 0.7391 accuracy here. The competition's public validation sample is only 62.5% spurious, so raw accuracy on this table is inflated relative to the leaderboard and **balanced accuracy is the number to track**.
+Our training split is 71.1% spurious, so predicting *always spurious* already scores 0.7105 accuracy here. The competition's public validation sample is only 62.5% spurious, so raw accuracy on this table is inflated relative to the leaderboard and **balanced accuracy is the number to track**.
 
-Best text-only method: **logreg on tf-idf chars** at 0.6732 balanced accuracy (0.6686 AUC).
+Best text-only method: **logreg on tf-idf words** at 0.6406 balanced accuracy (0.6625 AUC).
 
 This is the floor that model-internals work has to clear. Any probe or SAE feature set that cannot beat it is not reading robustness - it is reading problem surface form, which text features already capture for free.
 
@@ -27,16 +27,16 @@ This is the floor that model-internals work has to clear. Any probe or SAE featu
 
 | Feature | Coefficient (toward robust) |
 | --- | --- |
-| `n_brace` | +0.843 |
-| `n_words` | +0.679 |
-| `kw_integer` | +0.528 |
-| `n_backslash` | -0.474 |
-| `tex_frac` | -0.414 |
-| `kw_how_many` | +0.398 |
-| `n_sentences` | -0.356 |
-| `kw_greatest` | -0.355 |
-| `n_dollar` | -0.327 |
-| `tex_pmod` | -0.322 |
+| `n_backslash` | -0.851 |
+| `n_words` | +0.774 |
+| `n_brace` | +0.705 |
+| `tex_log` | +0.595 |
+| `tex_triangle` | -0.514 |
+| `kw_integer` | +0.503 |
+| `n_dollar` | -0.390 |
+| `type_token_ratio` | -0.383 |
+| `kw_how_many` | +0.367 |
+| `kw_greatest` | -0.346 |
 
 Fit on all instances for inspection only, not used for the scores above.
 
@@ -44,28 +44,29 @@ Regenerate with `uv run python ../train/train_text_baseline.py`, then `uv run py
 
 ## Is the text baseline just detecting the source dataset?
 
-The concern: the train-ready set is 137 Hendrycks MATH problems and **one** olympiad problem, while the private test set is entirely olympiad. A text model could score well by recognising dataset formatting rather than robustness.
+The concern: the train-ready set is mostly Hendrycks MATH problems while the private test set is entirely olympiad. A text model could score well by recognising dataset formatting rather than robustness.
 
 ### Base rate by source dataset
 
 | Dataset | Instances | Robust | Rate |
 | --- | --- | --- | --- |
 | `hendrycks-math-train-reference-500` | 84 | 25 | 0.298 |
-| `hendrycks-math-test-reference-100` | 53 | 11 | 0.208 |
-| `aimo-2025-reference` | 1 | 0 | 0.000 |
+| `hendrycks-math-test-reference-100` | 58 | 14 | 0.241 |
+| `train-main-v2` | 8 | 5 | 0.625 |
+| `aimo-2025-reference` | 2 | 0 | 0.000 |
 
 ### Performance within a single dataset (confound held constant)
 
 | Dataset | Instances | Balanced acc. | ROC-AUC |
 | --- | --- | --- | --- |
 | `hendrycks-math-train-reference-500` | 84 | 0.6698 | 0.6976 |
-| `hendrycks-math-test-reference-100` | 53 | 0.6439 | 0.6364 |
+| `hendrycks-math-test-reference-100` | 58 | 0.6477 | 0.6185 |
 
-Within-dataset scores land close to the pooled 0.6732, and the two MATH subsets have similar base rates, so **the signal is not a dataset artifact**. Char n-grams really do carry robustness information about the problem statement.
+Within-dataset scores land close to the pooled number in the table above, and the MATH subsets have similar base rates, so **the signal is not a dataset artifact** within MATH. Char n-grams do carry robustness information about the problem statement.
 
-### The limit of what we can currently measure
+### MATH to olympiad: the transfer the competition actually scores
 
-Olympiad instances in the train-ready set: **1**. A MATH-to-olympiad transfer test is therefore impossible today, and that transfer is exactly what the competition scores. Closing this gap is the highest-value data work available, ahead of any additional modelling.
+Char tf-idf trained on the 142 MATH instances and tested on the 10 olympiad instances (5 robust): **balanced accuracy 0.3000, ROC-AUC 0.2800**. Below 0.5 means the text signal does not survive the shift in difficulty, which is exactly what the private test set asks of it. At this sample size treat it as a warning, not a measurement.
 
 Regenerate with `train_text_baseline.py` followed by `check_dataset_confound.py`.
 
@@ -121,7 +122,7 @@ Full curve: `layer_curve.csv`; out-of-fold probabilities: `stagea_oof.npz`. Rege
 ## Stage B: generation-trace features
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 (36 robust / 102 spurious)  
+Instances: 138 (36 robust / 102 spurious), **14 still missing**  
 Traces: greedy, 4096-token cap; 55.1% hit the cap; median tokens robust=4096 vs spurious=3936  
 Evaluation: out-of-fold over the problem-grouped folds; fusion averages OOF probabilities with fixed weights
 
@@ -164,7 +165,7 @@ Reference: text floor on the full 138 is 0.6732 balanced accuracy. Regenerate wi
 ## E10: fusion v1
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 of 138 with every block (36 robust)  
+Instances: 138 of 152 with every block (36 robust)  
 Blocks: text, stagea, trace  
 Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
 
@@ -251,7 +252,7 @@ Full curve: `layer_curve.csv`; out-of-fold probabilities: `stagea_oof.npz`. Rege
 ## E4: fusion with trace states
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 of 138 with every block (36 robust)  
+Instances: 138 of 152 with every block (36 robust)  
 Blocks: text, stagea, tracestate  
 Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
 
@@ -280,6 +281,41 @@ Protocol: nested grouped CV; block scores standardised on inner folds; threshold
 | **stacked fusion: all blocks** | +0.0727 [-0.0262, +0.1704] | +0.0270 [-0.0739, +0.1250] |
 
 **Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0910 [+0.0309, +0.1518] (established gain) and balanced accuracy by +0.0727 [+0.0029, +0.1501] (established gain) at n=138.
+
+Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
+
+## E14: fusion with test-time agreement
+
+Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
+Instances: 138 of 152 with every block (36 robust)  
+Blocks: text, stagea, agreement  
+Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
+
+| Method | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
+| --- | --- | --- | --- | --- |
+| always-spurious (majority) | 0.7391 | 0.5000 | 0.5000 | 0 |
+| text alone | 0.6522 | 0.6389 | 0.6481 | 56 |
+| stagea alone | 0.6014 | 0.6046 | 0.7059 | 63 |
+| agreement alone | 0.5942 | 0.6626 | 0.6955 | 78 |
+| mean fusion: text + stagea | 0.6884 | 0.7173 | 0.7230 | 63 |
+| mean fusion: text + agreement | 0.6159 | 0.6683 | 0.7290 | 73 |
+| mean fusion: stagea + agreement | 0.6232 | 0.7181 | 0.7563 | 82 |
+| **mean fusion: all blocks** | 0.6522 | 0.6928 | 0.7320 | 68 |
+| **stacked fusion: all blocks** | 0.6522 | 0.6748 | 0.7092 | 64 |
+
+### Difference from text alone (95% paired bootstrap CI)
+
+| Row | AUC difference | Balanced-accuracy difference |
+| --- | --- | --- |
+| stagea alone | +0.0577 [-0.0366, +0.1494] | -0.0343 [-0.1388, +0.0642] |
+| agreement alone | +0.0474 [-0.0879, +0.1881] | +0.0237 [-0.1019, +0.1546] |
+| mean fusion: text + stagea | +0.0749 [+0.0308, +0.1174] | +0.0784 [+0.0145, +0.1477] |
+| mean fusion: text + agreement | +0.0809 [-0.0145, +0.1770] | +0.0294 [-0.0537, +0.1171] |
+| mean fusion: stagea + agreement | +0.1081 [+0.0047, +0.2107] | +0.0792 [-0.0185, +0.1794] |
+| **mean fusion: all blocks** | +0.0839 [+0.0229, +0.1463] | +0.0539 [-0.0255, +0.1405] |
+| **stacked fusion: all blocks** | +0.0610 [-0.0422, +0.1628] | +0.0359 [-0.0601, +0.1303] |
+
+**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0839 [+0.0229, +0.1463] (established gain) and balanced accuracy by +0.0539 [-0.0255, +0.1405] (not established) at n=138.
 
 Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
 
@@ -334,41 +370,6 @@ Setup: k=2 samples per prompt, 8192-token cap, vllm 0.29.0 in float16 on T4s. 44
 Anchor answer found for 121 of 138 problems; every rewrite sample matched it for 78.5% of them.
 Cost: 3.86M generated tokens, 27,988 per problem, 10.1 GPU-session hours (107 tok/s on 2x T4).
 
-## E14: fusion with test-time agreement
-
-Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 of 138 with every block (36 robust)  
-Blocks: text, stagea, agreement  
-Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
-
-| Method | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
-| --- | --- | --- | --- | --- |
-| always-spurious (majority) | 0.7391 | 0.5000 | 0.5000 | 0 |
-| text alone | 0.6522 | 0.6389 | 0.6481 | 56 |
-| stagea alone | 0.6014 | 0.6046 | 0.7059 | 63 |
-| agreement alone | 0.5942 | 0.6626 | 0.6955 | 78 |
-| mean fusion: text + stagea | 0.6884 | 0.7173 | 0.7230 | 63 |
-| mean fusion: text + agreement | 0.6159 | 0.6683 | 0.7290 | 73 |
-| mean fusion: stagea + agreement | 0.6232 | 0.7181 | 0.7563 | 82 |
-| **mean fusion: all blocks** | 0.6522 | 0.6928 | 0.7320 | 68 |
-| **stacked fusion: all blocks** | 0.6522 | 0.6748 | 0.7092 | 64 |
-
-### Difference from text alone (95% paired bootstrap CI)
-
-| Row | AUC difference | Balanced-accuracy difference |
-| --- | --- | --- |
-| stagea alone | +0.0577 [-0.0366, +0.1494] | -0.0343 [-0.1388, +0.0642] |
-| agreement alone | +0.0474 [-0.0879, +0.1881] | +0.0237 [-0.1019, +0.1546] |
-| mean fusion: text + stagea | +0.0749 [+0.0308, +0.1174] | +0.0784 [+0.0145, +0.1477] |
-| mean fusion: text + agreement | +0.0809 [-0.0145, +0.1770] | +0.0294 [-0.0537, +0.1171] |
-| mean fusion: stagea + agreement | +0.1081 [+0.0047, +0.2107] | +0.0792 [-0.0185, +0.1794] |
-| **mean fusion: all blocks** | +0.0839 [+0.0229, +0.1463] | +0.0539 [-0.0255, +0.1405] |
-| **stacked fusion: all blocks** | +0.0610 [-0.0422, +0.1628] | +0.0359 [-0.0601, +0.1303] |
-
-**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0839 [+0.0229, +0.1463] (established gain) and balanced accuracy by +0.0539 [-0.0255, +0.1405] (not established) at n=138.
-
-Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
-
 ## E15-E19: self-labelling progress
 
 Olympiad pool: 505 problems (AMC, AIME, OlympiadBench). k=4 samples per problem; vLLM, fp16, 2x T4. Eligible means all 4 base samples correct, the organizers' rule. Only `answer_modulus` variants (compliance `distinct`) are sampled for labels, per the extra-data rule.
@@ -377,7 +378,7 @@ Olympiad pool: 505 problems (AMC, AIME, OlympiadBench). k=4 samples per problem;
 
 | Model | Sampled | Eligible | Rate | Samples hitting the cap | Median tokens per sample | AMC eligible/sampled | AIME eligible/sampled | Olympiad eligible/sampled |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `Qwen/Qwen3.5-4B` | 270 of 505 | 84 | 31% | 58% | 16,384 | 2/10 | 2/29 | 80/231 |
+| `Qwen/Qwen3.5-4B` | 276 of 505 | 88 | 32% | 59% | 16,384 | 2/11 | 2/33 | 84/232 |
 | `Skywork/Skywork-OR1-Math-7B` | 232 of 505 | 143 | 62% | 21% | 7,378 | 6/9 | 9/26 | 128/197 |
 | `allenai/Olmo-3-7B-Think` | 28 of 505 | 15 | 54% | 41% | 9,278 | 1/2 | 1/3 | 13/23 |
 
@@ -385,8 +386,8 @@ Olympiad pool: 505 problems (AMC, AIME, OlympiadBench). k=4 samples per problem;
 
 | Model | Compliant variants of eligible problems | Problems covered | Variants sampled | Problems labelled | Robust (all) | Clear-cut (training) | Robust (clear-cut) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `Qwen/Qwen3.5-4B` | 91 | 48 | 89 | 47 | 19 (40%) | 26 | 19 |
-| `Skywork/Skywork-OR1-Math-7B` | 176 | 91 | 24 | 21 | 17 (81%) | 19 | 17 |
+| `Qwen/Qwen3.5-4B` | 100 | 53 | 89 | 47 | 19 (40%) | 26 | 19 |
+| `Skywork/Skywork-OR1-Math-7B` | 176 | 91 | 176 | 21 | 17 (81%) | 19 | 17 |
 | `allenai/Olmo-3-7B-Think` | 21 | 11 | 0 | — | — | — | — |
 
 Labels come from `datagen/perturb/label.py`: robust iff decay <= 0, where decay pools every sample of every variant; clear-cut drops the ambiguous 0 < decay <= 0.3 band, as the public data does. With 4 samples per variant, one wrong sample already lands a problem in that band. 34 AMC pool ids that the old pool reused for two problems are excluded (Finding 29). Olmo-3-7B-Think has no variants run: on 2x T4 it fits only at a 12k cap (Finding 26). Regenerate with `label.py`, then `train/summarize_labelling.py`.

@@ -25,7 +25,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "fccff57f3edb36618e7918352d5837a4878fb639",
+  "bundle_sha1": "b2187d02a332750ee6f8ac642a8f71e02fad2b9f",
   "bundle_files": [
     "data/probe_system_prompt.txt",
     "data/small_track/instances.parquet",

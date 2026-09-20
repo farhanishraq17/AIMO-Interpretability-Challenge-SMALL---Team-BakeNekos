@@ -48,7 +48,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "16e151ee6e1decee0c17fb2ccce39fa443012893",
+  "bundle_sha1": "0d61ea6c22d5ea47e3390dded74e53acd8a3d7b8",
   "bundle_files": [
     "data/olympiad_pool/pool.parquet",
     "data/perturbations/variants.parquet",
@@ -88,8 +88,9 @@
       "runs/e19-variants-skywork/e19-skywork/variants/shard_00_of_01/metadata.json",
       "runs/e19-variants-skywork/run_manifest.json"
     ],
-    "seconds": 35344.2,
+    "seconds": 29773.1,
     "returncodes": [
+      0,
       0,
       0
     ]

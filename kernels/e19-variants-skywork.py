@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e19-variants-skywork\", \"account\": \"Labib\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-m\", \"pip\", \"install\", \"-q\", \"vllm\"], [\"-c\", \"import glob, pathlib, shutil\\nfor src in sorted(glob.glob('runs/e19-variants-skywork/e19-skywork/variants/shard_*/records.jsonl')):\\n    path = pathlib.Path(src)\\n    dst = pathlib.Path('/kaggle/working/e19-skywork/variants') / path.parent.name / path.name\\n    dst.parent.mkdir(parents=True, exist_ok=True)\\n    shutil.copy(src, dst)\\n    print('restored', dst, sum(1 for _ in open(dst)), 'records')\"], [\"datagen/perturb/sample.py\", \"--phase\", \"variants\", \"--model-id\", \"Skywork/Skywork-OR1-Math-7B\", \"--backend\", \"vllm\", \"--base-records\", \"runs/e16-base-skywork/e16-skywork/base/shard_*/records.jsonl\", \"--k\", \"4\", \"--max-new-tokens\", \"16384\", \"--max-hours\", \"8.5\", \"--chunk\", \"4\", \"--out-dir\", \"/kaggle/working/e19-skywork\"]]}")
-BUNDLE_SHA1 = "16e151ee6e1decee0c17fb2ccce39fa443012893"
+BUNDLE_SHA1 = "0d61ea6c22d5ea47e3390dded74e53acd8a3d7b8"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/olympiad_pool/pool.parquet
   data/perturbations/variants.parquet

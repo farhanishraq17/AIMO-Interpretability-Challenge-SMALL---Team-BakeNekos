@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e16-base-skywork\", \"account\": \"ISHRAQ\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-m\", \"pip\", \"install\", \"-q\", \"vllm\"], [\"-c\", \"import glob, pathlib, shutil\\nfor src in sorted(glob.glob('runs/e16-base-skywork/e16-skywork/base/shard_*/records.jsonl')):\\n    path = pathlib.Path(src)\\n    dst = pathlib.Path('/kaggle/working/e16-skywork/base') / path.parent.name / path.name\\n    dst.parent.mkdir(parents=True, exist_ok=True)\\n    shutil.copy(src, dst)\\n    print('restored', dst, sum(1 for _ in open(dst)), 'records')\"], [\"datagen/perturb/sample.py\", \"--phase\", \"base\", \"--model-id\", \"Skywork/Skywork-OR1-Math-7B\", \"--backend\", \"vllm\", \"--k\", \"4\", \"--max-new-tokens\", \"16384\", \"--max-hours\", \"8.5\", \"--chunk\", \"4\", \"--out-dir\", \"/kaggle/working/e16-skywork\"]]}")
-BUNDLE_SHA1 = "c05d298886294cdf577f42860f646a76b3b10861"
+BUNDLE_SHA1 = "fe80097ce8a3fa6d6dbbcd87e9603409fb58cd55"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/olympiad_pool/pool.parquet
   data/probe_system_prompt.txt

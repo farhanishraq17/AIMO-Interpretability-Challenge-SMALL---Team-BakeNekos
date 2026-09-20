@@ -12,9 +12,10 @@ code paths:
 Label rule, identical to the public data (PROGRESS.md §5.2):
 
 * `permuted_accuracy` pools every sample of every variant in a category.
-* `absolute_accuracy_decay = base_accuracy - permuted_accuracy`; robust iff decay <= 0.
+* `absolute_accuracy_decay = base_accuracy - permuted_accuracy`; robust iff the drop is
+  <= 0.10, spurious iff >= 0.25, and unlabelled in between (the organizers' own rule, stated
+  in `aimo-interp/train-main-v2`; PROGRESS.md Finding 30).
 * Eligible iff base_accuracy >= --min-base-accuracy (1.0, the organizers' curation).
-* Clear-cut iff decay <= 0 or decay > 0.3.
 
 `label_source` is "self-generated" and `compliance` is carried through, so a training set
 can always be rebuilt from official data plus `distinct` categories only.
@@ -39,7 +40,7 @@ for import_path in (PERTURB, PERTURB.parent):
     if str(import_path) not in sys.path:
         sys.path.insert(0, str(import_path))
 
-from ingest_public import AMBIGUOUS_MAX_DECAY, build_instances, write_parquet  # noqa: E402
+from ingest_public import ROBUST_MAX_DROP, SPURIOUS_MIN_DROP, build_instances, write_parquet  # noqa: E402
 from sample import DEFAULT_POOL, DEFAULT_VARIANTS, load_records  # noqa: E402
 
 DEFAULT_OUT = ROOT / "data" / "e7_labels"
@@ -106,10 +107,10 @@ def main() -> None:
             "n_base_predictions": n_base,
             "n_permuted_predictions": n_permuted,
             "n_detrimental_permutations": sum(r["n_correct"] / r["n_samples"] < base_acc for r in records),
-            "is_robust": decay <= 0.0,
+            "is_robust": decay <= ROBUST_MAX_DROP,
             "label_source": "self-generated",
             "is_eligible": base_acc >= args.min_base_accuracy,
-            "is_clear_cut": decay <= 0.0 or decay > AMBIGUOUS_MAX_DECAY,
+            "is_clear_cut": decay <= ROBUST_MAX_DROP or decay >= SPURIOUS_MIN_DROP,
             "source_repo": "self-generated:e7",
             "compliance": first_variant["compliance"],
             "tier": problem["tier"],
@@ -144,8 +145,8 @@ def main() -> None:
         "instances": len(instances),
         "train_instances": len(train),
         "train_robust": sum(i["is_robust"] for i in train),
-        "label_rule": "is_robust == (absolute_accuracy_decay <= 0); eligible base_accuracy >= "
-        f"{args.min_base_accuracy}; clear-cut decay <= 0 or > {AMBIGUOUS_MAX_DECAY}",
+        "label_rule": f"is_robust == (max drop <= {ROBUST_MAX_DROP}); spurious iff >= {SPURIOUS_MIN_DROP}; "
+        f"eligible base_accuracy >= {args.min_base_accuracy}",
     }
     (args.out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))

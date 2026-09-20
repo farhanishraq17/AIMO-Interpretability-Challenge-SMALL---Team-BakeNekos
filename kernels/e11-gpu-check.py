@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e11-gpu-check\", \"account\": \"ISHMAM1\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-c\", \"from huggingface_hub import snapshot_download; print(snapshot_download('deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'))\"], [\"submission/gpu_check.py\", \"--search-root\", \"/kaggle/input\"]]}")
-BUNDLE_SHA1 = "30cbee271d572eaf400d1f0604700a3cc1297a14"
+BUNDLE_SHA1 = "bf49ac2b63f71b597f2eb145ca84140d0880576e"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/probe_system_prompt.txt
   data/small_track/instances.parquet

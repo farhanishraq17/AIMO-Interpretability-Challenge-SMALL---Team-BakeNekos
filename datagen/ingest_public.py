@@ -36,11 +36,19 @@ MODEL_CANONICAL = {
     "meta-llama__Llama-3.1-8B-Instruct_low": "meta-llama/Llama-3.1-8B-Instruct",
     "meta-llama/Llama-3.1-8B-Instruct": "meta-llama/Llama-3.1-8B-Instruct",
     "allenai/Olmo-3-7B-Instruct": "allenai/Olmo-3-7B-Instruct",
+    # The Competition Phase passes ids verbatim; train-main-v2 uses the same spellings.
+    "Qwen/Qwen3.5-4B": "Qwen/Qwen3.5-4B",
+    "Skywork/Skywork-OR1-Math-7B": "Skywork/Skywork-OR1-Math-7B",
+    "allenai/Olmo-3-7B-Think": "allenai/Olmo-3-7B-Think",
 }
 
-# Open-weight models below the 10B track cap.
+# Open-weight models below the 10B track cap: the four the Competition Phase scores, plus two
+# that only appear in the older public tables (Llama-3.1-8B-Instruct, Olmo-3-7B-Instruct).
 SMALL_MODELS = {
     "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    "Qwen/Qwen3.5-4B",
+    "Skywork/Skywork-OR1-Math-7B",
+    "allenai/Olmo-3-7B-Think",
     "meta-llama/Llama-3.1-8B-Instruct",
     "allenai/Olmo-3-7B-Instruct",
 }
@@ -53,9 +61,14 @@ DECAY = "absolute_accuracy_decay"
 # curation instead of training on problems the model never solved.
 MIN_BASE_ACCURACY = 1.0
 
-# The proposal drops cases that are "not clear-cut". Published labels contain nothing
-# between 0 and 0.3 decay, so treat that band as ambiguous and excludable.
-AMBIGUOUS_MAX_DECAY = 0.3
+# The organizers' own rule, stated in `aimo-interp/train-main-v2` (published 17 Sep 2026):
+# robust iff the largest drop is <= 0.10, spurious iff >= 0.25, and no label in between --
+# in training, validation and test alike (PROGRESS.md Finding 30). Our earlier `decay <= 0`
+# was recovered from older tables that happen to contain nothing between 0 and 0.3, so both
+# rules agree on every published row; they differ on rows we derive ourselves.
+ROBUST_MAX_DROP = 0.10
+SPURIOUS_MIN_DROP = 0.25
+AMBIGUOUS_MAX_DECAY = SPURIOUS_MIN_DROP  # kept for importers; the band is (0.10, 0.25)
 
 
 def canonical_model(raw: str) -> str | None:
@@ -116,21 +129,25 @@ def build_perturbation_rows(tables: list[tuple[str, list[dict]]]) -> list[dict]:
                 continue
             decay = row.get(DECAY)
             if decay is None:
-                continue
+                # `train-main-v2` (17 Sep) reports `max_drop`, the largest drop across
+                # perturbation types, which is what an instance label already aggregates. Rows
+                # in the organizers' unlabelled band carry is_robust = None and are skipped.
+                decay = row.get("max_drop")
+                if decay is None or row.get("is_robust") is None:
+                    continue
 
             published = row.get("model_is_robust")
             if published is None:
                 published = row.get("is_robust")
-            # `decay <= 0` rather than `== 0`: 15 rows show the model improving under
-            # perturbation, which is not evidence of brittleness. No published row has
-            # negative decay, so this agrees with the recovered rule everywhere it applies.
             decay_value = float(decay)
-            derived = decay_value <= 0.0
+            derived = decay_value <= ROBUST_MAX_DROP
             label = bool(published) if published is not None else derived
 
             base_accuracy = row.get("base_accuracy")
-            eligible = (base_accuracy or 0.0) >= MIN_BASE_ACCURACY
-            clear_cut = decay_value <= 0.0 or decay_value > AMBIGUOUS_MAX_DECAY
+            # The organizers' own split ships only cases they already curated, without a
+            # base-accuracy column; its rows are eligible by construction.
+            eligible = True if base_accuracy is None and row.get("max_drop") is not None                 else (base_accuracy or 0.0) >= MIN_BASE_ACCURACY
+            clear_cut = decay_value <= ROBUST_MAX_DROP or decay_value >= SPURIOUS_MIN_DROP
 
             problem = row.get("original_problem") or row.get("problem") or ""
             pkey = problem_key(str(problem))
@@ -144,7 +161,7 @@ def build_perturbation_rows(tables: list[tuple[str, list[dict]]]) -> list[dict]:
                 "problem_key": pkey,
                 "problem": str(problem),
                 "problem_id": str(row.get("problem_id") or ""),
-                "dataset_id": str(row.get("dataset_id") or ""),
+                "dataset_id": str(row.get("dataset_id") or repo.split("/")[-1]),
                 "perturbation_key": pert_key,
                 "perturbation_types": perturbations,
                 "is_perturbation_aggregate": len(perturbations) != 1,
@@ -209,13 +226,13 @@ def build_instances(rows: list[dict]) -> list[dict]:
                 "problem": group[0]["problem"],
                 "problem_id": group[0]["problem_id"],
                 "dataset_id": group[0]["dataset_id"],
-                "is_robust": max_decay <= 0.0,
+                "is_robust": max_decay <= ROBUST_MAX_DROP,
                 "max_absolute_accuracy_decay": max_decay,
                 "n_perturbation_rows": len(scored),
                 "perturbation_types": perturbations,
                 "has_published_label": bool(published),
                 "is_eligible": bool(eligible),
-                "is_clear_cut": max_decay <= 0.0 or max_decay > AMBIGUOUS_MAX_DECAY,
+                "is_clear_cut": max_decay <= ROBUST_MAX_DROP or max_decay >= SPURIOUS_MIN_DROP,
                 "source_repos": sorted({r["source_repo"] for r in scored}),
             }
         )
@@ -305,10 +322,10 @@ def main() -> None:
         label_sources[row["label_source"]] += 1
 
     summary = {
-        "label_rule": "is_robust == (absolute_accuracy_decay <= 0)",
+        "label_rule": f"is_robust == (max drop <= {ROBUST_MAX_DROP}); spurious iff >= {SPURIOUS_MIN_DROP}",
         "label_rule_agreement": "379/379 on published labels (scripts/infer_label_rule.py)",
         "eligibility_rule": f"base_accuracy >= {MIN_BASE_ACCURACY}",
-        "ambiguity_rule": f"0 < decay <= {AMBIGUOUS_MAX_DECAY} treated as not clear-cut",
+        "ambiguity_rule": f"{ROBUST_MAX_DROP} < drop < {SPURIOUS_MIN_DROP} carries no label (organizers' rule)",
         "source_repos": [repo for repo, _ in tables],
         "perturbation_rows": len(rows),
         "instances": len(instances),

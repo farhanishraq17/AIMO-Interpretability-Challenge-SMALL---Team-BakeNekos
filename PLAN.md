@@ -285,7 +285,7 @@ Report value only; revisit after 10 Oct if time allows.
 | **17 Sep, G-D: decided (no-go)** | E14: answer agreement under rewrites is at chance once length is controlled, and adds nothing to text + stagea (Finding 24). Lane D closed. |
 | **18 Sep, G-E: decided** | Qwen 90 and Skywork 157 eligible (≥ 60): variants phase launched (E18, E19). Olmo-3-Think 17 eligible at 30 problems in 9.6 h: too slow for T4s, deferred to the Fields grant (Finding 26). |
 | **26 Sep** | E11 v3 submitted: the Qwen text-transfer test (Lane D failed). |
-| **~21 Sep, G-V** | E20: self-labels (`answer_modulus`) vs official labels on 66 DeepSeek problems. If they disagree, E15–E19 labels are not trained on, and effort goes to organizer labels instead. |
+| **20 Sep, G-V: decided (fail)** | E20: self-labels agree with official ones at kappa -0.14, with drops correlating at -0.25. `answer_modulus` does not measure official robustness, so E15–E19 labels are set aside and the labelling program stops (Finding 31). |
 | **3 Oct, G1b** | ≥ 40 Qwen3.5-4B labels; a Qwen model scored under grouped CV. |
 | **10 Oct, G2** | For each model, a trained or agreement-based model replaces the constant only where CV (and the leaderboard) beat it. |
 | **27 Oct** | Freeze the best ZIP; only repeatability and timing runs after this. |

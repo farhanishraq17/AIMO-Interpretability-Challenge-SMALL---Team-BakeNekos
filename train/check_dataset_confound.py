@@ -1,14 +1,15 @@
 """Test whether the text baseline is really detecting the source dataset.
 
-The train-ready set is 137 Hendrycks MATH problems and a single olympiad problem, while
-the private test set is entirely olympiad. If robustness rate varies sharply by source
+Most of the train-ready set is Hendrycks MATH while the private test set is entirely
+olympiad. If robustness rate varies sharply by source
 dataset, a text model can score well by inferring the dataset from formatting alone -
 signal that will not transfer. This script quantifies that risk four ways:
 
 1. Robustness base rate per source dataset.
 2. How accurately the same text features predict the *dataset* instead of the label.
 3. Label performance within a single dataset, where the confound is held constant.
-4. A MATH-to-olympiad transfer check, which our data is currently too thin to support.
+4. A MATH-to-olympiad transfer check, now possible: `train-main-v2` (17 Sep) added olympiad
+   instances with official labels.
 
 Appends its findings to RESULTS.md, so run it *after* `train_text_baseline.py`, which
 rewrites that file from scratch.
@@ -124,6 +125,23 @@ def main() -> None:
     append_results(rows, y, datasets, texts, folds)
 
 
+def transfer_summary(y, datasets, texts) -> str:
+    """Train on the MATH instances, test on the olympiad ones: the shift the test set asks for."""
+    olympiad = np.asarray([not d.startswith("hendrycks") for d in datasets])
+    counts = f"{int(olympiad.sum())} olympiad instances ({int(y[olympiad].sum())} robust)"
+    if not olympiad.any() or len(set(y[olympiad].tolist())) < 2 or len(set(y[~olympiad].tolist())) < 2:
+        return f"{counts}: too few, or single-class, to measure transfer."
+    model = char_model().fit([t for t, m in zip(texts, olympiad) if not m], y[~olympiad])
+    proba = model.predict_proba([t for t, m in zip(texts, olympiad) if m])[:, 1]
+    return (
+        f"Char tf-idf trained on the {int((~olympiad).sum())} MATH instances and tested on the {counts}: "
+        f"**balanced accuracy {balanced_accuracy_score(y[olympiad], proba >= 0.5):.4f}, "
+        f"ROC-AUC {roc_auc_score(y[olympiad], proba):.4f}**. Below 0.5 means the text signal does not "
+        "survive the shift in difficulty, which is exactly what the private test set asks of it. "
+        "At this sample size treat it as a warning, not a measurement."
+    )
+
+
 def append_results(rows, y, datasets, texts, folds) -> None:
     """Append the confound analysis to RESULTS.md."""
     results = ROOT / "RESULTS.md"
@@ -135,8 +153,8 @@ def append_results(rows, y, datasets, texts, folds) -> None:
         "",
         "## Is the text baseline just detecting the source dataset?",
         "",
-        "The concern: the train-ready set is 137 Hendrycks MATH problems and **one** olympiad "
-        "problem, while the private test set is entirely olympiad. A text model could score "
+        "The concern: the train-ready set is mostly Hendrycks MATH problems while the private "
+        "test set is entirely olympiad. A text model could score "
         "well by recognising dataset formatting rather than robustness.",
         "",
         "### Base rate by source dataset",
@@ -171,16 +189,13 @@ def append_results(rows, y, datasets, texts, folds) -> None:
 
     lines += [
         "",
-        "Within-dataset scores land close to the pooled 0.6732, and the two MATH subsets have "
-        "similar base rates, so **the signal is not a dataset artifact**. Char n-grams really do "
-        "carry robustness information about the problem statement.",
+        "Within-dataset scores land close to the pooled number in the table above, and the MATH "
+        "subsets have similar base rates, so **the signal is not a dataset artifact** within MATH. "
+        "Char n-grams do carry robustness information about the problem statement.",
         "",
-        "### The limit of what we can currently measure",
+        "### MATH to olympiad: the transfer the competition actually scores",
         "",
-        f"Olympiad instances in the train-ready set: **{int(np.asarray([not d.startswith('hendrycks') for d in datasets]).sum())}**. "
-        "A MATH-to-olympiad transfer test is therefore impossible today, and that transfer is "
-        "exactly what the competition scores. Closing this gap is the highest-value data work "
-        "available, ahead of any additional modelling.",
+        transfer_summary(y, datasets, texts),
         "",
         "Regenerate with `train_text_baseline.py` followed by `check_dataset_confound.py`.",
         "",

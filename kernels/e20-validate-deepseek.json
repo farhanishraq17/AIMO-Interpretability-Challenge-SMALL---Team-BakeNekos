@@ -69,7 +69,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "3e36059b4f6ba2cd3151195b5b76ccde1e31d129",
+  "bundle_sha1": "7843e82653a1e9b436d8e187a791312ac6431787",
   "bundle_files": [
     "data/deepseek_check/pool.parquet",
     "data/deepseek_check/variants.parquet",
@@ -103,5 +103,17 @@
     "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
     "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py"
   ],
-  "downloaded_run": {}
+  "downloaded_run": {
+    "files": [
+      "runs/e20-validate-deepseek/e20-deepseek/base/shard_00_of_01/metadata.json",
+      "runs/e20-validate-deepseek/e20-deepseek/variants/shard_00_of_01/metadata.json",
+      "runs/e20-validate-deepseek/run_manifest.json"
+    ],
+    "seconds": 22130.6,
+    "returncodes": [
+      0,
+      0,
+      0
+    ]
+  }
 }

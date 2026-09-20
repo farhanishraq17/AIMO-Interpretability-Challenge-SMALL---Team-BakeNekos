@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 19 September 2026, 18:40 UTC.
+Last updated: 20 September 2026, 08:00 UTC.
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.
@@ -33,37 +33,35 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E12 | Label-free signals from one forward pass | Kaggle | Done | They are problem-text proxies, not model-specific |
 | E13 | Do the three unlabelled models run? | Kaggle | Done | All three run on T4s under the pins |
 | E14 | Does the answer survive rewrites at test time? | Kaggle | Done | **No.** At chance, and too expensive. Approach dropped |
-| E15 | Qwen3.5-4B: which problems can be labelled? | Kaggle | Done (2 sessions) | **90 of 285** eligible (32%) |
-| E16 | Skywork-OR1-Math-7B: same | Kaggle | Done (2 sessions) | **157 of 246** eligible (64%) |
+| E15 | Qwen3.5-4B: which problems can be labelled? | Kaggle | **Stopped** (3 sessions) | 84 of 270 eligible; labels unusable (Finding 31) |
+| E16 | Skywork-OR1-Math-7B: same | Kaggle | **Stopped** (2 sessions) | 143 of 232 eligible; labels unusable (Finding 31) |
 | E17 | Olmo-3-7B-Think: same | Kaggle | Paused | 17 of 30 eligible; too slow on T4s (Finding 26) |
 | E18 | Qwen3.5-4B: sample the variants of eligible problems | Kaggle | Done | 89 of 91 variants; **47 problems labelled**, 19 robust; 26 clear-cut (Finding 29) |
-| E19 | Skywork-OR1-Math-7B: same | Kaggle | **Running**, session 2 | Session 1: 24 of 176 variants (slow host); 21 labelled, 17 robust (Finding 29) |
-| E20 | Do self-labels agree with official labels? (DeepSeek, 66 MATH problems) | Kaggle | **Running** | — |
+| E19 | Skywork-OR1-Math-7B: same | Kaggle | **Stopped** | Labels set aside after E20 (Finding 31) |
+| E20 | Do self-labels agree with official labels? (DeepSeek, 66 MATH problems) | Kaggle | Done | **No.** kappa -0.14, drops correlate -0.25. Self-labelling stops (Finding 31) |
+| Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---
 
 ## 2. Running now
 
-Launched 19 Sep around 18:30 UTC. Each run saves every 4-8 problems and stops itself on
-budget.
+Nothing. The fleet is idle, and the self-labelling program (E15-E19) is stopped.
 
-| Run | Account | What it does | Why |
-| --- | --- | --- | --- |
-| `e20-validate-deepseek` | ISHRAQ | E7 pipeline (base, then `answer_modulus` variants; k=4, 8k cap) on DeepSeek's 66 officially labelled MATH problems with an integer answer >= 13 (19 officially robust) | **Do self-labels agree with official labels?** Decides whether E15–E19 labels can be trained on |
-| `e19-variants-skywork` (session 2) | Labib | Resumes Skywork's variants from the 24 done (176 in all) | The first session hit a slow host |
-| `e15-base-qwen35-a` / `-b` (session 3) | TASHIN, RSD | Resumes Qwen's base phase over the ~235 pool problems not yet tried | More eligible problems, so more Qwen labels |
+**Why it stopped.** E20 compared self-generated `answer_modulus` labels with official ones on
+66 DeepSeek problems: agreement 0.29, Cohen's kappa -0.135, and our measured drops correlate
+with the official drops at -0.25 (Finding 31). The category the extra-data rule let us label
+does not measure the robustness the competition scores.
 
-**Why not more samples per variant:** robust requires every variant sample to be correct.
-More samples would sharpen each problem's decay estimate but would not move problems out of
-the ambiguous 0 < decay <= 0.3 band, so they would not add usable labels. More problems do.
+**What replaced it.** `aimo-interp/train-main-v2` (published 17 Sep, ingested 20 Sep) carries
+official labels for every evaluated configuration, including the first for Qwen3.5-4B,
+Skywork-OR1-Math-7B and Olmo-3-7B-Think (Finding 30).
 
-**Labelling so far** (generated: `RESULTS.md`, "E15-E19: self-labelling progress"):
-
-| Model | Eligible (base) | Variants sampled | Problems labelled | Robust | Clear-cut for training |
+| Source | DeepSeek | Qwen3.5-4B | Olmo-3-7B-Think | Skywork | Llama-3.1-8B |
 | --- | --- | --- | --- | --- | --- |
-| Qwen3.5-4B | 84 of 270 | 89 of 91 | 47 | 19 (40%) | 26 (19 robust) |
-| Skywork-OR1-Math-7B | 143 of 232 | 24 of 176 | 21 | 17 (81%) | 19 (17 robust) |
-| Olmo-3-7B-Think | 15 of 28 | — | — | — | — |
+| Train-ready instances | 152 (44 robust) | 12 (8) | 9 (7) | 3 (2) | 49 (0) |
+
+**Kept for the report:** the E15-E19 base and variant records, as a documented negative result,
+and the 26 Qwen / 19 Skywork self-labels, which are not used for training.
 
 ---
 

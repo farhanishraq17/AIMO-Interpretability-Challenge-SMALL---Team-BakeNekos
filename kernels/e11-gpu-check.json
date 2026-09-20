@@ -27,7 +27,7 @@
   "dataset_sources": [
     "ishmamahmid/aimo-small-e11-bundle"
   ],
-  "bundle_sha1": "30cbee271d572eaf400d1f0604700a3cc1297a14",
+  "bundle_sha1": "bf49ac2b63f71b597f2eb145ca84140d0880576e",
   "bundle_files": [
     "data/probe_system_prompt.txt",
     "data/small_track/instances.parquet",

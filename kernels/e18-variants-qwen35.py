@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e18-variants-qwen35\", \"account\": \"RSD\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-m\", \"pip\", \"install\", \"-q\", \"vllm\"], [\"-c\", \"import os, subprocess, sys\\nargvs = [['datagen/perturb/sample.py', '--phase', 'variants', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--base-records', 'runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl', '--k', '4', '--max-new-tokens', '16384', '--max-hours', '8.5', '--chunk', '4', '--out-dir', '/kaggle/working/e18-qwen35', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '2', '--shard-index', '0'], ['datagen/perturb/sample.py', '--phase', 'variants', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--base-records', 'runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl', '--k', '4', '--max-new-tokens', '16384', '--max-hours', '8.5', '--chunk', '4', '--out-dir', '/kaggle/working/e18-qwen35', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '2', '--shard-index', '1']]\\nprocs = [subprocess.Popen([sys.executable, *a], env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(i)})\\n         for i, a in enumerate(argvs)]\\nsys.exit(max(p.wait() for p in procs))\"]]}")
-BUNDLE_SHA1 = "0eb1145067d39c38c07f42757aa82c3886033756"
+BUNDLE_SHA1 = "eda1881e8990d0c6661d57e6be9fdabad02e05bd"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/olympiad_pool/pool.parquet
   data/perturbations/variants.parquet

@@ -31,7 +31,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "c5dd6877735a3d1b8d5ef09e33cf8352e5e60c02",
+  "bundle_sha1": "4b6a31fa9f29318454f88558f5e593ef238a2706",
   "bundle_files": [
     "data/olympiad_pool/pool.parquet",
     "data/probe_system_prompt.txt",
@@ -77,7 +77,7 @@
       "runs/e15-base-qwen35-b/e15-qwen35/base/shard_03_of_04/metadata.json",
       "runs/e15-base-qwen35-b/run_manifest.json"
     ],
-    "seconds": 31491.5,
+    "seconds": 33454.7,
     "returncodes": [
       0,
       0,

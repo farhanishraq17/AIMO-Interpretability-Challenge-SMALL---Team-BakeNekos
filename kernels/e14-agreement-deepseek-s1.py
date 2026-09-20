@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e14-agreement-deepseek-s1\", \"account\": \"DIDHITI\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-m\", \"pip\", \"install\", \"-q\", \"vllm\"], [\"datagen/extract_agreement.py\", \"--model-id\", \"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B\", \"--out-dir\", \"/kaggle/working/features/agreement-deepseek\", \"--num-shards\", \"2\", \"--shard-index\", \"1\", \"--max-hours\", \"10\"]]}")
-BUNDLE_SHA1 = "377f79040110cdbe4511543e8142c772da3bcf0b"
+BUNDLE_SHA1 = "da6bd246074fa5cfefc81c6a5d5a99039817716e"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/olympiad_pool/pool.parquet
   data/probe_system_prompt.txt
