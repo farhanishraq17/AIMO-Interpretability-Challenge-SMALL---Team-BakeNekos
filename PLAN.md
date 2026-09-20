@@ -6,7 +6,7 @@
 
 | Date | Event |
 | --- | --- |
-| 17 Sep 2026 | Plan last updated |
+| 21 Sep 2026 | Plan last updated (E20/E21 closed two lanes; `nakib_v2` findings ported) |
 | 1 Nov 2026, 12:55 UTC | Codabench submissions close (about 6.5 weeks away) |
 | 15 Nov 2026 | Technical report and open-source code due |
 | 11/12 Dec 2026 | NeurIPS workshop |
@@ -61,17 +61,20 @@ actionable interpretability, negative results, and efficiency. Report material a
 
 ---
 
-## 1. Where we stand (17 Sep)
+## 1. Where we stand (21 Sep)
 
 | Area | State |
 | --- | --- |
 | Rules, contract, leaderboard mechanics | Done: `COMPETITION.md` |
-| Training set | 187 instances, **138 DeepSeek-8B (36/102)**; **no labels for the other three small-track models** |
+| Training set | 226 instances: **153 DeepSeek-8B (46/107)**, 49 Llama, and the first official rows for the other three models via `train-main-v2` (Qwen 12, Skywork 3, Olmo-Think 9) — enough to check a constant, not to fit a model (Findings 30, 44) |
 | Text floor; E1b; E2f; E4; E10 | Done (Findings 9–18). Text + stagea is the DeepSeek model |
 | E11 submission | **v2 scores 0.64 on the leaderboard** (v1: 0.47) |
 | Leaderboard probes | Done (Finding 21) |
 | E12 label-free signals; E13 plumbing for the three new models | Done (Finding 22) |
-| E14–E17 | **Running** on Kaggle (§4) |
+| E14 | Done: answer agreement is at chance (Finding 24). Lane D closed |
+| E15–E19 self-labelling | **Closed** by E20: `answer_modulus` does not measure official robustness (Finding 31) |
+| E21 | Done: the model does not transfer to olympiad problems and there is no cross-model signal (Finding 32) |
+| `nakib_v2` port | Findings 33–43 merged by hand; models agree 20/20 on official rows (Finding 38) |
 | Kaggle accounts | **ISHMAM1 and DESIKALAKAR tokens stopped authenticating on 17 Sep**; four accounts usable |
 | Organizer questions | Drafted 17 Sep, **not sent** |
 
@@ -85,8 +88,13 @@ Details are in `PROGRESS.md`:
    balanced accuracy 0.7173 and AUC 0.7230, with both gains over text established
    (Findings 11, 16). Trace features add little (Findings 15, 18).
 3. **The tokenizer bug** (Finding 14) affects the shipped probe and the organizers' baselines.
-4. **Near-total difficulty shift.** There is one olympiad instance in training; the test set
-   is olympiad.
+4. **Near-total difficulty shift, now measured rather than feared.** Training is almost all
+   Hendrycks MATH; the test set is olympiad. Against the official olympiad rows the fused
+   model scores AUC 0.429, the text block 0.617 with a CI spanning 0.5, and a refit layer
+   ensemble 0.476 (Findings 32, 39).
+5. **Robustness is a property of the problem, not the model:** the four models agree on 20 of
+   20 shared official rows, p = 0.0005 (Finding 38). Labels are therefore poolable across
+   models even though our *features* do not transfer.
 5. **The leaderboard.**
 
    | Submission | Score |
@@ -228,9 +236,14 @@ Authoritative run definitions live in `datagen/kaggle_launch.py`.
 | E12 | Do forward-pass label-free signals predict robustness? | ISHMAM1 | **Done** | Only as problem-text proxies (Finding 22) |
 | E13 | Do Qwen3.5-4B, Skywork and Olmo-3-Think run under the pins? | TASHIN, ISHRAQ, DESIKALAKAR | **Done** | Yes, on T4 in bf16 (Finding 22) |
 | **E14** | **Does the model's answer survive rewrites at test time?** DeepSeek, k=2, 8k cap, original + up to 4 rewrites | ISHRAQ (s0), DIDHITI (s1) | **Done** | **No.** Agreement AUC 0.46 (0.54 within length quintiles); no fusion gain; 28k tokens per problem (Finding 24). Lane D closed |
-| **E15** | Qwen3.5-4B base phase over the pool (two single-GPU vLLM engines per account) | TASHIN, SALAM | **Running** | Eligible Qwen problems, then the variants phase and Qwen labels (Lane E) |
-| **E16** | Skywork-OR1-Math-7B base phase (TP=2) | TASHIN | **Running** | Skywork labels (Lane E) |
-| **E17** | Olmo-3-7B-Think base phase (TP=2) | ISHRAQ | **Running** | Olmo-Think labels (Lane E) |
+| E15 | Qwen3.5-4B base phase over the pool (two single-GPU vLLM engines per account) | TASHIN, SALAM, RSD | **Stopped** | 84 of 270 eligible; labels set aside after E20 (Finding 31) |
+| E16 | Skywork-OR1-Math-7B base phase (TP=2) | ISHRAQ | **Stopped** | 143 of 232 eligible; labels set aside (Finding 31) |
+| E17 | Olmo-3-7B-Think base phase (TP=2) | Labib | **Paused** | 17 of 30 eligible; too slow on T4s (Finding 26) |
+| E18 / E19 | Variants phase for Qwen and Skywork | RSD, Labib | **Stopped** | 47 Qwen and 21 Skywork self-labels, all set aside (Finding 31) |
+| **E20** | Do our `answer_modulus` self-labels agree with official ones? | ISHRAQ | **Done** | **No.** kappa -0.135, drops correlate -0.25; self-labelling stops (Finding 31) |
+| **E21** | Does the DeepSeek model transfer to olympiad problems, and is there a cross-model signal? | DIDHITI, SALAM, TASHIN, ISHRAQ | **Done** | **No to both.** AUC 0.429 on the 10 unseen olympiad rows; every leave-one-model-out fold at chance (Finding 32) |
+| Gapfill (`nakib_v2`) | Base samples for problems whose variants were already paid for | NAKIB | **Done** | 26 Qwen and 23 Skywork self-labels (Finding 37), invalidated by E20 |
+| Stage A olympiad (`nakib_v2`) | Do prompt states carry olympiad signal where text does not? | MR | **Done** | AUC 0.844 vs text's 0.688 on 12 official Qwen rows, but the strict control gives p = 0.073 and the training labels were self-labels (Finding 41) |
 
 **Pipeline for every GPU result:**
 
@@ -267,10 +280,22 @@ time.
    (96 GB, HF `generate` only, no vLLM), budget about 3000 s for the whole run. If needed,
    cap tokens, use k=1, or use one rewrite.
 
-### Lane E: self-generated labels for the three new models
+### Lane E: self-generated labels — CLOSED (20 Sep, gate G-V)
 
-E15–E17 (base phase), then the variants phase (`answer_modulus` only, compliant), then
-`label.py`. Then a per-model text + stagea model trained exactly like E11. Qwen3.5-4B first.
+E15–E19 and the two `nakib_v2` gapfill runs built the pipeline and produced 26 Qwen and 23
+Skywork `answer_modulus` labels. E20 then ran the same pipeline on 66 DeepSeek problems that
+carry official labels: agreement 0.29, Cohen's kappa −0.135, drops correlating −0.25
+(Finding 31). `answer_modulus` was the only category the extra-data rule allowed, so **there is
+no compliant path to self-generated labels left** and the lane closes. The records stay as a
+documented negative result.
+
+One ported result rests on those labels and is retained only as a measurement: the Stage A
+olympiad probe of Finding 41 (AUC 0.844 on 12 official Qwen rows, strict control p = 0.073).
+Finding 32 has since asked the same question with official labels on both sides and found
+chance.
+
+**What replaces it:** `aimo-interp/train-main-v2`. 153 DeepSeek instances plus 34 official
+small-track rows are the whole training set, and those 34 rows are the acceptance test.
 
 ### Lane C: SAE / transcoder (deprioritized)
 
@@ -286,8 +311,10 @@ Report value only; revisit after 10 Oct if time allows.
 | **18 Sep, G-E: decided** | Qwen 90 and Skywork 157 eligible (≥ 60): variants phase launched (E18, E19). Olmo-3-Think 17 eligible at 30 problems in 9.6 h: too slow for T4s, deferred to the Fields grant (Finding 26). |
 | **26 Sep** | E11 v3 submitted: the Qwen text-transfer test (Lane D failed). |
 | **20 Sep, G-V: decided (fail)** | E20: self-labels agree with official ones at kappa -0.14, with drops correlating at -0.25. `answer_modulus` does not measure official robustness, so E15–E19 labels are set aside and the labelling program stops (Finding 31). |
-| **3 Oct, G1b** | ≥ 40 Qwen3.5-4B labels; a Qwen model scored under grouped CV. |
-| **10 Oct, G2** | For each model, a trained or agreement-based model replaces the constant only where CV (and the leaderboard) beat it. |
+| **20 Sep, G-T: decided (fail)** | E21: the shipped model scores AUC 0.429 on the 10 official olympiad DeepSeek rows and pooled uncertainty scalars score at chance across models (Finding 32). No v3 follows from a model; E11 v2's constants stand. |
+| **19 Sep, G-T (`nakib_v2`): decided (no-go)** | E11 v3 as "the text block for every model" is rejected: the MATH-trained block reaches AUC 0.617 on the official rows with CI [0.391, 0.833], and 0.476 on DeepSeek itself (Finding 39). Reached independently of our own G-T. |
+| **~~3 Oct, G1b~~ withdrawn** | Was "≥ 40 Qwen3.5-4B labels". No longer meaningful after G-V: the labels it counted do not measure the target. |
+| **10 Oct, G2 (revised)** | A trained model replaces a constant only where it beats it **on the 34 official rows** as well as under CV. A model that cannot clear always-robust (0.706 on those rows) does not ship. |
 | **27 Oct** | Freeze the best ZIP; only repeatability and timing runs after this. |
 
 ---
@@ -351,17 +378,18 @@ Submit the form this week: https://forms.gle/oYkYDN1EtSVeSfMd9. Long-cap olympia
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| MATH-trained signal does not transfer to olympiad | Leaderboard far below CV | E7 labels before G2; score the frozen candidate out-of-sample |
+| MATH-trained signal does not transfer to olympiad | Leaderboard far below CV | **Measured, and it does not** (Findings 32, 39): AUC 0.429 on the official olympiad rows. The constants carry the submission; do not ship a model that cannot clear always-robust there |
 | Selection effect: adopting the best ablation (text + stagea) | Optimistic CV | Freeze the candidate now; confirm on E7 labels and the leaderboard, not by re-picking |
 | E7 too expensive at long caps on T4 | No olympiad labels | e7b decides; Fields grant; label the easiest tier first |
 | Tokenizer regressions (`AutoTokenizer`) | Silently corrupted features at eval | `tokenizer_check` in every loader; the E11 bundle must use it too |
 | Emulated bf16 (T4) vs native bf16 (Blackwell) hidden states | Feature shift at scoring | Layer ensembles average out per-layer noise; check leaderboard vs CV after E11 |
-| Three of four models unlabelled | Constants on most of the test set | E15–E17 self-labels; Lane D needs no labels; ask organizers |
+| Three of four models near-unlabelled | Constants on most of the test set | `train-main-v2` gives 34 official rows to check constants against (Finding 30); self-labelling is closed (Finding 31); ask the organizers whether more is coming |
+| Our constants contradict the official labels | `False` for Skywork and Olmo may be backwards | Those rows are labelled 2/3 and 7/9 robust (Finding 33), but 12 rows cannot outvote a leaderboard probe; re-test if more labels arrive |
 | Self-labels (`answer_modulus`) measure a different robustness than the official types | Models trained on them mispredict | Validate the same pipeline on DeepSeek, where official labels exist |
 | vLLM cannot run Qwen3.5 on T4 (hybrid attention kernels) | E15 fails | HF backend fallback (slower); Fields grant GPUs |
 | Hidden validation set changes under us | Misread leaderboard | Re-measure probes after any unexplained jump (0.53 predicted, 0.64 observed) |
 | Two Kaggle tokens rejected | A third less GPU capacity | Owners issue new tokens; runs moved to other accounts |
-| 100-submission budget spent on probing | Leaderboard overfitting | Probes only for per-model base rates, never per case; about 10 used so far |
+| Submission budget spent on probing | Leaderboard overfitting | The cap is **300** per person in the Competition phase, not 100 (Finding 35), so the budget is not the binding constraint; the ~14-case validation set is. Probes only for per-model base rates, never per case; about 10 used so far |
 | Secrets leaking into the public repo | Compromised Kaggle accounts | `Secrets.env` ignored; `git grep --cached "KGAT_"` before every commit |
 
 ---
@@ -381,21 +409,26 @@ Submit the form this week: https://forms.gle/oYkYDN1EtSVeSfMd9. Long-cap olympia
 
 **Proceeding here:**
 
-1. Watch E14–E17 for early failures, especially vLLM + Qwen3.5 on T4 (switch to the HF backend if
-   needed).
-2. When E14 finishes: `train/` evaluation of agreement vs DeepSeek labels, plus fusion with text
-   (gate G-D).
-3. When E15–E17 finish: eligibility counts, then launch the variants phase (gate G-E).
+1. **Nothing is running.** Every lane that needed GPU is closed: D (E14), E (E20), and the
+   transfer/cross-model questions (E21).
+2. **Group by template, not by text,** wherever `train-main-v2` is used (Finding 34). Our
+   folds group on `problem_key`, which splits a template across folds in that table.
+3. **Keep the report current as results land** — the four negative results (E12, E14, E20, E21)
+   plus the tokenizer bug and the probe-baseline selection artifact are the substance of it.
 
 ## 10. Open questions for the organizers
 
 Drafted 17 Sep as one message (not yet sent):
 
-1. Will labelled training data be released for **Qwen3.5-4B, Skywork-OR1-Math-7B and
-   Olmo-3-7B-Think**? If not, may we label them ourselves with non-official perturbation types
-   (answer-modulus, notation change, premise reorder)?
-2. How many cases does the Competition Phase **validation set** hold, for which models, and
-   did it change on 16–17 Sep?
+1. **Partly self-answered (Finding 30):** `aimo-interp/train-main-v2` labels all four models,
+   but only 34 small-track rows. Will it **grow**, or is a larger per-model train split coming?
+   If not, may we label them ourselves with non-official perturbation types (answer-modulus,
+   notation change, premise reorder)? Note E20 found `answer_modulus` does not track the
+   official types, so this matters less than it did.
+2. **Partly self-answered (Finding 35):** the small-track task was recreated 16 Sep 22:35 UTC
+   as v8, and the `train-main-v2` commit log shows 7 rows withheld "used by the small-track
+   validation set" that day. Still ask: how many cases does the validation set hold, and for
+   which models?
 3. Does the final **test set** cover all four small-track models, and in what proportions?
    Does `reasoning_effort` apply to the small track?
 4. Can we get access to **`aimo-interp/problems-public`**?

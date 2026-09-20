@@ -127,14 +127,14 @@ Evaluation subset: **best-performing models below 10B parameters**. Intended for
 
 Reported analyses (organizers' final report, not the live metric): public vs private, per perturbation type, per model, published vs unpublished problems, with bootstrap CIs and paired tests.
 
-### How results are measured (verified 16 Sep 2026 from the Codabench API and the website)
+### How results are measured (verified 19 Sep 2026 from the Codabench API and the website)
 
 There are three levels, and only the last decides prizes:
 
 | Level | What it scores | What it is good for |
 | --- | --- | --- |
 | Local: `getting-started/scripts/run_local.py` | The public `val-sample` (24 cases, only **1** small-model case), run through the same ingestion and scoring programs Codabench uses | Contract and packaging checks: `coverage 1.0`, `invalid_predictions 0`, `small.txt` placement. **Not** a score estimate. |
-| **Live Codabench leaderboard** | Task "AIMO Robustness Validation v7 - Small Model Track" in the Competition Phase. Input and reference data are non-public, i.e. the hidden validation set, which the website says "covers all types of models contained in the test set". | The only external estimate of real performance. It is public and shows Accuracy, Coverage, and Invalid predictions. |
+| **Live Codabench leaderboard** | Task "AIMO Robustness Validation **v8** - Small Model Track" (task id 36241, **created 16 Sep 2026 22:35 UTC**; recorded as v7 before, Finding 35) in the Competition Phase. Input and reference data are non-public, i.e. the hidden validation set, which the website says "covers all types of models contained in the test set". | The only external estimate of real performance. It is public and shows Accuracy, Coverage, and Invalid predictions. |
 | Final ranking | Held-out private test set, scored after the deadline | Prizes. Ties are broken by average runtime over repeated runs. |
 
 Scoring details from `components/scoring_program/scoring.py`:
@@ -145,9 +145,14 @@ Scoring details from `components/scoring_program/scoring.py`:
 
 Submission rules from the Codabench API:
 
-- **10 submissions per day and 100 per person in total.**
+- **10 submissions per day and 300 per person in total** in the Competition phase; the 100 recorded earlier was the Warmup limit (re-read from the API 19 Sep, Finding 35).
 - 3600 s execution limit per submission.
 - Leaderboard rule `Force_Latest_Multiple`.
+
+**The small-track task was rebuilt on 16 Sep** (Finding 35). The organizers' `train-main-v2`
+commit log shows the labelling construction being replaced and 7 rows withheld "used by the
+small-track validation set" on the same day. **Leaderboard readings taken before 16 Sep
+22:35 UTC scored a different task** and should not be compared with later ones.
 
 The leaderboard metric is raw accuracy, which depends on the class prior, while our development metric is balanced accuracy. Choose the decision threshold deliberately, and do not tune it by leaderboard probing: the budget is small and the validation set is not the test set.
 
@@ -187,12 +192,15 @@ The public `val-sample` mixes **closed APIs** and **open-weight** systems. White
 
 ### Models evaluated in the Competition Phase (upstream README, commit `995f992`, checked 16 Sep 2026)
 
+Public-label counts below are labelled rows in `aimo-interp/train-main-v2` (Finding 30), plus
+our own consolidated set for DeepSeek.
+
 | `model_id` (passed verbatim) | Main Track | Small Models Track | Public labels |
 | --- | --- | --- | --- |
-| `Qwen/Qwen3.5-4B` | yes | **yes** | none |
-| `Skywork/Skywork-OR1-Math-7B` | yes | **yes** | none |
-| `allenai/Olmo-3-7B-Think` | yes | **yes** | none |
-| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | yes | **yes** | 138 train-ready |
+| `Qwen/Qwen3.5-4B` | yes | **yes** | 12 (`train-main-v2`) |
+| `Skywork/Skywork-OR1-Math-7B` | yes | **yes** | 3 (`train-main-v2`) |
+| `allenai/Olmo-3-7B-Think` | yes | **yes** | 9 (`train-main-v2`) |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | yes | **yes** | 143 train-ready MATH + 10 (`train-main-v2`) |
 | `openai/gpt-oss-120b` | yes | no | — |
 
 - **No aliases.** The `:low`-suffixed names in the public datasets are never passed during the
@@ -202,9 +210,14 @@ The public `val-sample` mixes **closed APIs** and **open-weight** systems. White
 - **Hardware.** Each evaluation container sees **one** RTX PRO 6000 (96 GB), and every model
   fits on it. `gpt-oss-120b` is now cached in MXFP4 (about 62 GiB). A 4–8B checkpoint loads in
   about 2 s from the warm cache.
-- **Interface.** The unmerged `reasoning_effort` branch adds an optional
-  `are_robust(model_id, reasoning_effort, problems)`. It detects the parameter by name and
-  keeps the legacy two-argument call working.
+- **Interface.** `reasoning_effort` is **merged upstream** (PR #9, commit `de79405`, two
+  commits ahead of our submodule pin `995f992`), not a pending branch. The documented signature
+  is `are_robust(model_id, reasoning_effort, problems)`; the harness detects the parameter by
+  name and the legacy two-argument call still works. The README lists `"default"`, `"low"` and
+  `"medium"`, and an absent field yields `"default"` — but `train-main-v2` also carries
+  `"high"`, so do not treat the documented set as exhaustive. Only `gpt-oss-120b` varies it, so
+  the small track sees `"default"` throughout. The merge touches
+  `components/ingestion_program/ingestion.py` and the shipped solutions, not just the README.
 
 Anything outside this list cannot be loaded during evaluation. Contact organizers if another checkpoint must be mounted.
 
@@ -252,6 +265,21 @@ Perturbation types already used:
 | `expert_perturbations` | Expert answer-preserving adversarial edits |
 | `expert_no_solution` | Unanswerable variant (missing premises) — tests unsolvability detection |
 
+**A second, newer labelling rule applies to `train-main-v2`** (Findings 30, 33). There the
+label is three-valued and keyed on `max_drop`, the largest accuracy drop across perturbation
+families:
+
+| `max_drop` | `is_robust` |
+| --- | --- |
+| ≤ 0.10 | `true` |
+| 0.11 – 0.21 (observed band) | `null` — too close to call |
+| ≥ 0.25 | `false` |
+
+Verified against all 82 rows with zero violations by `scripts/inspect_train_main_v2.py`. The
+dataset card states band cases are **also left unlabelled in the validation and test splits**,
+so they are never scored. This does not replace the `absolute_accuracy_decay` rule used for the
+older tables; the two apply to different tables and must not be mixed for one pair (Finding 44).
+
 Public development label field: `model_is_robust`. Related numeric fields: `base_accuracy`, `permuted_accuracy`, `absolute_accuracy_decay`, `relative_accuracy_decay`.
 
 The public sample is a **packaging and contract check**, not a preview of private-track scores. All model *types* in the private test set are represented in the public validation set.
@@ -260,8 +288,9 @@ The public sample is a **packaging and contract check**, not a preview of privat
 
 | Dataset | Use |
 | --- | --- |
+| [`aimo-interp/train-main-v2`](https://huggingface.co/datasets/aimo-interp/train-main-v2) | **82 officially labelled rows covering all four small-track models** (34 labelled small-track rows) on olympiad problems, schema `model_id / reasoning_effort / problem / is_robust / max_drop`. Linked from neither the website nor the upstream README; found by listing the org. Summarize with `scripts/inspect_train_main_v2.py` (pinned revision `23791d9b`). Findings 30, 33, 34 |
 | [`aimo-interp/val-sample`](https://huggingface.co/datasets/aimo-interp/val-sample) | 28 public validation rows; mixed models; import with `uv run scripts/import_hf_dataset.py` |
-| [`aimo-interp/problems-public`](https://huggingface.co/datasets/aimo-interp/problems-public) | Problems + symbolic chains (AIME 2026, AIMO 2 reference, …) |
+| [`aimo-interp/problems-public`](https://huggingface.co/datasets/aimo-interp/problems-public) | Problems + symbolic chains (AIME 2026, AIMO 2 reference, …). **Still 401 as of 19 Sep 2026** |
 | [`aimo-interp/augmented-sample-math-agg`](https://huggingface.co/datasets/aimo-interp/augmented-sample-math-agg) | Larger labeled aggregate for `qwen3-8b:low` (Hendrycks MATH). Used by the uncertainty baseline |
 
 Local import layout after `import_hf_dataset.py`:

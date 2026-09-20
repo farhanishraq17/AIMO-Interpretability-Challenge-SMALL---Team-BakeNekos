@@ -1,0 +1,66 @@
+{
+  "name": "e21-stagea-skywork-official",
+  "account": "TASHIN",
+  "kernel": "tashintahir/aimo-small-e21-stagea-skywork-official",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "E21 Stage A on Skywork-OR1-Math-7B over its 3 officially labelled problems (see e21-stagea-qwen35-official).",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "datagen/extract_features.py",
+      "--model-id",
+      "Skywork/Skywork-OR1-Math-7B",
+      "--system-prompt-file",
+      "data/probe_system_prompt.txt",
+      "--out-dir",
+      "/kaggle/working/features/stagea-skywork-official"
+    ],
+    [
+      "datagen/merge_features.py",
+      "--features-dir",
+      "/kaggle/working/features/stagea-skywork-official"
+    ]
+  ],
+  "dataset_sources": [],
+  "bundle_sha1": "8d3a0a0f42a1907a2b08c2f2eea881afab40e108",
+  "bundle_files": [
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py"
+  ],
+  "downloaded_run": {
+    "files": [
+      "runs/e21-stagea-skywork-official/features/stagea-skywork-official/shard_00_of_01/metadata.json",
+      "runs/e21-stagea-skywork-official/run_manifest.json"
+    ],
+    "seconds": 149.7,
+    "returncodes": [
+      0,
+      0
+    ]
+  }
+}

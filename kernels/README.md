@@ -44,6 +44,13 @@ The account only decides where a kernel runs. To run one elsewhere, change its
 | `e18-variants-qwen35` | RSD | https://www.kaggle.com/code/rsdaiyan/aimo-small-e18-variants-qwen35 | 8.7 h, exit [0, 0] |
 | `e19-variants-skywork` | Labib | https://www.kaggle.com/code/gmnoorlabib/aimo-small-e19-variants-skywork | 8.3 h, exit [0, 0, 0] |
 | `e20-validate-deepseek` | ISHRAQ | https://www.kaggle.com/code/farhanishraqq/aimo-small-e20-validate-deepseek | 6.1 h, exit [0, 0, 0] |
+| `e21-stagea-deepseek-official` | DIDHITI | https://www.kaggle.com/code/didhitinahid/aimo-small-e21-stagea-deepseek-official | 0.1 h, exit [0, 0] |
+| `e21-stagea-qwen35-official` | SALAM | https://www.kaggle.com/code/salam2026/aimo-small-e21-stagea-qwen35-official | 0.0 h, exit [0, 0] |
+| `e21-stagea-skywork-official` | TASHIN | https://www.kaggle.com/code/tashintahir/aimo-small-e21-stagea-skywork-official | 0.0 h, exit [0, 0] |
+| `e21-stagea-olmo-think-official` | ISHRAQ | https://www.kaggle.com/code/farhanishraqq/aimo-small-e21-stagea-olmo-think-official | 0.1 h, exit [0, 0] |
+| `e20-base-qwen35-gapfill` | NAKIB | https://www.kaggle.com/code/nakibsaleh/aimo-small-e20-base-qwen35-gapfill | 2.7 h, exit [0, 0] |
+| `e22-base-skywork-gapfill` | NAKIB | https://www.kaggle.com/code/nakibsaleh/aimo-small-e22-base-skywork-gapfill | 1.4 h, exit [0, 0] |
+| `e21-stagea-qwen35-olympiad` | MR | https://www.kaggle.com/code/mohsinreza1971/aimo-small-e21-stagea-qwen35-olympiad | 0.0 h, exit [0, 0] |
 | `e4-tracestate-deepseek` | SALAM | https://www.kaggle.com/code/salam2026/aimo-small-e4-tracestate-deepseek | 0.4 h, exit [0, 0] |
 
 There are no Jupyter notebooks in this project: every Kaggle run is a script kernel

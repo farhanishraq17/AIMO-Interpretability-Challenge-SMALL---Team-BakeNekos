@@ -3,23 +3,23 @@
 ## Text-only baseline (no GPU)
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 152 (44 robust / 108 spurious)  
+Instances: 153 (46 robust / 107 spurious)  
 Evaluation: out-of-fold over the 5 problem-grouped folds in `data/small_track/splits.json`  
 Features: problem text only, since inference exposes just `{id, model_id, problem}`
 
 | Method | Accuracy | Balanced acc. | ROC-AUC | F1 (robust) | Predicted robust |
 | --- | --- | --- | --- | --- | --- |
-| always-spurious (majority) | 0.7105 | 0.5000 | 0.5000 | 0.0000 | 0 |
-| logreg on handcrafted | 0.6118 | 0.5787 | 0.5814 | 0.4272 | 59 |
-| hist-gradient-boosting on handcrafted | 0.7237 | 0.6372 | 0.7024 | 0.4750 | 36 |
-| logreg on tf-idf words | 0.6711 | 0.6406 | 0.6625 | 0.5000 | 56 |
-| logreg on tf-idf chars | 0.6711 | 0.6406 | 0.6294 | 0.5000 | 56 |
+| always-spurious (majority) | 0.6993 | 0.5000 | 0.5000 | 0.0000 | 0 |
+| logreg on handcrafted | 0.6209 | 0.5741 | 0.5937 | 0.4200 | 54 |
+| hist-gradient-boosting on handcrafted | 0.7124 | 0.6457 | 0.7233 | 0.5000 | 42 |
+| logreg on tf-idf words | 0.6601 | 0.6393 | 0.6770 | 0.5094 | 60 |
+| logreg on tf-idf chars | 0.6601 | 0.6331 | 0.6491 | 0.5000 | 58 |
 
 ### Reading these numbers
 
-Our training split is 71.1% spurious, so predicting *always spurious* already scores 0.7105 accuracy here. The competition's public validation sample is only 62.5% spurious, so raw accuracy on this table is inflated relative to the leaderboard and **balanced accuracy is the number to track**.
+Our training split is 69.9% spurious, so predicting *always spurious* already scores 0.6993 accuracy here. The competition's public validation sample is only 62.5% spurious, so raw accuracy on this table is inflated relative to the leaderboard and **balanced accuracy is the number to track**.
 
-Best text-only method: **logreg on tf-idf words** at 0.6406 balanced accuracy (0.6625 AUC).
+Best text-only method: **hist-gradient-boosting on handcrafted** at 0.6457 balanced accuracy (0.7233 AUC).
 
 This is the floor that model-internals work has to clear. Any probe or SAE feature set that cannot beat it is not reading robustness - it is reading problem surface form, which text features already capture for free.
 
@@ -27,16 +27,16 @@ This is the floor that model-internals work has to clear. Any probe or SAE featu
 
 | Feature | Coefficient (toward robust) |
 | --- | --- |
-| `n_backslash` | -0.851 |
-| `n_words` | +0.774 |
-| `n_brace` | +0.705 |
-| `tex_log` | +0.595 |
-| `tex_triangle` | -0.514 |
-| `kw_integer` | +0.503 |
-| `n_dollar` | -0.390 |
-| `type_token_ratio` | -0.383 |
-| `kw_how_many` | +0.367 |
-| `kw_greatest` | -0.346 |
+| `n_words` | +0.859 |
+| `n_backslash` | -0.836 |
+| `tex_triangle` | -0.578 |
+| `kw_how_many` | +0.573 |
+| `tex_log` | +0.534 |
+| `n_underscore` | +0.521 |
+| `kw_integer` | +0.480 |
+| `n_brace` | +0.430 |
+| `type_token_ratio` | -0.415 |
+| `tex_pmod` | -0.289 |
 
 Fit on all instances for inspection only, not used for the scores above.
 
@@ -52,8 +52,8 @@ The concern: the train-ready set is mostly Hendrycks MATH problems while the pri
 | --- | --- | --- | --- |
 | `hendrycks-math-train-reference-500` | 84 | 25 | 0.298 |
 | `hendrycks-math-test-reference-100` | 58 | 14 | 0.241 |
-| `train-main-v2` | 8 | 5 | 0.625 |
-| `aimo-2025-reference` | 2 | 0 | 0.000 |
+| `train-main-v2` | 10 | 7 | 0.700 |
+| `aimo-2025-reference` | 1 | 0 | 0.000 |
 
 ### Performance within a single dataset (confound held constant)
 
@@ -66,7 +66,7 @@ Within-dataset scores land close to the pooled number in the table above, and th
 
 ### MATH to olympiad: the transfer the competition actually scores
 
-Char tf-idf trained on the 142 MATH instances and tested on the 10 olympiad instances (5 robust): **balanced accuracy 0.3000, ROC-AUC 0.2800**. Below 0.5 means the text signal does not survive the shift in difficulty, which is exactly what the private test set asks of it. At this sample size treat it as a warning, not a measurement.
+Char tf-idf trained on the 142 MATH instances and tested on the 11 olympiad instances (7 robust): **balanced accuracy 0.4107, ROC-AUC 0.4286**. Below 0.5 means the text signal does not survive the shift in difficulty, which is exactly what the private test set asks of it. At this sample size treat it as a warning, not a measurement.
 
 Regenerate with `train_text_baseline.py` followed by `check_dataset_confound.py`.
 
@@ -122,7 +122,7 @@ Full curve: `layer_curve.csv`; out-of-fold probabilities: `stagea_oof.npz`. Rege
 ## Stage B: generation-trace features
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 (36 robust / 102 spurious), **14 still missing**  
+Instances: 138 (36 robust / 102 spurious), **15 still missing**  
 Traces: greedy, 4096-token cap; 55.1% hit the cap; median tokens robust=4096 vs spurious=3936  
 Evaluation: out-of-fold over the problem-grouped folds; fusion averages OOF probabilities with fixed weights
 
@@ -161,41 +161,6 @@ The best trace model is picked by AUC across the rows above, so the fusion row c
 | `generation_ppl` | 0.576 |
 
 Reference: text floor on the full 138 is 0.6732 balanced accuracy. Regenerate with `train/train_stageb_features.py`.
-
-## E10: fusion v1
-
-Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 of 152 with every block (36 robust)  
-Blocks: text, stagea, trace  
-Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
-
-| Method | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
-| --- | --- | --- | --- | --- |
-| always-spurious (majority) | 0.7391 | 0.5000 | 0.5000 | 0 |
-| text alone | 0.6522 | 0.6389 | 0.6481 | 56 |
-| stagea alone | 0.6014 | 0.6046 | 0.7059 | 63 |
-| trace alone | 0.5507 | 0.5792 | 0.6334 | 72 |
-| mean fusion: text + stagea | 0.6884 | 0.7173 | 0.7230 | 63 |
-| mean fusion: text + trace | 0.6232 | 0.6103 | 0.6419 | 58 |
-| mean fusion: stagea + trace | 0.6522 | 0.6928 | 0.7571 | 68 |
-| **mean fusion: all blocks** | 0.6667 | 0.6667 | 0.7176 | 58 |
-| **stacked fusion: all blocks** | 0.6377 | 0.6471 | 0.7285 | 62 |
-
-### Difference from text alone (95% paired bootstrap CI)
-
-| Row | AUC difference | Balanced-accuracy difference |
-| --- | --- | --- |
-| stagea alone | +0.0577 [-0.0366, +0.1494] | -0.0343 [-0.1388, +0.0642] |
-| trace alone | -0.0147 [-0.1456, +0.1129] | -0.0596 [-0.1806, +0.0587] |
-| mean fusion: text + stagea | +0.0749 [+0.0308, +0.1174] | +0.0784 [+0.0145, +0.1477] |
-| mean fusion: text + trace | -0.0063 [-0.0540, +0.0383] | -0.0286 [-0.1102, +0.0513] |
-| mean fusion: stagea + trace | +0.1089 [+0.0154, +0.1992] | +0.0539 [-0.0390, +0.1411] |
-| **mean fusion: all blocks** | +0.0694 [+0.0186, +0.1209] | +0.0278 [-0.0472, +0.1035] |
-| **stacked fusion: all blocks** | +0.0803 [-0.0201, +0.1751] | +0.0082 [-0.0899, +0.0997] |
-
-**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0694 [+0.0186, +0.1209] (established gain) and balanced accuracy by +0.0278 [-0.0472, +0.1035] (not established) at n=138.
-
-Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
 
 ## E4: trace-state probes
 
@@ -249,73 +214,108 @@ Choices vary across folds, and inner AUCs well above the nested score mean the s
 For scale, the shipped last-token probe averages 0.5005 per layer. The best-in-hindsight row is what picking a layer after seeing every fold gives, the same selection effect behind the baseline's 58.4%.
 Full curve: `layer_curve.csv`; out-of-fold probabilities: `stagea_oof.npz`. Regenerate with `train/train_stagea_probes.py`.
 
-## E4: fusion with trace states
+## E10: fusion v1
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 of 152 with every block (36 robust)  
-Blocks: text, stagea, tracestate  
+Instances: 138 of 153 with every block (37 robust)  
+Blocks: text, stagea  
 Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
 
 | Method | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
 | --- | --- | --- | --- | --- |
-| always-spurious (majority) | 0.7391 | 0.5000 | 0.5000 | 0 |
-| text alone | 0.6522 | 0.6389 | 0.6481 | 56 |
-| stagea alone | 0.6014 | 0.6046 | 0.7059 | 63 |
-| tracestate alone | 0.6087 | 0.6454 | 0.7037 | 70 |
-| mean fusion: text + stagea | 0.6884 | 0.7173 | 0.7230 | 63 |
-| mean fusion: text + tracestate | 0.6377 | 0.6830 | 0.7179 | 70 |
-| mean fusion: stagea + tracestate | 0.6377 | 0.6920 | 0.7505 | 72 |
-| **mean fusion: all blocks** | 0.6667 | 0.7116 | 0.7391 | 68 |
-| **stacked fusion: all blocks** | 0.6522 | 0.6658 | 0.7209 | 62 |
+| always-spurious (majority) | 0.7319 | 0.5000 | 0.5000 | 0 |
+| text alone | 0.6739 | 0.6573 | 0.6794 | 54 |
+| stagea alone | 0.6232 | 0.6569 | 0.7490 | 69 |
+| **mean fusion: all blocks** | 0.6739 | 0.6916 | 0.7305 | 62 |
+| **stacked fusion: all blocks** | 0.6594 | 0.6903 | 0.7214 | 66 |
 
 ### Difference from text alone (95% paired bootstrap CI)
 
 | Row | AUC difference | Balanced-accuracy difference |
 | --- | --- | --- |
-| stagea alone | +0.0577 [-0.0366, +0.1494] | -0.0343 [-0.1388, +0.0642] |
-| tracestate alone | +0.0556 [-0.0383, +0.1556] | +0.0065 [-0.1021, +0.1138] |
-| mean fusion: text + stagea | +0.0749 [+0.0308, +0.1174] | +0.0784 [+0.0145, +0.1477] |
-| mean fusion: text + tracestate | +0.0697 [+0.0179, +0.1265] | +0.0441 [-0.0241, +0.1182] |
-| mean fusion: stagea + tracestate | +0.1024 [+0.0219, +0.1881] | +0.0531 [-0.0419, +0.1468] |
-| **mean fusion: all blocks** | +0.0910 [+0.0309, +0.1518] | +0.0727 [+0.0029, +0.1501] |
-| **stacked fusion: all blocks** | +0.0727 [-0.0262, +0.1704] | +0.0270 [-0.0739, +0.1250] |
+| stagea alone | +0.0696 [-0.0150, +0.1544] | -0.0004 [-0.0917, +0.0926] |
+| **mean fusion: all blocks** | +0.0511 [+0.0103, +0.0953] | +0.0343 [-0.0342, +0.1013] |
+| **stacked fusion: all blocks** | +0.0420 [-0.0465, +0.1298] | +0.0329 [-0.0629, +0.1273] |
 
-**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0910 [+0.0309, +0.1518] (established gain) and balanced accuracy by +0.0727 [+0.0029, +0.1501] (established gain) at n=138.
+**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0511 [+0.0103, +0.0953] (established gain) and balanced accuracy by +0.0343 [-0.0342, +0.1013] (not established) at n=138.
+
+Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
+
+## E4: fusion with trace states
+
+Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
+Instances: 138 of 153 with every block (37 robust)  
+Blocks: text, stagea, tracestate, trace  
+Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
+
+| Method | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
+| --- | --- | --- | --- | --- |
+| always-spurious (majority) | 0.7319 | 0.5000 | 0.5000 | 0 |
+| text alone | 0.6739 | 0.6573 | 0.6794 | 54 |
+| stagea alone | 0.6232 | 0.6569 | 0.7490 | 69 |
+| tracestate alone | 0.6232 | 0.6826 | 0.7198 | 75 |
+| trace alone | 0.5507 | 0.5732 | 0.6064 | 71 |
+| mean fusion: text + stagea | 0.6739 | 0.6916 | 0.7305 | 62 |
+| mean fusion: text + tracestate | 0.6232 | 0.6569 | 0.7244 | 69 |
+| mean fusion: text + trace | 0.6159 | 0.6092 | 0.6489 | 60 |
+| mean fusion: stagea + tracestate | 0.6522 | 0.7281 | 0.7584 | 77 |
+| mean fusion: stagea + trace | 0.6522 | 0.7024 | 0.7482 | 71 |
+| mean fusion: tracestate + trace | 0.5942 | 0.6543 | 0.6941 | 77 |
+| **mean fusion: all blocks** | 0.6594 | 0.7245 | 0.7410 | 74 |
+| **stacked fusion: all blocks** | 0.6522 | 0.6596 | 0.7022 | 61 |
+
+### Difference from text alone (95% paired bootstrap CI)
+
+| Row | AUC difference | Balanced-accuracy difference |
+| --- | --- | --- |
+| stagea alone | +0.0696 [-0.0150, +0.1544] | -0.0004 [-0.0917, +0.0926] |
+| tracestate alone | +0.0404 [-0.0651, +0.1502] | +0.0253 [-0.0770, +0.1307] |
+| trace alone | -0.0731 [-0.2100, +0.0716] | -0.0842 [-0.2153, +0.0464] |
+| mean fusion: text + stagea | +0.0511 [+0.0103, +0.0953] | +0.0343 [-0.0342, +0.1013] |
+| mean fusion: text + tracestate | +0.0450 [-0.0269, +0.1147] | -0.0004 [-0.0855, +0.0798] |
+| mean fusion: text + trace | -0.0305 [-0.0870, +0.0212] | -0.0482 [-0.1253, +0.0345] |
+| mean fusion: stagea + tracestate | +0.0789 [-0.0153, +0.1793] | +0.0708 [-0.0197, +0.1666] |
+| mean fusion: stagea + trace | +0.0688 [-0.0292, +0.1674] | +0.0451 [-0.0612, +0.1509] |
+| mean fusion: tracestate + trace | +0.0147 [-0.1074, +0.1398] | -0.0031 [-0.1165, +0.1140] |
+| **mean fusion: all blocks** | +0.0615 [-0.0153, +0.1385] | +0.0672 [-0.0195, +0.1552] |
+| **stacked fusion: all blocks** | +0.0227 [-0.0702, +0.1151] | +0.0023 [-0.0971, +0.1013] |
+
+**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0615 [-0.0153, +0.1385] (not established) and balanced accuracy by +0.0672 [-0.0195, +0.1552] (not established) at n=138.
 
 Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
 
 ## E14: fusion with test-time agreement
 
 Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`  
-Instances: 138 of 152 with every block (36 robust)  
+Instances: 138 of 153 with every block (37 robust)  
 Blocks: text, stagea, agreement  
 Protocol: nested grouped CV; block scores standardised on inner folds; thresholds learned on inner folds (a score >= 0 is robust); fusions fixed in advance
 
 | Method | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
 | --- | --- | --- | --- | --- |
-| always-spurious (majority) | 0.7391 | 0.5000 | 0.5000 | 0 |
-| text alone | 0.6522 | 0.6389 | 0.6481 | 56 |
-| stagea alone | 0.6014 | 0.6046 | 0.7059 | 63 |
-| agreement alone | 0.5942 | 0.6626 | 0.6955 | 78 |
-| mean fusion: text + stagea | 0.6884 | 0.7173 | 0.7230 | 63 |
-| mean fusion: text + agreement | 0.6159 | 0.6683 | 0.7290 | 73 |
-| mean fusion: stagea + agreement | 0.6232 | 0.7181 | 0.7563 | 82 |
-| **mean fusion: all blocks** | 0.6522 | 0.6928 | 0.7320 | 68 |
-| **stacked fusion: all blocks** | 0.6522 | 0.6748 | 0.7092 | 64 |
+| always-spurious (majority) | 0.7319 | 0.5000 | 0.5000 | 0 |
+| text alone | 0.6739 | 0.6573 | 0.6794 | 54 |
+| stagea alone | 0.6232 | 0.6569 | 0.7490 | 69 |
+| agreement alone | 0.5725 | 0.6651 | 0.7119 | 86 |
+| mean fusion: text + stagea | 0.6739 | 0.6916 | 0.7305 | 62 |
+| mean fusion: text + agreement | 0.6522 | 0.6853 | 0.7418 | 67 |
+| mean fusion: stagea + agreement | 0.6377 | 0.7182 | 0.7731 | 79 |
+| **mean fusion: all blocks** | 0.6594 | 0.7245 | 0.7624 | 74 |
+| **stacked fusion: all blocks** | 0.6667 | 0.6866 | 0.7182 | 63 |
 
 ### Difference from text alone (95% paired bootstrap CI)
 
 | Row | AUC difference | Balanced-accuracy difference |
 | --- | --- | --- |
-| stagea alone | +0.0577 [-0.0366, +0.1494] | -0.0343 [-0.1388, +0.0642] |
-| agreement alone | +0.0474 [-0.0879, +0.1881] | +0.0237 [-0.1019, +0.1546] |
-| mean fusion: text + stagea | +0.0749 [+0.0308, +0.1174] | +0.0784 [+0.0145, +0.1477] |
-| mean fusion: text + agreement | +0.0809 [-0.0145, +0.1770] | +0.0294 [-0.0537, +0.1171] |
-| mean fusion: stagea + agreement | +0.1081 [+0.0047, +0.2107] | +0.0792 [-0.0185, +0.1794] |
-| **mean fusion: all blocks** | +0.0839 [+0.0229, +0.1463] | +0.0539 [-0.0255, +0.1405] |
-| **stacked fusion: all blocks** | +0.0610 [-0.0422, +0.1628] | +0.0359 [-0.0601, +0.1303] |
+| stagea alone | +0.0696 [-0.0150, +0.1544] | -0.0004 [-0.0917, +0.0926] |
+| agreement alone | +0.0325 [-0.0978, +0.1710] | +0.0078 [-0.1077, +0.1287] |
+| mean fusion: text + stagea | +0.0511 [+0.0103, +0.0953] | +0.0343 [-0.0342, +0.1013] |
+| mean fusion: text + agreement | +0.0623 [-0.0104, +0.1350] | +0.0280 [-0.0485, +0.1083] |
+| mean fusion: stagea + agreement | +0.0937 [+0.0012, +0.1887] | +0.0609 [-0.0290, +0.1536] |
+| **mean fusion: all blocks** | +0.0830 [+0.0143, +0.1569] | +0.0672 [-0.0192, +0.1566] |
+| **stacked fusion: all blocks** | +0.0388 [-0.0602, +0.1375] | +0.0293 [-0.0750, +0.1347] |
 
-**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0839 [+0.0229, +0.1463] (established gain) and balanced accuracy by +0.0539 [-0.0255, +0.1405] (not established) at n=138.
+**Verdict:** relative to text alone, fusing all blocks changes AUC by +0.0830 [+0.0143, +0.1569] (established gain) and balanced accuracy by +0.0672 [-0.0192, +0.1566] (not established) at n=138.
 
 Text alone here uses a learned threshold, so it can differ from the 0.5-threshold floor above. Pair rows are ablations; the all-block rows are the pre-declared result. Regenerate with `train/train_fusion.py`.
 
@@ -391,3 +391,137 @@ Olympiad pool: 505 problems (AMC, AIME, OlympiadBench). k=4 samples per problem;
 | `allenai/Olmo-3-7B-Think` | 21 | 11 | 0 | — | — | — | — |
 
 Labels come from `datagen/perturb/label.py`: robust iff decay <= 0, where decay pools every sample of every variant; clear-cut drops the ambiguous 0 < decay <= 0.3 band, as the public data does. With 4 samples per variant, one wrong sample already lands a problem in that band. 34 AMC pool ids that the old pool reused for two problems are excluded (Finding 29). Olmo-3-7B-Think has no variants run: on 2x T4 it fits only at a 12k cap (Finding 26). Regenerate with `label.py`, then `train/summarize_labelling.py`.
+
+## train-main-v2 transfer
+
+Source: `aimo-interp/train-main-v2` @ `23791d9b1201`, regenerated by `train/eval_train_main_v2.py`.
+
+### Is robustness a property of the problem or of the model?
+
+| Scope | Agreeing pairs | Rate |
+| --- | --- | --- |
+| all configurations | 83 / 85 | 0.976 |
+| small-track models only | 20 / 20 | 1.000 |
+| chance, at a 0.732 robust base rate | — | 0.608 |
+
+Label permutation test over 2000 draws: **p = 0.0005**.
+
+### Does the shipped text block transfer to olympiad problems?
+
+| Scope | n | ROC-AUC | 95% CI |
+| --- | --- | --- | --- |
+| all small-track rows | 34 | 0.617 | [0.391, 0.833] |
+| Qwen/Qwen3.5-4B | 12 | 0.688 | — |
+| Skywork/Skywork-OR1-Math-7B | 3 | 1.000 | — |
+| allenai/Olmo-3-7B-Think | 9 | 0.500 | — |
+| deepseek-ai/DeepSeek-R1-0528-Qwen3-8B | 10 | 0.476 | — |
+
+- Always-robust scores **0.706** on this set; the best threshold sweep reaches **0.765** at `p >= 0.469`, chosen in-sample and so optimistic.
+- The train split is **0.732** robust, but the dataset card calls the validation set close to balanced and Finding 27's all-False probe scored 0.50. Do not calibrate a threshold on the train prevalence.
+
+## E21: official-split holdouts
+
+### DeepSeek: MATH-trained, olympiad-tested
+
+| Method | n | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
+| --- | --- | --- | --- | --- | --- |
+| E11 fused (shipped artifact) | 10 | 0.700 | 0.595 | 0.429 | 8 |
+| E11 text block only | 10 | 0.500 | 0.452 | 0.476 | 6 |
+| all-spurious | 10 | 0.300 | 0.500 | 0.500 | 0 |
+| all-robust | 10 | 0.700 | 0.500 | 0.500 | 10 |
+| layer ensemble refit on 142 MATH rows | 10 | 0.500 | 0.548 | 0.476 | 4 |
+
+### Cross-model: next-token uncertainty, one model held out
+
+Five scalars from the same forward pass, standardised within each model.
+
+| Method | n | Accuracy | Balanced acc. | ROC-AUC | Predicted robust |
+| --- | --- | --- | --- | --- | --- |
+| held out `Qwen/Qwen3.5-4B` | 12 | 0.583 | 0.625 | 0.406 | 5 |
+| &nbsp;&nbsp;other models' base rate | 12 | 0.667 | 0.500 | 0.500 | 12 |
+| held out `Skywork/Skywork-OR1-Math-7B` | 3 | 0.667 | 0.750 | 0.500 | 1 |
+| &nbsp;&nbsp;other models' base rate | 3 | 0.667 | 0.500 | 0.500 | 3 |
+| held out `allenai/Olmo-3-7B-Think` | 9 | 0.444 | 0.464 | 0.571 | 4 |
+| &nbsp;&nbsp;other models' base rate | 9 | 0.778 | 0.500 | 0.500 | 9 |
+| held out `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 10 | 0.600 | 0.619 | 0.571 | 5 |
+| &nbsp;&nbsp;other models' base rate | 10 | 0.700 | 0.500 | 0.500 | 10 |
+
+Regenerate with `train/eval_official_holdout.py`.
+
+## Self-generated olympiad labels
+
+> **Generated on the `nakib_v2` checkout** (19 Sep) and copied here verbatim: the script reads run outputs and label directories that only that machine holds. Do not hand-edit; regenerate there.
+
+Self-generated `answer_modulus` labels on the olympiad pool, by `datagen/perturb/label.py`. Regenerated by `train/summarize_selflabels.py`.
+
+| Model | Train-ready | Robust | Robust rate |
+| --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 33 | 19 | 0.576 |
+| `Skywork/Skywork-OR1-Math-7B` | 24 | 20 | 0.833 |
+
+### Cross-model agreement on shared problems
+
+| Pair | Shared | Agree | Rate | Chance | p |
+| --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` vs `Skywork/Skywork-OR1-Math-7B` | 6 | 5 | 0.833 | 0.551 | 0.164 |
+
+`Chance` is the agreement two independent labellers would reach drawing at each model's own robust rate. Both rates are high, so a high agreement rate is worth little until the shared set is large; read the p column, not the rate.
+
+## Labelling cost model
+
+> **Generated on the `nakib_v2` checkout** (19 Sep) and copied here verbatim: the script reads run outputs and label directories that only that machine holds. Do not hand-edit; regenerate there.
+
+Cost of labelling the remaining olympiad pool, from measured throughput. Regenerated by `datagen/plan_labelling_cost.py --weeks 6`.
+
+The pool holds **505 problems**; `answer_modulus` variants exist for **333** of them, 1.95 per problem. It is the only `distinct` category, so it is the only one that may carry labels.
+
+| Model | Phase | Items measured | GPU-sec/item |
+| --- | --- | --- | --- |
+| Qwen3.5-4B | base | 19 | 454 |
+| Qwen3.5-4B | variants | 107 | 567 |
+| Skywork-7B | base | 25 | 363 |
+| Skywork-7B | variants | 28 | 2425 |
+| Olmo-7B-Think | base | 32 | 2138 |
+
+Eligibility is pool-wide, from the full base phases (Findings 25-26) â€” not from the gapfill runs above, whose problems were picked *because* an earlier run found them eligible.
+
+| Model | Eligible | Cost per usable label | Whole pool | Share of budget |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 32% | 0.71 GPU-h | **113 GPU-h** for ~159 labels | 16% |
+| Skywork-7B | 64% | 1.47 GPU-h | **474 GPU-h** for ~322 labels | 66% |
+| Olmo-7B-Think | 57% | *no variants run yet* | -- | -- |
+
+Budget: 4 reachable accounts x 30 GPU-hours/week x 6 weeks = **720 GPU-hours**.
+
+Compute is not the binding constraint. The pool itself is: 505 problems cap what any amount of GPU time can produce, and only the share a model solves 4/4 can be labelled at all.
+
+## E21: Stage A on olympiad labels
+
+> **Generated on the `nakib_v2` checkout** (19 Sep) and copied here verbatim: the script reads run outputs and label directories that only that machine holds. Do not hand-edit; regenerate there.
+
+> **Superseded by Finding 31.** The probes below are fitted on self-generated `answer_modulus` labels, which E20 showed do not measure official robustness (agreement 0.29, kappa -0.135). This section records what E21 measured; it is not a result to build on, and its borderline strict-control p-value is consistent with the labels carrying no signal.
+
+Probes fitted on 26 answer-modulus self-labels, scored on 12 officially labelled `train-main-v2` rows for `Qwen/Qwen3.5-4B`, disjoint by `problem_key`. Regenerated by `train/eval_stagea_olympiad.py`.
+
+Evaluation rows are 0.667 robust. The hidden validation set is close to balanced (Finding 27), so read ROC-AUC, not accuracy.
+
+| Block | ROC-AUC | 95% CI |
+| --- | --- | --- |
+| Stage A, `last` pooling | 0.750 | [0.407, 1.000] |
+| Stage A, `max` pooling | 0.938 | [0.743, 1.000] |
+| Stage A, `mean` pooling | 0.875 | [0.611, 1.000] |
+| **Stage A, all poolings** | **0.844** | [0.556, 1.000] |
+| Text block (reference) | 0.688 | [0.222, 1.000] |
+
+Paired bootstrap, Stage A minus text: **+0.158**, 95% CI [-0.273, +0.600] -- no difference detected.
+
+### Controls
+
+| Null | Null mean | 95th pct | p |
+| --- | --- | --- | --- |
+| Permuted **evaluation** labels (5000 draws) | 0.499 | 0.812 | **0.037** |
+| Shuffled **training** labels, refitted (40 draws) | 0.541 | 0.816 | **0.073** |
+
+The second control is the one to believe: a probe fitted on random labels still reaches 0.816 five percent of the time at this sample size, so the observed 0.844 sits inside its tail. **Suggestive, not established.**
+
+At n=12 this can falsify a block, not confirm one. Per-pooling rows are reported for spread only -- the all-pooling ensemble is the pre-specified estimator, and picking the best pooling on 12 rows repeats the selection effect of Finding 11.

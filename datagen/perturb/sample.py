@@ -85,6 +85,14 @@ def build_items(args: argparse.Namespace) -> tuple[list[dict], dict]:
     pool = pool[~pool["pool_id"].duplicated(keep=False)]
     if args.tiers:
         pool = pool[pool["tier"].isin(args.tiers)]
+    if args.problem_keys:
+        # Re-sample a named set of problems, e.g. ones whose base records were lost with an
+        # account. Keyed on `problem_key` rather than `pool_id` because the latter is not unique.
+        wanted = set(args.problem_keys)
+        pool = pool[pool["problem_key"].isin(wanted)]
+        found = set(pool["problem_key"])
+        if found != wanted:
+            raise SystemExit(f"{len(wanted - found)} of {len(wanted)} --problem-keys are not in {args.pool}")
     info: dict = {"pool_problems": len(pool)}
     if args.phase == "base":
         items = [
@@ -267,6 +275,8 @@ def main() -> None:
     parser.add_argument("--categories", nargs="+", default=None)
     parser.add_argument("--include-confirm", action="store_true", help="also sample categories awaiting organizer confirmation")
     parser.add_argument("--tiers", nargs="+", default=None, choices=["amc", "aime", "olympiad"])
+    parser.add_argument("--problem-keys", nargs="+", default=None,
+                        help="restrict to these problem_key values (unlike pool_id, they are unique)")
     parser.add_argument("--k", type=int, default=8, help="samples per item")
     parser.add_argument("--temperature", type=float, default=0.6)
     parser.add_argument("--top-p", type=float, default=0.95)

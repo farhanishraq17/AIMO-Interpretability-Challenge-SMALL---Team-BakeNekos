@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e20-validate-deepseek\", \"account\": \"ISHRAQ\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"-m\", \"pip\", \"install\", \"-q\", \"vllm\"], [\"datagen/perturb/sample.py\", \"--phase\", \"base\", \"--model-id\", \"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B\", \"--backend\", \"vllm\", \"--k\", \"4\", \"--max-new-tokens\", \"8192\", \"--max-hours\", \"3.5\", \"--chunk\", \"8\", \"--out-dir\", \"/kaggle/working/e20-deepseek\", \"--pool\", \"data/deepseek_check/pool.parquet\"], [\"datagen/perturb/sample.py\", \"--phase\", \"variants\", \"--model-id\", \"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B\", \"--backend\", \"vllm\", \"--base-records\", \"/kaggle/working/e20-deepseek/base/shard_*/records.jsonl\", \"--k\", \"4\", \"--max-new-tokens\", \"8192\", \"--max-hours\", \"4.5\", \"--chunk\", \"8\", \"--out-dir\", \"/kaggle/working/e20-deepseek\", \"--pool\", \"data/deepseek_check/pool.parquet\", \"--variants\", \"data/deepseek_check/variants.parquet\"]]}")
-BUNDLE_SHA1 = "7843e82653a1e9b436d8e187a791312ac6431787"
+BUNDLE_SHA1 = "8a5b560f0bb09c110782be781f6f0ac6bcabd44f"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/deepseek_check/pool.parquet
   data/deepseek_check/variants.parquet

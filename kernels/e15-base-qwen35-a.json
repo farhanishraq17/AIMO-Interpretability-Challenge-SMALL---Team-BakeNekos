@@ -31,7 +31,7 @@
     ]
   ],
   "dataset_sources": [],
-  "bundle_sha1": "4b6a31fa9f29318454f88558f5e593ef238a2706",
+  "bundle_sha1": "2826ccfccb8426c5fdec7f6d39a3bdf242163eb2",
   "bundle_files": [
     "data/olympiad_pool/pool.parquet",
     "data/probe_system_prompt.txt",

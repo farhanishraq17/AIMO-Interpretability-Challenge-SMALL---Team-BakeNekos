@@ -106,11 +106,16 @@ def main() -> None:
     for name, experiment in launcher.EXPERIMENTS.items():
         files, sha1 = bundle_files(experiment)
         (OUT / f"{name}.py").write_text(render(name, experiment, files, sha1), encoding="utf-8")
+        # No `Secrets.env` holds every alias and no checkout holds every downloaded run, so an
+        # export from one machine must never overwrite what another machine recorded. Both the
+        # kernel slug and the run provenance fall back to the committed values.
+        previous = json.loads((OUT / f"{name}.json").read_text(encoding="utf-8")) \
+            if (OUT / f"{name}.json").is_file() else {}
         try:
             ref = launcher.kernel_ref(name)
-        except KeyError:  # the account's token is no longer in Secrets.env
-            ref = f"<{experiment.account}>/aimo-small-{name}"
-        provenance = copy_provenance(name)
+        except KeyError:  # this machine has no token for that alias
+            ref = previous.get("kernel") or f"<{experiment.account}>/aimo-small-{name}"
+        provenance = copy_provenance(name) or previous.get("downloaded_run", {})
         (OUT / f"{name}.json").write_text(
             json.dumps(
                 {

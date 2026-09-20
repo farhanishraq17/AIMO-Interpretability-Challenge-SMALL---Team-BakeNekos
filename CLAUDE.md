@@ -40,6 +40,8 @@ is the actual filename.
     `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Small-Model-Track`.
   - `getting-started/` is a **submodule** pinned to upstream `aimo-interp/getting-started` at
     `995f992` (12 Sep README update: competition-phase model list); clone with `--recurse-submodules`.
+    **Upstream has since moved to `de79405`** (PR #9, `reasoning_effort` support, 2 commits
+    ahead). The pin is deliberate; our signature already works under both callers.
   - `.gitignore` excludes `Secrets.env` (and `*.env`), `data/`, `features/`, `runs/`,
     `kaggle_runs/`, and `dist/`.
   - Before every commit, `git grep --cached -n "KGAT_"` must print nothing.
@@ -65,6 +67,21 @@ $py = "getting-started\.venv\Scripts\python.exe"
 
 # Data: rebuild data/small_track/ from the six public HF datasets (no GPU, ~30 s)
 & $py datagen\ingest_public.py
+
+# Summarize the organizers' own labelled split (network, no GPU); regenerates Findings 30, 33, 34
+& $py scripts\inspect_train_main_v2.py
+
+# Official-label acceptance test: do models agree, and does our text block reach olympiad rows?
+& $py train\eval_train_main_v2.py
+
+# Official-split holdouts: the frozen E11 artifact and a cross-model probe (needs the e21 features)
+& $py train\eval_official_holdout.py
+
+# Ported from `nakib_v2`; these three need that checkout's label dirs and run outputs to produce
+# numbers, and are kept so the report's sections can be regenerated there
+& $py datagen\build_stagea_olympiad_set.py ; & $py train\eval_stagea_olympiad.py
+& $py train\summarize_selflabels.py
+& $py datagen\plan_labelling_cost.py
 
 # Text-only floor, then the confound check (the second appends to RESULTS.md)
 & $py train\train_text_baseline.py
@@ -119,6 +136,8 @@ datagen/
   extract_trace_states.py    E4: teacher-forced pass over prompt + E2 trace, segment-pooled states
   merge_features.py          merge Stage A / E4 shards (refuses inconsistent dtype/prompt/layers)
   plan_shards.py             shard balance and time estimate, no model load
+  plan_labelling_cost.py     what labelling the rest of the pool would cost (ported)
+  build_stagea_olympiad_set.py  instance table for the ported Stage A olympiad test
   kaggle_launch.py           experiment registry; renders and pushes self-contained kernels
 train/
   train_text_baseline.py     text-only methods under grouped CV (writes RESULTS.md)
@@ -126,6 +145,10 @@ train/
   train_stagea_probes.py     nested probes, layer ensembles, text fusion (Stage A; E4 via --section)
   train_stageb_features.py   trace-feature classifiers + fusion with text (Stage B)
   train_fusion.py            E10: nested fusion of text / stagea / tracestate / trace blocks
+  eval_official_holdout.py   E21: frozen E11 on the official olympiad rows; cross-model probe
+  eval_train_main_v2.py      do models agree on the official rows? does the text block reach them?
+  eval_stagea_olympiad.py    Stage A probes fitted on self-labels, scored on official rows (ported)
+  summarize_selflabels.py    per-model self-label inventory and cross-model agreement (ported)
   results_io.py              section upsert for RESULTS.md
 scripts/                     setup and one-off audits (Kaggle accounts, HF access, label rule)
 data/small_track/            generated training set (git-ignored, regenerable)
@@ -136,16 +159,29 @@ features/ runs/ kaggle_runs/ generated feature dumps, downloaded kernel outputs,
 
 Recovered or measured facts that the pipeline depends on (evidence in `PROGRESS.md` §5–§7):
 
-- **Label rule:** `is_robust == (absolute_accuracy_decay <= 0)`. The organizers' rule is
+- **Label rule (our consolidated set, older tables):** `is_robust == (absolute_accuracy_decay <= 0)`. The organizers' rule is
   `== 0` (379/379 agreement). We use `<= 0` because 15 derived rows show improvement under
   perturbation; no published row is negative, so the two agree wherever testable.
+- **Label rule (`train-main-v2`) is different and three-valued:** keyed on `max_drop`, not
+  `absolute_accuracy_decay`. `true` iff `max_drop <= 0.10`, `false` iff `>= 0.25`, `null`
+  between, with 0 violations over 82 rows. Band cases are unlabelled in validation and test
+  too, so they are never scored. **The two labellings must never be aggregated for the same
+  pair**: doing so corrupted two DeepSeek labels (Finding 44). `ingest_public.py` now lets the
+  official split decide any pair it covers (`OFFICIAL_SPLIT_REPO`).
 - **Eligibility:** `base_accuracy >= 1.0`; the task presumes the model solved the original.
-- **Ambiguity band:** `0 < decay <= 0.3` is excluded as not clear-cut.
-- **Training set:** 187 train-ready instances. **138 are DeepSeek-8B (36 robust / 102
-  spurious)**; 49 are Llama-3.1-8B, all spurious and useless as a classification target.
+- **Ambiguity band:** `(0.10, 0.25)` under the official rule; rows inside it carry no label.
+  (`0 < decay <= 0.3` was the pre-20-Sep band, from the older recovered rule.)
+- **Training set:** 226 train-ready instances (20 Sep). **153 are DeepSeek-8B (46 robust / 107
+  spurious)**, of which 10 are officially labelled olympiad rows; 49 are Llama-3.1-8B, all
+  spurious and useless as a classification target; Qwen3.5-4B 12, Olmo-3-Think 9 and Skywork 3
+  come entirely from `train-main-v2`.
 - **Grouped folds:** 5 folds in `data/small_track/splits.json`, grouped by `problem_key`
   (SHA-1 of whitespace-normalised text). 31 of the 156 train problems recur across models, so
   **never split ungrouped**.
+- **`problem_key` is not sufficient for `train-main-v2`.** That table holds the same problem
+  template with one constant swapped (`$10^{5}$` vs `$10^{4}$`, `f(3520)` vs `f(2024)`) under
+  different labels: 36 distinct strings, 29 templates. SHA-1 of the text would split a template
+  across folds and leak. Group by template there (Finding 34).
 - **Model filtering is on by default.** `is_robust` belongs to a (model, problem) pair.
   `--no-filter-model` exists only for plumbing tests; its labels belong to another model.
 - **Inference sees only `{model_id, problem}`.** No case id, no `permutation_type`, no
@@ -157,14 +193,19 @@ Recovered or measured facts that the pipeline depends on (evidence in `PROGRESS.
 - **Floors to beat:** char tf-idf text model = **0.6732 balanced accuracy**. The shipped
   linear probe averages **0.5005** per layer (its 58.4% headline is a selection artifact).
   A method that cannot clear 0.6732 is reading surface form, not robustness.
-- **Biggest known risk:** the DeepSeek train set has **one** olympiad instance; the private
-  test set is entirely olympiad (AIMO/AIME/JMO).
-- **Three of the four small-track models have no public labels:** `Qwen/Qwen3.5-4B`,
-  `Skywork/Skywork-OR1-Math-7B`, `allenai/Olmo-3-7B-Think`. Only DeepSeek is labelled. E11 v2
-  answers `True` for Qwen and `False` for the other two (Finding 21), and E15–E19 are building
-  our own labels (`answer_modulus` only). `Olmo-3-7B-Instruct`, used in E3, was a warm-up model
-  and is not evaluated.
-- `aimo-interp/problems-public` (symbolic chains) returns 401 and is unavailable.
+- **Biggest known risk:** the private test set is entirely olympiad (AIMO/AIME/JMO) while our
+  DeepSeek training rows are almost all Hendrycks MATH. `train-main-v2` is the first official
+  olympiad-labelled material (36 problems, 2025 AIME I among them), and every block measured
+  against it is at or below chance (Findings 32, 39, 40).
+- **All four small-track models now have some public labels**, via `aimo-interp/train-main-v2`:
+  Qwen 12, Skywork 3, Olmo-3-Think 9, DeepSeek 10 (34 rows, 71% robust). Enough to check a
+  constant or estimate a prior, **not** to train a per-model model. E11 v2 answers `True` for
+  Qwen and `False` for the other two (Findings 21, 27), which disagrees with the official rows
+  labelling Skywork 2/3 and Olmo 7/9 robust — too few rows to flip on (Finding 33).
+  Self-labelling (E15–E19) is **closed**: `answer_modulus` does not measure official robustness
+  (Finding 31). `Olmo-3-7B-Instruct`, used in E3, was a warm-up model and is not evaluated.
+- `aimo-interp/problems-public` (symbolic chains) returns 401 and is unavailable (re-checked
+  19 Sep 2026).
 
 ## Competition contract (submission code)
 
@@ -175,14 +216,17 @@ Recovered or measured facts that the pipeline depends on (evidence in `PROGRESS.
   network. Allowed imports are the stdlib plus the `Dockerfile.competition` pins.
 - **Small-track models** (Competition Phase, passed verbatim, no aliases):
   `Qwen/Qwen3.5-4B`, `Skywork/Skywork-OR1-Math-7B`, `allenai/Olmo-3-7B-Think`,
-  `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`. Only DeepSeek has public labels. Main Track adds
+  `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`. All four have some public labels via
+  `train-main-v2`; only DeepSeek has enough to train on. Main Track adds
   `openai/gpt-oss-120b`. Return `[False] * len(problems)` for models you do not cover rather
   than raising.
 - Budget: **3600 s** for the whole prediction run on **one** RTX PRO 6000 (96 GB, Blackwell,
   bf16). A cached 4–8B model loads in about 2 s. Ties break on runtime.
-- Accept both call styles: `are_robust(model_id, problems)` and the pending
-  `are_robust(model_id, reasoning_effort=..., problems=...)`. The E11 signature
-  `(model_id, problems, reasoning_effort="default")` works under both.
+- Accept both call styles: `are_robust(model_id, problems)` and
+  `are_robust(model_id, reasoning_effort=..., problems=...)`, which is **merged upstream** as of
+  `de79405`, not pending. The E11 signature `(model_id, problems, reasoning_effort="default")`
+  works under both. Small-track cases are always `"default"`; `train-main-v2` also carries
+  `"high"`, so do not assume the README's three values are exhaustive.
 - **Load the DeepSeek tokenizer as `PreTrainedTokenizerFast`**; `AutoTokenizer` strips
   whitespace under transformers 5.13 (Finding 14). Use `datagen/tokenizer_check.py`.
 - **Fit every shipped sklearn/joblib artifact in the pinned local venv**, never on Kaggle.
@@ -206,6 +250,22 @@ Six accounts, each with about 30 GPU-hours a week and 12-hour sessions. Roles ar
 | ISHMAM1 | `ishmamahmid` | activation dumps |
 | DESIKALAKAR | `fatkhato` | training sweeps, repeatability |
 
+`kaggle_launch.ACCOUNTS` also registers RSD, Labib, NAKIB, CHOTON, MEDIUM and MR.
+**`Secrets.env` is per-machine and holds only the aliases whose owner set them up.** This
+checkout holds the six above plus RSD and Labib; a teammate's holds:
+
+| Alias | Username | Note |
+| --- | --- | --- |
+| NAKIB | `nakibsaleh` | the gapfill runs |
+| CHOTON | `gmnoorlabib` | **the same account this registry calls `Labib`** (E17, E19) |
+| MEDIUM | `rsdaiyan` | **the same account this registry calls `RSD`** (E15-b, E18) |
+| MR | `mohsinreza1971` | added 19 Sep; fresh, quota untouched |
+
+Two aliases therefore name one account each under two spellings, so **their weekly quota is
+shared, not additional** (Finding 42). Registry entries name the original aliases, so a push
+from the other machine needs the override: `push <experiment> --account NAKIB`. Check the key
+names in `Secrets.env` before assuming an alias works; never print the values.
+
 **Auth:** CLI 2.x uses access tokens (`KGAT_…`) via `KAGGLE_API_TOKEN` or
 `~/.kaggle/access_token`, not the legacy `kaggle.json` key.
 `python scripts\use_kaggle_account.py <ALIAS>` switches the default account;
@@ -228,6 +288,12 @@ system prompt read from `probe_artifact.pkl`. On Kaggle it then:
 After changing `EXPERIMENTS`, run `python scripts/export_kernels.py`: it writes each kernel
 and its run manifests to `kernels/`, so an experiment can be rebuilt from this repository even
 if the Kaggle account disappears.
+
+**Export only what this machine can see.** `kernels/` is a whole-fleet record, but no checkout
+holds every alias's token or every downloaded run. The script falls back to the committed kernel
+slug and `downloaded_run` rather than overwriting them, but `bundle_files` still shrinks to the
+files present locally and `bundle_sha1` shifts because some bundles embed git-ignored data. After
+an export, **commit only the kernels you actually changed** and `git checkout --` the rest.
 
 To add an experiment, add a registry entry and push; don't edit kernels on Kaggle. If a new
 step needs another repo file, add it to `BUNDLE_FILES`. Kernels are private

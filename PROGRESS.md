@@ -849,15 +849,15 @@ collision.** (`e18-variants-qwen35` on RSD, 8.7 h; `e19-variants-skywork` on Lab
     tables that happen to contain nothing between 0 and 0.3 (§5.2). Both agree on every
     published row; they differ on rows we derive.
 - **Effect on our training set:** DeepSeek goes from 138 train-ready instances (36 robust) to
-  **152 (44 robust)**, and Qwen (12), Olmo-3-Think (9) and Skywork (3) enter with official
-  labels. Stage A results are unchanged, because the 6 newly-labelled DeepSeek instances are
+  **153 (46 robust)** once Finding 44's precedence fix lands, and Qwen (12), Olmo-3-Think (9)
+  and Skywork (3) enter with official labels. Stage A results are unchanged, because the 6 newly-labelled DeepSeek instances are
   ones the old rule dropped as ambiguous and they have no features yet.
 - **They confirm the leaderboard is balanced.** The README says this split is 72% robust while
   "the validation set is close to balanced", and warns against calibrating a threshold on it.
   That matches the probes exactly (Finding 27: all-False 0.50).
 - **The olympiad transfer test is now possible, and it fails.** Char tf-idf trained on the 142
-  MATH instances and tested on the 10 olympiad ones scores **balanced accuracy 0.30, AUC
-  0.28**: below chance. Our text signal does not survive the difficulty shift the private test
+  MATH instances and tested on the olympiad ones scores **balanced accuracy 0.41, AUC 0.43**
+  (11 instances after the label fix of Finding 44): below chance. Our text signal does not survive the difficulty shift the private test
   set asks for. Small sample, so it is a warning rather than a measurement, but it points the
   same way as the leaderboard, where E11's DeepSeek predictions are worth about one case.
 - **Also merged upstream:** the starter kit now carries `reasoning_effort` on main. Only
@@ -888,6 +888,311 @@ fails.** (E20: the full E7 pipeline on 66 of DeepSeek's officially labelled MATH
     self-labelling under the extra-data rule has no cheap path left.
   - Official labels (34 small-track rows) plus DeepSeek's 152 are now the whole training set.
 - **What it saves.** About 40 GPU-hours a week that E15-E19 would have consumed.
+
+**32. Neither remaining route beats a constant: the model does not transfer to olympiad
+problems, and there is no cross-model signal to borrow.** (E21: Stage A prompt states over
+the official split for all four models, four Kaggle sessions of about 20 minutes;
+`train/eval_official_holdout.py`, `RESULTS.md` "E21: official-split holdouts".)
+
+Two questions, both first answerable now that `train-main-v2` exists.
+
+- **Does the shipped DeepSeek model survive the difficulty shift?** The 10 `train-main-v2`
+  DeepSeek rows are olympiad problems that no fit has seen (7 robust, 3 spurious). Re-measured
+  after Finding 44 corrected two of their labels.
+
+  | Method | Accuracy | Balanced acc. | ROC-AUC |
+  | --- | --- | --- | --- |
+  | E11 fused, shipped artifact | 0.700 | 0.595 | 0.429 |
+  | its text block alone | 0.500 | 0.452 | 0.476 |
+  | layer ensemble refit on the 142 MATH rows | 0.500 | 0.548 | 0.476 |
+  | all-robust | 0.700 | 0.500 | 0.500 |
+
+  Every AUC is at or below 0.5. The fused model's 0.700 accuracy is what answering `True`
+  everywhere scores. On MATH the same model reaches 0.7173 balanced accuracy under grouped
+  CV, so **the signal is specific to MATH-style problems**, which agrees with the char
+  tf-idf transfer (0.41 balanced accuracy, Finding 30) and with the leaderboard.
+
+- **Is there a model-agnostic signal?** Hidden states differ in width per model, but the five
+  next-token uncertainty scalars do not. Pooling all 34 official rows and holding one model
+  out at a time (standardising within each model, which evaluation allows, since the harness
+  hands over one model's whole batch):
+
+  | Held out | n | Balanced acc. | ROC-AUC |
+  | --- | --- | --- | --- |
+  | `Qwen/Qwen3.5-4B` | 12 | 0.625 | 0.406 |
+  | `allenai/Olmo-3-7B-Think` | 9 | 0.464 | 0.571 |
+  | `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 10 | 0.619 | 0.571 |
+  | `Skywork/Skywork-OR1-Math-7B` | 3 | 0.750 | 0.500 |
+
+  No AUC clears 0.58, the balanced accuracies swing on one or two rows each (Skywork's 0.750 is
+  three rows), and the other models' base rate - predict `True` for everyone - still beats every
+  fold on raw accuracy. Nothing here is a signal to build on.
+
+- **Consequences.**
+  - **E11 v2 stands.** Its per-model constants remain the best thing we can defend, and
+    nothing here justifies a v3.
+  - The two facts together explain the leaderboard: DeepSeek's model is worth about one case
+    (Finding 27), and it is the one model where we have any model at all.
+  - **What is left is the technical report**, where E21 joins E12, E14 and E20 as a measured
+    negative result, and any further modelling waits on more labels than 32 rows.
+  - Sample sizes are 3 to 12 rows. These are go/no-go signals, not measurements, and they all
+    point the same way.
+
+**Findings 33-43 are ported by hand from the `nakib_v2` branch** (measured on a teammate's
+checkout and Kaggle accounts, 19 Sep). The branches are deliberately not merged; the scripts
+they cite were copied file by file, and their numbering was shifted onto this sequence.
+Where a result there rests on self-generated `answer_modulus` labels it is marked superseded
+by Finding 31, which invalidated that label source.
+
+**33. More on `train-main-v2`: how it was found, what is in it, and why the prevalence gap is
+the problem population rather than the rule.** (`scripts/inspect_train_main_v2.py`, revision
+`23791d9b`. Extends Finding 30, which reached the same table independently.)
+
+- **Reachable only by listing the `aimo-interp` org on Hugging Face** - linked from neither the
+  competition website nor the `getting-started` README, public, unauthenticated.
+- **11 of the 82 rows carry `is_robust = null`**, all strictly inside the band (0.11-0.21). The
+  card says band cases are left unlabelled in validation and test too, so they are never scored.
+- **The problems are olympiad.** Problem 1 is verbatim 2025 AIME I Problem 1, and 5 of the 8
+  `val-sample` problems appear here. This is the first olympiad-difficulty material with
+  official labels.
+- **The label rule does not explain the inverted prevalence.** Re-labelling our own DeepSeek
+  instances under `<= 0.10` / `>= 0.25` moves the robust rate from 0.250 to 0.311, nowhere near
+  train-main-v2's 0.706. The gap is a property of the **problem population**, not the
+  labelling: ours is Hendrycks MATH, theirs is olympiad. Note the direction - the *harder*
+  problems have the *higher* robust rate, consistent with eligibility filtering.
+- **E11 v2's constants disagree with it.** We answer `False` for Skywork and Olmo-3-Think, which
+  this table labels 2 of 3 and 7 of 9 robust. Finding 27 chose those constants from a ~14-case
+  leaderboard; this is independent evidence against them, on too few rows to act on alone.
+
+**34. `problem` text is not a safe grouping key in that table.** (Same script.)
+
+- 36 distinct problem strings collapse to **29 templates** at similarity > 0.90; the card itself
+  says 28 problems.
+- The near-duplicates are not whitespace: the same statement with a constant swapped
+  (`$10^{5}$` vs `$10^{4}$`, `617` vs `1000`, `f(3520)` vs `f(2024)`), carrying different labels.
+- **Consequence:** SHA-1 of the normalised text would place two instantiations of one template
+  in different folds and leak. Any use of this table must group by template, not by text.
+
+**35. The small-track scoring task was rebuilt on 16 September, which is the likeliest cause of
+the leaderboard jump in Finding 23.** (Codabench API for competition 16180 and the Hugging Face
+commit log, read unauthenticated on 19 Sep.)
+
+- The task we submit to was **created 16 Sep at 22:35 UTC**, is numbered **v8**, id 36241, and
+  is named `AIMO Robustness Validation v8 - Small Model Track`. `COMPETITION.md` had recorded
+  v7. The Main Track task was created earlier the same day, at 17:12 UTC.
+- **The organizers were assembling that validation set the same day.** Their commit log:
+
+  | When (UTC) | Commit |
+  | --- | --- |
+  | 16 Sep 14:42 | replace contents with the `gap >= 0.25` construction (was v3) |
+  | 16 Sep 15:11 | **withhold 7 cells used by the small-track validation set** |
+  | 16 Sep 15:11 | update counts after withholding small-track val cells |
+
+  The labelling rule changed and rows were pulled out of the train split *because they are in
+  the small-track validation set*, on the day the task was recreated.
+- **Independent of our own timestamps.** Finding 23 brackets the change between 16 Sep 23:33
+  and 17 Sep 11:24 as we logged them; whether 22:35 UTC falls inside that bracket depends on
+  whether those logs are UTC or local (UTC+6), and the Codabench API refuses unauthenticated
+  reads of our own submissions. The commit log supports the conclusion either way.
+- **It weakens Finding 21's reading.** Withholding 7 cells from a split covering five
+  configurations is hard to reconcile with a hidden set made only of Qwen3.5-4B cases. Finding
+  27 still prefers v2's constants, so nothing is retracted, but the composition claim is open.
+- **Two contract facts changed:** the Competition phase allows **300 submissions per person**,
+  not 100 (that was the Warmup limit; 10 per day still holds), and `reasoning_effort` is
+  **merged upstream** (PR #9, `de79405`), touching the ingestion program and the shipped
+  solutions, not only the README. Our submodule is pinned two commits behind at `995f992`; the
+  E11 signature already works under both callers, so no submission change is required.
+
+**36. The `pool_id` collision had a second, silent loss on top of the crash, and can be resolved
+rather than dropped.** (Found independently on 19 Sep; Finding 29 reports the same root cause.)
+
+- Same diagnosis: `AI-MO/aimo-validation-amc` reuses its `id` column, so the 505-row pool holds
+  471 distinct ids - **34 collisions, all AMC**, covering 68 problems.
+- **The dangerous symptom was silent**, not the crash: `label.py` keyed `base_accuracy` on
+  `pool_id`, so a variant of problem A could be scored against problem B's baseline. Blast
+  radius at the time:
+
+  | Affected | Count |
+  | --- | --- |
+  | Pool problems sharing an id | 68 of 505 (13%) |
+  | Variants referencing a colliding id | 143 of 1249 |
+  | Qwen base records | 22 of 208 (6 of 64 eligible) |
+  | Qwen variant records | 18 of 107 |
+  | Skywork variant records | 4 of 28 |
+
+- **A second loss sat on top.** The base phase names items `orig:<pool_id>` and `load_records`
+  de-duplicates on `item_id`, so one record of each colliding pair was discarded *before any
+  labelling logic ran*: 208 Qwen records collapsed to 197. Both problems had been sampled, so
+  that was paid-for GPU time thrown away.
+- **Two fixes exist.** Ours disambiguates at the source (`pool.py` suffixes colliding ids) and
+  drops records filed under the old ambiguous ids. Theirs resolves them instead:
+  `(pool_id, expected_answer)` is unique across all 505 problems, so pre-fix records are
+  recovered rather than discarded, and `sample.py` suffixes only colliding `item_id`s so
+  existing records still resume. **Their `label.py`, `--problem-keys` and the `item_id` suffix
+  are all ported**, after checking that their labeller reproduces E20 exactly on our records
+  (49 instances, 45 train-ready, 38 self-robust). Their merge was
+  verified rather than assumed: every formerly-colliding `pool_id` resolves to its own
+  `problem_key`, the stored text matches the pool row, and `label.py` reported
+  `base_records_unresolved: 0` on the Skywork set.
+- **Report value.** A clean example of a dataset-provenance bug that produces plausible-looking
+  labels rather than an error, caught only because a duplicated-index crash fired first.
+
+**37. The gapfill runs: the cheapest possible self-labelling, and it worked.** (Their E23 and
+E22, pushed as `e20-base-qwen35-gapfill` and `e22-base-skywork-gapfill` on NAKIB, 2.4 h and
+1.4 h. Both registry entries are ported.)
+
+E18 and E19 had sampled variants for problems whose *base* records sat on accounts that
+checkout could not read, so none of them could be labelled. Each gapfill re-samples base
+accuracy for exactly those problems: one k=4 sample each, unlocking variant sets already paid
+for.
+
+| | Qwen3.5-4B | Skywork-OR1-Math-7B |
+| --- | --- | --- |
+| Problems re-sampled | 19 | 25 |
+| Eligible (solved 4/4) | 13 | 24 |
+| Train-ready labels after pairing | 26 (19 robust) | 23 (0.87 robust) |
+
+- **Eligibility is where the cost hides,** and Skywork - a math specialist - converts far more
+  base samples into labels than Qwen.
+- Their Qwen self-labels are **73.1% robust** against train-main-v2's 70.6%, and have **zero
+  overlap** with it by `problem_key`.
+- The Qwen run used one T4 of two: `base_sampling` was not wrapped in `per_gpu`, costing ~2x.
+
+> **Superseded by Finding 31.** These labels are `answer_modulus` self-labels, which E20 showed
+> do not measure official robustness. Kept as a record of what was measured.
+
+**38. Robustness is a property of the problem, not of the model: the models agree 20/20.**
+(`train/eval_train_main_v2.py` over `train-main-v2`; section `train-main-v2 transfer` of
+`RESULTS.md`. Reproduced on this checkout, 20 Sep.)
+
+| Scope | Agreeing pairs | Rate |
+| --- | --- | --- |
+| **Small-track models only** | **20 / 20** | **1.000** |
+| All configurations, incl. gpt-oss efforts | 83 / 85 | 0.976 |
+| Chance, at the 0.732 robust base rate | - | 0.608 |
+
+- **Label permutation test: p = 0.0005.**
+- **This is the first direct evidence for what Finding 22 inferred**: the signals that work are
+  problem properties, not model properties. There it was implied by `problem_nll` transferring
+  across models; here it is measured on the labels themselves.
+- **Consequence:** olympiad labels are fungible across models, so thin per-model data can be
+  pooled into one problem-level training set. It is also the cleanest reason our cross-model
+  *feature* test failed in Finding 32: the labels transfer, our features do not.
+- **Caveat:** 20 comparisons over 15 problems. Strong but small.
+
+**39. The MATH-trained text block does not transfer to olympiad problems, measured with CIs.**
+(Same script; complements Finding 32, which measured the fused model on the DeepSeek rows.)
+
+| Scope | n | ROC-AUC | 95% CI |
+| --- | --- | --- | --- |
+| All small-track rows | 34 | **0.617** | **[0.391, 0.833]** |
+| `Qwen/Qwen3.5-4B` | 12 | 0.688 | - |
+| `Skywork/Skywork-OR1-Math-7B` | 3 | 1.000 | - |
+| `allenai/Olmo-3-7B-Think` | 9 | 0.500 | - |
+| **`deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`** | 10 | **0.476** | - |
+
+- **The CI spans 0.5, and the worst row is the model the block was trained for.**
+- Always-robust scores 0.706 here; the best in-sample threshold sweep reaches only 0.765.
+- **A proposed E11 v3 was abandoned on this evidence** (their gate G-T, 19 Sep), independently
+  of ours (Finding 32).
+- **A calibration trap avoided:** the train split is 73% robust, the hidden validation set is
+  close to balanced (Finding 27). **Never calibrate a threshold on the train prevalence**, and
+  use prevalence-independent metrics against this table.
+- **What it does not say.** It does not show robustness is unpredictable on olympiad problems,
+  only that a model fitted on MATH does not predict it there. That was an argument for olympiad
+  *training* data - which Finding 31 then closed off, and Finding 32 tested directly.
+
+**40. Training the text block on olympiad labels instead does not rescue it.** (Three-way
+refit, scored on the 34 official rows.)
+
+| Text block trained on | n | ROC-AUC | 95% CI |
+| --- | --- | --- | --- |
+| DeepSeek MATH (shipped) | 138 | 0.617 | [0.395, 0.838] |
+| Qwen olympiad self-labels | 26 | 0.600 | [0.396, 0.788] |
+| Pooled MATH + olympiad | 164 | 0.579 | [0.375, 0.783] |
+
+Paired bootstrap, olympiad minus MATH: **-0.017, CI [-0.326, +0.298]**. Underpowered, but there
+is no hint of a gain, so the failure in Finding 39 is not simply a training-difficulty problem.
+
+**41. Prompt hidden states were the one block that did not fail on olympiad labels - on
+invalidated labels, at n=12.** (Their E21, `e21-stagea-qwen35-olympiad` on MR, 142 s;
+`train/eval_stagea_olympiad.py`, both ported.)
+
+Probes fitted on 26 Qwen self-labels, scored on the 12 officially labelled Qwen rows, disjoint
+by `problem_key`.
+
+| Block | ROC-AUC |
+| --- | --- |
+| **Stage A, all poolings** (pre-specified) | **0.844** |
+| Text block, same rows | 0.688 |
+
+- **Two controls disagree.** Permuting the evaluation labels gives p = 0.037; shuffling the
+  *training* labels and refitting - which keeps the probe's capacity to fit noise - gives
+  **p = 0.073**. The strict control does not clear 0.05.
+- Paired against text: **+0.158, CI [-0.273, +0.600]**; `max` pooling scored 0.938 and must be
+  ignored as the selection effect of Finding 11.
+- Stage A cost 142 s against the gapfill's 2.4 h: representation work is about three orders of
+  magnitude cheaper than sampling work.
+
+> **Superseded by Finding 31** as a result, since the training labels are `answer_modulus`
+> self-labels. **It is the one open tension in the record:** those labels are anti-correlated
+> with official ones for DeepSeek (Finding 31), yet a probe fitted on them ranked official Qwen
+> labels at 0.844. Either is explicable at n=12, and re-testing it needs Stage A features over
+> officially labelled problems - which Finding 32 has now measured directly, at chance.
+
+**42. A fleet audit: two aliases are the same accounts twice, and a completed Olmo run had
+never been downloaded.** (Audit of `kernels list --mine` across that checkout's aliases.)
+
+- **`CHOTON` is the same Kaggle account as `Labib`, and `MEDIUM` the same as `RSD`.** The
+  registry names eleven aliases but they resolve to fewer accounts, so their weekly quota is
+  **shared, not additional**. A twelfth alias, `MR`, is new and untouched.
+- `e17-base-olmo-think` had status COMPLETE, not the "paused" our log recorded, and nothing had
+  pulled its output: **32 problems sampled, 18 eligible**, fp16, TP=2, 9.7 GPU-hours recovered
+  for the cost of one download.
+- **Olmo really is the slow model:** 30.4 tok/s against Qwen's 85 and Skywork's 117; of 128
+  samples, 50 hit the 16k cap and 41 produced no answer. Finding 26's reason for pausing stands.
+- **18.5 GPU-hours are reachable from that checkout; 46.0 GPU-hours across 20 runs are not**,
+  including `e16-base-skywork` and the larger half of Qwen's base phase.
+
+**43. More labels were affordable, but could never buy what the project is short of.**
+(`datagen/plan_labelling_cost.py`, from measured throughput; section `Labelling cost model` of
+`RESULTS.md`. Ported for the report.)
+
+| Model | Pool-wide eligible | Cost per usable label | Whole pool |
+| --- | --- | --- | --- |
+| Qwen3.5-4B | 32% | 0.71 GPU-h | 113 GPU-h for ~159 labels |
+| Skywork-OR1-Math-7B | 64% | 1.47 GPU-h | 474 GPU-h for ~322 labels |
+
+- Labelling the entire pool for Qwen would have cost about 16% of the remaining fleet budget, so
+  **the shortage was never a compute problem**.
+- It corrects Finding 37: base-phase cost says Skywork is cheaper, but its variants phase ran at
+  2425 GPU-seconds per item against Qwen's 567. **That 4.3x gap is unexplained** - E19 generated
+  at 19.9 tok/s where E22 generated at 116.6 under a byte-identical vLLM config - and host
+  throttling is the guess, not a measurement.
+- **The binding ceiling was compliance, not volume.** Only `answer_modulus` is labelable under
+  the extra-data rule, so every label we could legally manufacture measures robustness under a
+  *changed requested output* while the competition scores *answer-preserving rewrites*. Scaling
+  volume scales the proxy, not the validation of it - which is exactly what Finding 31 then
+  measured.
+
+**44. Merging the organizers' split with the older tables corrupted two DeepSeek labels.**
+(Found while porting Finding 33; fixed in `datagen/ingest_public.py`.)
+
+`build_instances` aggregated every table's rows for a (model, problem) pair and took the largest
+decay. Two problems appear in both `aimo-2025-reference` and `train-main-v2`, which are labelled
+under **different rules**, and the older derived measurement won:
+
+| Problem | Official | Ours before | Effect |
+| --- | --- | --- | --- |
+| `cd15d0c0…` | robust (`max_drop` 0.08) | spurious (decay 0.11) | label flipped |
+| `49981d06…` | robust (`max_drop` 0.04) | ambiguous (decay 0.11) | dropped from training |
+
+- **Fix:** where `train-main-v2` covers a pair, its rows alone decide the label, the decay and
+  the `dataset_id`. This is the invariant their CLAUDE.md states as "do not merge the two
+  labellings"; we were merging them.
+- **Effect:** DeepSeek goes from 152 to **153 train-ready instances (46 robust)**, and its
+  official olympiad evaluation set from 8 rows to **10**, which is what Finding 39 scores
+  against. Finding 32 was measured on the 8 and is re-measured on the 10.
 
 ---
 

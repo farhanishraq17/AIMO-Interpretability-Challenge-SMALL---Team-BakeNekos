@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 20 September 2026, 08:00 UTC.
+Last updated: 20 September 2026, 16:00 UTC.
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.
@@ -35,10 +35,14 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E14 | Does the answer survive rewrites at test time? | Kaggle | Done | **No.** At chance, and too expensive. Approach dropped |
 | E15 | Qwen3.5-4B: which problems can be labelled? | Kaggle | **Stopped** (3 sessions) | 84 of 270 eligible; labels unusable (Finding 31) |
 | E16 | Skywork-OR1-Math-7B: same | Kaggle | **Stopped** (2 sessions) | 143 of 232 eligible; labels unusable (Finding 31) |
-| E17 | Olmo-3-7B-Think: same | Kaggle | Paused | 17 of 30 eligible; too slow on T4s (Finding 26) |
+| E17 | Olmo-3-7B-Think: same | Kaggle | **Stopped**, output recovered 20 Sep | 18 of 32 eligible; slowest model at 30 tok/s; labels unusable (Findings 26, 31, 42) |
 | E18 | Qwen3.5-4B: sample the variants of eligible problems | Kaggle | Done | 89 of 91 variants; **47 problems labelled**, 19 robust; 26 clear-cut (Finding 29) |
 | E19 | Skywork-OR1-Math-7B: same | Kaggle | **Stopped** | Labels set aside after E20 (Finding 31) |
 | E20 | Do self-labels agree with official labels? (DeepSeek, 66 MATH problems) | Kaggle | Done | **No.** kappa -0.14, drops correlate -0.25. Self-labelling stops (Finding 31) |
+| **E21** | Does the DeepSeek model transfer to olympiad problems? Is there a cross-model signal? | Kaggle + local | Done | **No to both.** AUC 0.429 on 10 unseen olympiad rows; no held-out model clears AUC 0.58 (Finding 32) |
+| Gapfill | Base samples for problems whose variants were already paid for (Qwen, Skywork) | Kaggle (`nakib_v2`) | Done | 26 Qwen + 23 Skywork self-labels; invalidated by E20 (Finding 37) |
+| Stage A olympiad | Do prompt states carry olympiad signal where text does not? | Kaggle (`nakib_v2`) | Done | AUC 0.844 on 12 official Qwen rows, strict control p = 0.073, self-labelled training set (Finding 41) |
+| Official-label tests | Do models agree? Does the text block reach olympiad rows? | local (`nakib_v2`) | Done | Models agree **20/20**, p = 0.0005 (Finding 38); text block AUC 0.617, CI spans 0.5 (Finding 39) |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---
@@ -58,10 +62,14 @@ Skywork-OR1-Math-7B and Olmo-3-7B-Think (Finding 30).
 
 | Source | DeepSeek | Qwen3.5-4B | Olmo-3-7B-Think | Skywork | Llama-3.1-8B |
 | --- | --- | --- | --- | --- | --- |
-| Train-ready instances | 152 (44 robust) | 12 (8) | 9 (7) | 3 (2) | 49 (0) |
+| Train-ready instances | 153 (46 robust) | 12 (8) | 9 (7) | 3 (2) | 49 (0) |
 
-**Kept for the report:** the E15-E19 base and variant records, as a documented negative result,
-and the 26 Qwen / 19 Skywork self-labels, which are not used for training.
+**Kept for the report:** the E15-E19 and gapfill base and variant records, as a documented
+negative result, and the Qwen and Skywork self-labels (`Self-generated olympiad labels` in
+`RESULTS.md`), which are not used for training.
+
+**What the official labels then bought us: nothing yet.** E21 spent them on the two questions
+they made answerable, and both came back negative (Finding 32, below).
 
 ---
 
@@ -226,6 +234,65 @@ sentence. 447 prompts, 3.86M generated tokens.
 - It also exposed a measurement bug of ours: the old length control turned heavily tied
   signals into length itself, which flattered them by 0.1–0.2 AUC.
 
+### E21: olympiad transfer and cross-model signal (DIDHITI, SALAM, TASHIN, ISHRAQ, 20 Sep, ~0.3 h each)
+
+Stage A prompt states over the official split for all four models: DeepSeek's 152 train
+instances (the 8 olympiad ones from `train-main-v2` included), Qwen's 12, Olmo-3-Think's 9,
+Skywork's 3. Four small kernels, one per model, because each needs its own checkpoint.
+
+**Question 1: does the shipped DeepSeek model survive the shift to olympiad problems?** The 10
+`train-main-v2` rows are held out by construction: they were unlabelled when the artifact was
+built. (Re-measured after the label fix of Finding 44; the first pass saw 8 of them.)
+
+| Method | Accuracy | Balanced acc. | ROC-AUC |
+| --- | --- | --- | --- |
+| E11 fused, shipped artifact | 0.700 | 0.595 | 0.429 |
+| its text block alone | 0.500 | 0.452 | 0.476 |
+| layer ensemble refit on the 142 MATH rows | 0.500 | 0.548 | 0.476 |
+| all-robust | 0.700 | 0.500 | 0.500 |
+
+**Question 2: is there anything model-agnostic to borrow?** The five next-token uncertainty
+scalars are the only features whose width does not depend on the model. Pooled over the 34
+official rows, standardised within each model, one model held out at a time: no fold clears
+AUC 0.58, and the balanced accuracies (0.464-0.750) swing on one or two rows each.
+
+- **Decision (gate G-T): both fail.** The signal we have is specific to MATH-style problems and
+  to DeepSeek. **E11 v2 stands; there is no v3 to build from a model** (Finding 32).
+- Sample sizes are 3 to 12 rows, so these are go/no-go signals rather than measurements.
+- Cost: about 1.2 GPU-hours in total, most of it downloading checkpoints.
+
+### Ported from the `nakib_v2` branch (teammate's checkout and accounts, 19 Sep)
+
+The branches are deliberately not merged; scripts were copied file by file and the findings
+renumbered onto our sequence (Findings 33-43). Three runs and four local analyses came across.
+
+| Run / analysis | Where | Result |
+| --- | --- | --- |
+| `e20-base-qwen35-gapfill` (their E23; the slug kept its original number) | NAKIB, 2.4 h | Base samples for 19 problems whose variants were already paid for; 13 eligible, Qwen reaches 26 labels |
+| `e22-base-skywork-gapfill` (their E22) | NAKIB, 1.4 h | The same for 25 Skywork problems; 24 eligible, 23 labels |
+| `e21-stagea-qwen35-olympiad` (their E21) | MR, 142 s | Stage A probes on self-labels score AUC 0.844 on 12 official Qwen rows; strict control p = 0.073 |
+| `scripts/inspect_train_main_v2.py` | local | 82 rows, label rule verified at 0 violations, **29 templates from 36 problem strings** |
+| `train/eval_train_main_v2.py` | local | **Models agree 20/20 on shared problems, p = 0.0005**; text block AUC 0.617, CI [0.391, 0.833] |
+| `train/eval_stagea_olympiad.py` | local | The controls behind the 0.844 above |
+| `datagen/plan_labelling_cost.py` | local | Labelling the whole pool for Qwen = 113 GPU-h, 16% of the remaining budget |
+
+- **The two self-label results are superseded by E20** (Finding 31), which invalidated the label
+  source. They stay in the record as measurements.
+- **The one result that stands on official data is the 20/20 model agreement:** robustness is a
+  property of the problem, not of the model, which is why per-model constants do as well as they
+  do and why our cross-model *feature* test still failed (Finding 32).
+- **Fleet correction.** That checkout's aliases are NAKIB (`nakibsaleh`), CHOTON
+  (`gmnoorlabib` = the registry's `Labib`), MEDIUM (`rsdaiyan` = `RSD`) and MR
+  (`mohsinreza1971`), so `CHOTON`/`MEDIUM` share a quota with `Labib`/`RSD` rather than adding
+  one. Their audit found every AIMO kernel downloaded once `e17-base-olmo-think` was recovered
+  - it had completed on 17 Sep and was never pulled. **18.5 GPU-hours are reachable from that
+  machine; 46.0 across 20 runs are not**, including `e16-base-skywork` and
+  `e15-base-qwen35-a` (Finding 42).
+- **A bug it exposed here:** our ingest was aggregating the official split with the older tables
+  for the same problem, which flipped one DeepSeek label and dropped another. Fixed; the
+  official rows now decide any pair they cover, and DeepSeek's olympiad evaluation set grows
+  from 8 rows to 10 (Finding 44).
+
 ---
 
 ## 4. Failures worth remembering
@@ -241,15 +308,20 @@ sentence. 447 prompts, 3.86M generated tokens.
 | vLLM's custom all-reduce crashes on some T4 pairs | E14, E16 | NCCL instead (`disable_custom_all_reduce`) (Finding 23) |
 | Qwen3.5 needs one state block per sequence; the default 256 exceeds the 157 available | E15 | `--max-num-seqs 64` (Finding 23) |
 | Two Kaggle tokens stopped authenticating | 17 Sep | Awaiting new tokens from the account owners (Finding 23) |
+| One problem's base accuracy scored another's variants, silently | E15-E19 | `pool_id` is not unique; disambiguated at the source, and one record of each colliding pair had been discarded before that (Findings 29, 36) |
+| The official split was merged with older tables for the same problem | Ingest | Different label rules; the official rows now win outright (Finding 44) |
 
 ---
 
 ## 5. Where this leaves the approach
 
-- **DeepSeek has a working model:** text + prompt hidden states, 0.7173 balanced accuracy,
-  packaged and verified on GPUs.
-- **Two label-free shortcuts have now failed** (E12, E14). Neither reads anything specific to
-  the model; both mostly read the problem.
-- **So the three unlabelled models need labels**, from the organizers or from E15–E17. That is
-  the whole current GPU load.
-- **The leaderboard needs re-measuring** before E11 v3 sets each model's default.
+- **DeepSeek has a working model on MATH problems:** text + prompt hidden states, 0.7173
+  balanced accuracy under grouped CV. E21 shows it does not transfer to olympiad problems
+  (AUC 0.429), which is the distribution the competition scores.
+- **Every shortcut has now failed:** label-free forward-pass signals (E12), test-time answer
+  agreement (E14), self-generated labels (E20), and cross-model transfer (E21). Each is a
+  measured negative result for the report.
+- **Labels are the binding constraint.** 32 official small-track rows is not a training set,
+  and the extra-data rule leaves no compliant way to make more.
+- **E11 v2 (0.64) is the submission** until more labels exist. The open ask is to the
+  organizers: is more training data coming?

@@ -70,6 +70,10 @@ ROBUST_MAX_DROP = 0.10
 SPURIOUS_MIN_DROP = 0.25
 AMBIGUOUS_MAX_DECAY = SPURIOUS_MIN_DROP  # kept for importers; the band is (0.10, 0.25)
 
+# That split is also authoritative wherever it covers a (model, problem) pair: it is labelled
+# under a different rule from the older derived tables, so the two must not be aggregated.
+OFFICIAL_SPLIT_REPO = "aimo-interp/train-main-v2"
+
 
 def canonical_model(raw: str) -> str | None:
     return MODEL_CANONICAL.get(raw.strip())
@@ -215,7 +219,13 @@ def build_instances(rows: list[dict]) -> list[dict]:
     instances = []
     for (model, pkey), group in grouped.items():
         eligible = [r for r in group if r["is_eligible"]]
-        scored = eligible or group
+        # The organizers' own split wins outright where it covers a pair. It is labelled under
+        # a different rule (`max_drop`, three-valued) from the older derived tables, and mixing
+        # the two silently overrode two official DeepSeek labels with older measurements of the
+        # same problems: `cd15d0c0…` was flipped robust -> spurious and `49981d06…` was pushed
+        # into the ambiguous band and dropped from training.
+        official = [r for r in group if r["source_repo"] == OFFICIAL_SPLIT_REPO]
+        scored = official or eligible or group
         max_decay = max(r["absolute_accuracy_decay"] for r in scored)
         perturbations = sorted({p for r in scored for p in r["perturbation_types"]})
         published = [r for r in scored if r["label_source"] == "published"]
@@ -223,9 +233,9 @@ def build_instances(rows: list[dict]) -> list[dict]:
             {
                 "model_id": model,
                 "problem_key": pkey,
-                "problem": group[0]["problem"],
-                "problem_id": group[0]["problem_id"],
-                "dataset_id": group[0]["dataset_id"],
+                "problem": scored[0]["problem"],
+                "problem_id": scored[0]["problem_id"],
+                "dataset_id": scored[0]["dataset_id"],
                 "is_robust": max_decay <= ROBUST_MAX_DROP,
                 "max_absolute_accuracy_decay": max_decay,
                 "n_perturbation_rows": len(scored),

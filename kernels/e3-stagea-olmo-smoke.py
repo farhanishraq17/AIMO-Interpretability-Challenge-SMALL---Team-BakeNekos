@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 EXPERIMENT = json.loads("{\"name\": \"e3-stagea-olmo-smoke\", \"account\": \"TASHIN\", \"pip\": [\"transformers==5.13.0\", \"accelerate==1.13.0\", \"huggingface-hub==1.22.0\", \"tokenizers==0.22.2\", \"safetensors==0.8.0\", \"scikit-learn==1.8.0\", \"joblib==1.5.3\"], \"steps\": [[\"datagen/extract_features.py\", \"--model-id\", \"allenai/Olmo-3-7B-Instruct\", \"--system-prompt-file\", \"data/probe_system_prompt.txt\", \"--out-dir\", \"/kaggle/working/features/stagea-olmo-smoke\", \"--no-filter-model\"], [\"datagen/merge_features.py\", \"--features-dir\", \"/kaggle/working/features/stagea-olmo-smoke\"]]}")
-BUNDLE_SHA1 = "b2187d02a332750ee6f8ac642a8f71e02fad2b9f"
+BUNDLE_SHA1 = "8d3a0a0f42a1907a2b08c2f2eea881afab40e108"
 BUNDLE_B64 = """  # bundle stripped for the repository copy: these files are tracked here
   data/probe_system_prompt.txt
   data/small_track/instances.parquet

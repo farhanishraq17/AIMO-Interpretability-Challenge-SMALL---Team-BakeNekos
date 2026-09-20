@@ -83,8 +83,10 @@ BUNDLE_DIRS = ["getting-started/solutions/uncertainty-profiling/uncertainty_prof
 BUNDLE_WARN_BYTES = 900_000
 
 # ISHMAM1 and DESIKALAKAR stopped authenticating on 17 Sep; RSD and Labib were added on 18 Sep.
-# NAKIB, CHOTON and MEDIUM come from the `nakib` branch; each alias needs its token in Secrets.env.
-ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR", "RSD", "Labib", "NAKIB", "CHOTON", "MEDIUM"]
+# NAKIB, CHOTON, MEDIUM and MR come from the `nakib`/`nakib_v2` branches; each alias needs its
+# token in Secrets.env. CHOTON and MEDIUM are the *same Kaggle accounts* as Labib and RSD under
+# a second spelling, so their quota is shared, not additional (Finding 42).
+ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR", "RSD", "Labib", "NAKIB", "CHOTON", "MEDIUM", "MR"]
 
 # Stage B traces used downstream (E4). fp16 only: the dtype benchmark showed bf16 and fp16
 # greedy traces diverge, so the two sets must never be mixed.
@@ -172,6 +174,27 @@ SKYWORK_VARIANT_RECORDS = "runs/e19-variants-skywork/e19-skywork/variants/shard_
 # E20: DeepSeek's officially labelled MATH problems in pool form (datagen/perturb/deepseek_check_pool.py).
 CHECK_POOL = "data/deepseek_check/pool.parquet"
 CHECK_VARIANTS = "data/deepseek_check/variants.parquet"
+
+# Problems E18 sampled Qwen variants for while their base records stayed on an account this
+# checkout cannot read. Listed literally so the kernel records exactly which problems it
+# re-sampled (ported from `nakib_v2`, Finding 36).
+QWEN35_GAPFILL_KEYS = (
+    "09614ab696400998", "0b54136fc692e0c7", "10f97723a88077d2", "1135f49af4fcedbb",
+    "1293217ebd97ed17", "139d89afb527f5e6", "1a17db537035c4f4", "1f0ccfd0d6792c8e",
+    "27a4e7ab5d29661f", "5b10a0fd172a4dd6", "691cb9fbdb99b9a9", "9e3cfe84ec7606f1",
+    "b5ac25ab547ec3db", "b93905359e1ad28d", "cd09ffc429cc54dd", "d4b1650741179e7b",
+    "d4ccf4347ab82805", "ebcaa5cf29f5e809", "f72895c4fbcfa580",
+)
+# The same, for the 25 problems E19 sampled Skywork variants for.
+SKYWORK_GAPFILL_KEYS = (
+    "1a17db537035c4f4", "1d8ef1e3f2eaf603", "2025c735c4ffde03", "2053390e1ec47f98",
+    "25aa0f4d78fcd6c3", "32d936881040ffa5", "3980c787bdea2215", "3aad65408a0f1875",
+    "44206a7619bcad94", "4893606b65d43380", "506d378bc029f34d", "725ef63f684781bb",
+    "79e1abbe53ef6879", "861cf79dfc623f20", "874b4a8d662051bb", "8f6a5fcacd3175bd",
+    "921983dd11591226", "adeb6cb10b2fe831", "b0832a17441dcd5b", "b265d695c151c5c7",
+    "c21ef3d4d630a47e", "d50ba6f1dcbb7572", "e53faab347086059", "e7c519bf1eea1396",
+    "eadf4b95241b8c82",
+)
 
 
 def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
@@ -508,6 +531,90 @@ EXPERIMENTS: dict[str, Experiment] = {
                              max_new_tokens=8192, chunk=8, max_hours=4.5),
         ),
         bundle_globs=(*E7_FILES, CHECK_POOL, CHECK_VARIANTS),
+    ),
+    "e21-stagea-deepseek-official": Experiment(
+        account="DIDHITI",
+        purpose="E21 Stage A on DeepSeek over the relabelled 152 train instances, which now include the "
+        "10 official olympiad ones from train-main-v2. Gives the E11 probe its first out-of-sample test "
+        "on the difficulty shift the private test set asks for (Finding 30).",
+        steps=(
+            stage_a(DEEPSEEK, "stagea-deepseek-official"),
+            merge(f"{KAGGLE_FEATURES}/stagea-deepseek-official"),
+        ),
+    ),
+    "e21-stagea-qwen35-official": Experiment(
+        account="SALAM",
+        purpose="E21 Stage A on Qwen3.5-4B over its 12 officially labelled problems (8 robust). With the "
+        "other three models, the first pooled cross-model probe we can hold a model out of.",
+        steps=(
+            stage_a(QWEN35, "stagea-qwen35-official"),
+            merge(f"{KAGGLE_FEATURES}/stagea-qwen35-official"),
+        ),
+    ),
+    "e21-stagea-skywork-official": Experiment(
+        account="TASHIN",
+        purpose="E21 Stage A on Skywork-OR1-Math-7B over its 3 officially labelled problems (see "
+        "e21-stagea-qwen35-official).",
+        steps=(
+            stage_a(SKYWORK, "stagea-skywork-official"),
+            merge(f"{KAGGLE_FEATURES}/stagea-skywork-official"),
+        ),
+    ),
+    "e21-stagea-olmo-think-official": Experiment(
+        account="ISHRAQ",
+        purpose="E21 Stage A on Olmo-3-7B-Think over its 9 officially labelled problems (see "
+        "e21-stagea-qwen35-official).",
+        steps=(
+            stage_a(OLMO_THINK, "stagea-olmo-think-official"),
+            merge(f"{KAGGLE_FEATURES}/stagea-olmo-think-official"),
+        ),
+    ),
+    # --- Run on the teammate's accounts from the `nakib_v2` branch, ported so the whole fleet's
+    # kernels stay addressable from this repository. Their slugs keep the numbering they were
+    # pushed under, which collides with ours: `e20-base-qwen35-gapfill` is that branch's E23,
+    # and `e21-stagea-qwen35-olympiad` is its E21, neither of which is our E20 or E21.
+    "e20-base-qwen35-gapfill": Experiment(
+        account="NAKIB",
+        purpose="Base samples for the 19 problems E18 already sampled Qwen variants for but whose "
+        "base records are unreachable (they live in the e15-base-qwen35-a shards on an account "
+        "that checkout cannot read). Each costs one k=4 base sample and unlocks a variant set "
+        "already paid for. Keyed on problem_key because pool_id is not unique (Finding 29). "
+        "Result: 19/19 sampled, 13 eligible, Qwen reaches 26 train-ready labels (Finding 37) - "
+        "since invalidated by E20 (Finding 31).",
+        steps=(
+            VLLM_INSTALL,
+            base_sampling(
+                QWEN35, "e20-qwen35", "--tensor-parallel", "1", "--text-only", "--max-num-seqs", "64",
+                "--problem-keys", *QWEN35_GAPFILL_KEYS,
+            ),
+        ),
+        bundle_globs=E7_FILES,
+    ),
+    "e22-base-skywork-gapfill": Experiment(
+        account="NAKIB",
+        purpose="The same gapfill for Skywork: base samples for the 25 problems E19 sampled "
+        "variants for. Result: 24 of 25 eligible, 23 train-ready labels (Finding 37) - since "
+        "invalidated by E20 (Finding 31). TP=2, as Skywork in fp16 does not fit one T4.",
+        steps=(
+            VLLM_INSTALL,
+            base_sampling(SKYWORK, "e22-skywork", "--problem-keys", *SKYWORK_GAPFILL_KEYS),
+        ),
+        bundle_globs=E7_FILES,
+    ),
+    "e21-stagea-qwen35-olympiad": Experiment(
+        account="MR",
+        purpose="Do prompt hidden states carry olympiad robustness signal when text does not? "
+        "Stage A over 38 Qwen3.5-4B problems from datagen/build_stagea_olympiad_set.py: 26 "
+        "answer-modulus olympiad self-labels to fit probes on, and the 12 officially labelled "
+        "train-main-v2 rows to score them against, disjoint by problem_key. Result: AUC 0.844 "
+        "against text's 0.688, but the strict control gives p = 0.073 and the training labels "
+        "were later invalidated by E20 (Findings 41, 31).",
+        steps=(
+            stage_a(QWEN35, "stagea-qwen35-olympiad",
+                    "--instances", "data/stagea_olympiad/instances.parquet"),
+            merge(f"{KAGGLE_FEATURES}/stagea-qwen35-olympiad"),
+        ),
+        bundle_globs=("data/stagea_olympiad/instances.parquet",),
     ),
     "e4-tracestate-deepseek": Experiment(
         account="SALAM",
