@@ -43,6 +43,9 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | Gapfill | Base samples for problems whose variants were already paid for (Qwen, Skywork) | Kaggle (`nakib_v2`) | Done | 26 Qwen + 23 Skywork self-labels; invalidated by E20 (Finding 37) |
 | Stage A olympiad | Do prompt states carry olympiad signal where text does not? | Kaggle (`nakib_v2`) | Done | AUC 0.844 on 12 official Qwen rows, strict control p = 0.073, self-labelled training set (Finding 41) |
 | Official-label tests | Do models agree? Does the text block reach olympiad rows? | local (`nakib_v2`) | Done | Models agree **20/20**, p = 0.0005 (Finding 38); text block AUC 0.617, CI spans 0.5 (Finding 39) |
+| E22 | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | **Planned** | Scores every later gate (PLAN §11) |
+| E23 | Do familiarity/contamination scores predict robustness? | Kaggle | **Planned** | Gate G-M |
+| E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | **Planned** | Gate G-V2: reopens or finally closes self-labelling |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---
