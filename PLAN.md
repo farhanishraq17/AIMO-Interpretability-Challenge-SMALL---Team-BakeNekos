@@ -246,7 +246,7 @@ Authoritative run definitions live in `datagen/kaggle_launch.py`.
 | Stage A olympiad (`nakib_v2`) | Do prompt states carry olympiad signal where text does not? | MR | **Done** | AUC 0.844 vs text's 0.688 on 12 official Qwen rows, but the strict control gives p = 0.073 and the training labels were self-labels (Finding 41) |
 | **E22** | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | **Done** | Nothing clears chance; problem length is best at AUC 0.635, CI [0.42, 0.84] (Finding 46) |
 | **E23** | Do familiarity/contamination scores (Min-K%, zlib, suffix NLL) predict robustness? | RSD (Qwen, DeepSeek), Labib (Skywork, Olmo-Think) | **Done** | **G-M fails**, but on olympiad problems familiar problems lean spurious (mean NLL 0.69 unoriented, CI to 0.49); tested on the leaderboard as E27d (Finding 47) |
-| **E24** | Do `answer_modulus` self-labels agree with official labels *on olympiad problems*? | Eshad (E24a); ISHRAQ, DIDHITI, TASHIN, SALAM (E24b) | **Running** (E24a: answer key) | Gate G-V2: reopens or finally closes Lane E (§11) |
+| **E24** | Do `answer_modulus` self-labels agree with official labels *on olympiad problems*? | ISHRAQ (E24a); TASHIN, ISHRAQ, RSD, Labib (E24b) | **Running** (E24b; E24a done: 14 of 20 problems answered, 27 pairs) | Gate G-V2: reopens or finally closes Lane E (§11) |
 | **E27** | Can per-problem predictions from official labels beat the 0.64 constant ceiling on the leaderboard? | local + Codabench | **Built**, awaiting upload | Three ZIPs (§11.6); the constants cap is 9/14 (Finding 45) |
 
 **Pipeline for every GPU result:**

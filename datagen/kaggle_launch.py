@@ -177,6 +177,7 @@ CHECK_POOL = "data/deepseek_check/pool.parquet"
 CHECK_VARIANTS = "data/deepseek_check/variants.parquet"
 # E24: the labelled olympiad problems of train-main-v2 (datagen/perturb/official_check_pool.py).
 OFFICIAL_POOL = "data/official_check/pool.parquet"
+OFFICIAL_VARIANTS = "data/official_check/variants.parquet"
 
 # Problems E18 sampled Qwen variants for while their base records stayed on an account this
 # checkout cannot read. Listed literally so the kernel records exactly which problems it
@@ -198,6 +199,32 @@ SKYWORK_GAPFILL_KEYS = (
     "c21ef3d4d630a47e", "d50ba6f1dcbb7572", "e53faab347086059", "e7c519bf1eea1396",
     "eadf4b95241b8c82",
 )
+
+
+def official_check(
+    model_id: str, short: str, *engine: str, max_new_tokens: int = 24576, hours: tuple[float, float] = (4.0, 6.5),
+    per_gpu_engines: bool = False,
+) -> tuple[tuple[str, ...], ...]:
+    """E24b: base phase, then `answer_modulus` variants, on the official problems `model_id` is labelled on.
+
+    Olympiad problems truncate often at 16k (58% of Qwen's samples did, Finding 26), and these are
+    problems the model solved in the organizers' runs, so the cap is 24k where memory allows.
+    """
+    pool, out = f"data/official_check/pool_{short}.parquet", f"e24b-{short}"
+    base_records = f"/kaggle/working/{out}/base/shard_*/records.jsonl"
+    shards = [("--num-shards", "2", "--shard-index", str(g)) for g in (0, 1)] if per_gpu_engines else [()]
+
+    def base(shard: tuple[str, ...]) -> tuple[str, ...]:
+        return base_sampling(model_id, out, "--pool", pool, *engine, *shard,
+                             max_new_tokens=max_new_tokens, max_hours=hours[0])
+
+    def variants(shard: tuple[str, ...]) -> tuple[str, ...]:
+        return variant_sampling(model_id, out, base_records, "--pool", pool, "--variants", OFFICIAL_VARIANTS,
+                                *engine, *shard, max_new_tokens=max_new_tokens, max_hours=hours[1])
+
+    if per_gpu_engines:
+        return (VLLM_INSTALL, per_gpu(*map(base, shards)), per_gpu(*map(variants, shards)))
+    return (VLLM_INSTALL, base(()), variants(()))
 
 
 def familiarity(model_id: str, out_name: str) -> tuple[str, ...]:
@@ -672,6 +699,35 @@ EXPERIMENTS: dict[str, Experiment] = {
         steps=(("submission/check_e27d.py", "--models", SKYWORK, OLMO_THINK),),
         bundle_globs=("submission/check_e27d.py", "dist/solution-e27d-familiarity-small.zip",
                       "data/official_check/pool.parquet", "data/official_check/official_labels.parquet"),
+    ),
+    "e24b-qwen35": Experiment(
+        account="TASHIN",
+        purpose="E24b, gate G-V2: do answer_modulus self-labels agree with official labels on olympiad "
+        "problems? Qwen3.5-4B on the 9 official problems it is labelled on that have a reference answer: "
+        "base phase k=4, then 2 answer_modulus variants each, k=4, 24k cap, one vLLM engine per T4.",
+        steps=official_check(QWEN35, "qwen35", "--tensor-parallel", "1", "--text-only", "--max-num-seqs", "64",
+                             per_gpu_engines=True),
+        bundle_globs=(*E7_FILES, "data/official_check/pool_qwen35.parquet", OFFICIAL_VARIANTS),
+    ),
+    "e24b-deepseek": Experiment(
+        account="ISHRAQ",
+        purpose="E24b for DeepSeek-R1-0528-Qwen3-8B on its 7 answerable official problems (see e24b-qwen35). TP=2.",
+        steps=official_check(DEEPSEEK, "deepseek"),
+        bundle_globs=(*E7_FILES, "data/official_check/pool_deepseek.parquet", OFFICIAL_VARIANTS),
+    ),
+    "e24b-skywork": Experiment(
+        account="RSD",
+        purpose="E24b for Skywork-OR1-Math-7B on its 3 official problems (see e24b-qwen35). TP=2.",
+        steps=official_check(SKYWORK, "skywork"),
+        bundle_globs=(*E7_FILES, "data/official_check/pool_skywork.parquet", OFFICIAL_VARIANTS),
+    ),
+    "e24b-olmo-think": Experiment(
+        account="Labib",
+        purpose="E24b for Olmo-3-7B-Think on its 8 answerable official problems (see e24b-qwen35). TP=2 at a "
+        "12k cap, the most its full KV cache allows on a T4 pair (Finding 26).",
+        steps=official_check(OLMO_THINK, "olmo-think", "--gpu-memory-utilization", "0.95",
+                             max_new_tokens=12288, hours=(4.5, 6.5)),
+        bundle_globs=(*E7_FILES, "data/official_check/pool_olmo-think.parquet", OFFICIAL_VARIANTS),
     ),
     "e4-tracestate-deepseek": Experiment(
         account="SALAM",

@@ -45,7 +45,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | Official-label tests | Do models agree? Does the text block reach olympiad rows? | local (`nakib_v2`) | Done | Models agree **20/20**, p = 0.0005 (Finding 38); text block AUC 0.617, CI spans 0.5 (Finding 39) |
 | E22 | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | Done | Nothing clears chance; problem length best at 0.635, CI [0.42, 0.84] (Finding 46) |
 | E23 | Do familiarity/contamination scores predict robustness? | Kaggle | Done | **G-M fails**; on olympiad problems familiar problems lean spurious, not significant (Finding 47) |
-| E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | **Running** (E24a answer key on Eshad) | Gate G-V2: reopens or finally closes self-labelling |
+| E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | **Running** (E24b; E24a answer key done) | Gate G-V2: reopens or finally closes self-labelling |
 | E27 | Per-problem predictions from official labels, to beat the 0.64 constant ceiling | local + Codabench | **Built**, awaiting upload | Three ZIPs; the constants cap is 9/14 (Finding 45) |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
@@ -53,9 +53,17 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 
 ## 2. Running now
 
-**`e24a-answer-key-skywork` on Eshad** (pushed 22 Sep): Skywork k=8 over the 20 labelled official
-problems, to recover the answers `train-main-v2` does not ship (gate G-V2, PLAN §11). Everything
-else is idle; the original self-labelling program (E15-E19) stays stopped.
+**E24b, gate G-V2** (pushed 22 Sep): each model samples the official problems it is labelled on
+(base phase, then two `answer_modulus` variants each, k=4), to compare self-labels with official
+labels on olympiad problems. `e24b-qwen35` (TASHIN), `e24b-deepseek` (ISHRAQ), `e24b-skywork`
+(RSD), `e24b-olmo-think` (Labib).
+
+**E24a is done.** `train-main-v2` ships no answers, so Skywork sampled all 20 labelled problems
+8 times (`e24a-answer-key-skywork`, ISHRAQ; its first push went to Eshad, which ran without a
+GPU and needs phone verification). A reference answer is kept only when all 8 samples agree:
+that happened on 3 of the 6 problems whose answers were already known, matching all 3, and on 8
+of the 14 unknown ones. **14 problems answered, 28 compliant variants, 27 (model, problem)
+pairs to test**: Qwen 9, Olmo 8, DeepSeek 7, Skywork 3.
 
 **Why it stopped.** E20 compared self-generated `answer_modulus` labels with official ones on
 66 DeepSeek problems: agreement 0.29, Cohen's kappa -0.135, and our measured drops correlate
