@@ -244,9 +244,10 @@ Authoritative run definitions live in `datagen/kaggle_launch.py`.
 | **E21** | Does the DeepSeek model transfer to olympiad problems, and is there a cross-model signal? | DIDHITI, SALAM, TASHIN, ISHRAQ | **Done** | **No to both.** AUC 0.429 on the 10 unseen olympiad rows; every leave-one-model-out fold at chance (Finding 32) |
 | Gapfill (`nakib_v2`) | Base samples for problems whose variants were already paid for | NAKIB | **Done** | 26 Qwen and 23 Skywork self-labels (Finding 37), invalidated by E20 |
 | Stage A olympiad (`nakib_v2`) | Do prompt states carry olympiad signal where text does not? | MR | **Done** | AUC 0.844 vs text's 0.688 on 12 official Qwen rows, but the strict control gives p = 0.073 and the training labels were self-labels (Finding 41) |
-| **E22** | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | **Planned** | Scores every later gate (§11) |
-| **E23** | Do familiarity/contamination scores (Min-K%, zlib, suffix NLL) predict robustness? | RSD | **Planned** | Gate G-M (§11) |
-| **E24** | Do `answer_modulus` self-labels agree with official labels *on olympiad problems*? | ISHRAQ, DIDHITI, TASHIN, SALAM | **Planned** | Gate G-V2: reopens or finally closes Lane E (§11) |
+| **E22** | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | **Done** | Nothing clears chance; problem length is best at AUC 0.635, CI [0.42, 0.84] (Finding 46) |
+| **E23** | Do familiarity/contamination scores (Min-K%, zlib, suffix NLL) predict robustness? | RSD (Qwen, DeepSeek), Labib (Skywork, Olmo-Think) | **Done** | **G-M fails**, but on olympiad problems familiar problems lean spurious (mean NLL 0.69 unoriented, CI to 0.49); tested on the leaderboard as E27d (Finding 47) |
+| **E24** | Do `answer_modulus` self-labels agree with official labels *on olympiad problems*? | Eshad (E24a); ISHRAQ, DIDHITI, TASHIN, SALAM (E24b) | **Running** (E24a: answer key) | Gate G-V2: reopens or finally closes Lane E (§11) |
+| **E27** | Can per-problem predictions from official labels beat the 0.64 constant ceiling on the leaderboard? | local + Codabench | **Built**, awaiting upload | Three ZIPs (§11.6); the constants cap is 9/14 (Finding 45) |
 
 **Pipeline for every GPU result:**
 
@@ -544,3 +545,23 @@ These are also added to the §5 table.
   that `CLAUDE.md` says `kernels/` holds.
 - Commit the RESULTS regeneration sequence used on 20 Sep as `scripts/regenerate_results.sh`,
   so every number in the report rebuilds with one command.
+
+### 11.6 Leaderboard push (added 22 Sep)
+
+Another team reached **0.79 (11/14)** on 21 Sep. The probes show v2's constants are the ceiling
+for constants (9/14, Finding 45), so the only way up is per-problem prediction. **E27** fits
+three estimators on the 33 official problems, labels pooled across configurations. The
+estimators ship, never the labels: the rules forbid submitting training data.
+
+| ZIP (`dist/`) | Predictions | What its score tells us |
+| --- | --- | --- |
+| `solution-e27a-official-text-small.zip` | char tf-idf on official labels, every model | Whether official-label text transfers to the validation cases |
+| `solution-e27b-official-text-e11-small.zip` | the same, E11 fusion kept for DeepSeek | Whether keeping E11 for DeepSeek helps |
+| `solution-e27c-official-length-small.zip` | problem length only, every model | Whether E22's best signal carries to the validation set |
+| `solution-e27d-familiarity-small.zip` | each model's own NLL of the problem; the less familiar half of each batch robust | Independent test of the memorization direction from E23 (Finding 47) |
+
+**Pre-registered reading.** A score ≥ 0.71 (10/14) counts as a real gain, since chance moves
+it by one case. A score at or below 0.64 means that estimator carries nothing the constants do
+not. **Caveat:** the validation cells were withheld from `train-main-v2` itself (Finding 35),
+so they may share problems with it. In that case the leaderboard rewards the overlap more than
+it predicts the private test.

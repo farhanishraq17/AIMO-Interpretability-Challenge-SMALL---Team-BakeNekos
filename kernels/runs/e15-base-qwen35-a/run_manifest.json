@@ -1,0 +1,35 @@
+{
+  "experiment": "e15-base-qwen35-a",
+  "account": "TASHIN",
+  "bundle_sha1": "c5dd6877735a3d1b8d5ef09e33cf8352e5e60c02",
+  "steps": [
+    {
+      "argv": [
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "vllm"
+      ],
+      "returncode": 0,
+      "seconds": 291.6
+    },
+    {
+      "argv": [
+        "-c",
+        "import glob, pathlib, shutil\nfor src in sorted(glob.glob('runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl')):\n    path = pathlib.Path(src)\n    dst = pathlib.Path('/kaggle/working/e15-qwen35/base') / path.parent.name / path.name\n    dst.parent.mkdir(parents=True, exist_ok=True)\n    shutil.copy(src, dst)\n    print('restored', dst, sum(1 for _ in open(dst)), 'records')"
+      ],
+      "returncode": 0,
+      "seconds": 0.1
+    },
+    {
+      "argv": [
+        "-c",
+        "import os, subprocess, sys\nargvs = [['datagen/perturb/sample.py', '--phase', 'base', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--k', '4', '--max-new-tokens', '16384', '--max-hours', '8.5', '--chunk', '4', '--out-dir', '/kaggle/working/e15-qwen35', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '4', '--shard-index', '0'], ['datagen/perturb/sample.py', '--phase', 'base', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--k', '4', '--max-new-tokens', '16384', '--max-hours', '8.5', '--chunk', '4', '--out-dir', '/kaggle/working/e15-qwen35', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '4', '--shard-index', '1']]\nprocs = [subprocess.Popen([sys.executable, *a], env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(i)})\n         for i, a in enumerate(argvs)]\nsys.exit(max(p.wait() for p in procs))"
+      ],
+      "returncode": 0,
+      "seconds": 32310.5
+    }
+  ],
+  "seconds": 32667.0
+}

@@ -1,0 +1,60 @@
+{
+  "name": "e27d-gpu-check-a",
+  "account": "TASHIN",
+  "kernel": "tashintahir/aimo-small-e27d-gpu-check-a",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "GPU check of dist/solution-e27d-familiarity-small.zip before upload: unpack it as Codabench would, load each model from the cache, and score its officially labelled problems with no fallback allowed. Qwen3.5-4B and DeepSeek.",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "submission/check_e27d.py",
+      "--models",
+      "Qwen/Qwen3.5-4B",
+      "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+    ]
+  ],
+  "dataset_sources": [],
+  "bundle_sha1": "c593d5be5f78447b7787c7b8f36db88e5f8536bc",
+  "bundle_files": [
+    "data/official_check/official_labels.parquet",
+    "data/official_check/pool.parquet",
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "dist/solution-e27d-familiarity-small.zip",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py",
+    "submission/check_e27d.py"
+  ],
+  "downloaded_run": {
+    "files": [
+      "runs/e27d-gpu-check-a/run_manifest.json"
+    ],
+    "seconds": 305.4,
+    "returncodes": [
+      0
+    ]
+  }
+}

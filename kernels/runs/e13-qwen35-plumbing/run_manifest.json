@@ -1,0 +1,46 @@
+{
+  "experiment": "e13-qwen35-plumbing",
+  "account": "TASHIN",
+  "bundle_sha1": "6df3de283d3e1f85f5b0f1efd626094da1328ef1",
+  "steps": [
+    {
+      "argv": [
+        "-c",
+        "from huggingface_hub import snapshot_download; from transformers import AutoConfig\nprint(snapshot_download('Qwen/Qwen3.5-4B'))\ntry:\n    c = AutoConfig.from_pretrained('Qwen/Qwen3.5-4B'); print(type(c).__name__, c.architectures)\nexcept Exception as exc:\n    print('AutoConfig failed:', type(exc).__name__, exc)"
+      ],
+      "returncode": 0,
+      "seconds": 53.8
+    },
+    {
+      "argv": [
+        "datagen/extract_features.py",
+        "--model-id",
+        "Qwen/Qwen3.5-4B",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/stagea-qwen35-smoke",
+        "--no-filter-model",
+        "--limit",
+        "20"
+      ],
+      "returncode": 0,
+      "seconds": 30.0
+    },
+    {
+      "argv": [
+        "datagen/extract_label_free.py",
+        "--model-id",
+        "Qwen/Qwen3.5-4B",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/labelfree-qwen35",
+        "--no-filter-model"
+      ],
+      "returncode": 0,
+      "seconds": 534.2
+    }
+  ],
+  "seconds": 662.1
+}

@@ -1,0 +1,81 @@
+{
+  "experiment": "e7b-sample-smoke",
+  "account": "TASHIN",
+  "bundle_sha1": "d662168d696ca9498a12758b04605172d790f94b",
+  "steps": [
+    {
+      "argv": [
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "vllm"
+      ],
+      "returncode": 0,
+      "seconds": 282.8
+    },
+    {
+      "argv": [
+        "datagen/perturb/pool.py"
+      ],
+      "returncode": 0,
+      "seconds": 6.2
+    },
+    {
+      "argv": [
+        "datagen/perturb/generate.py",
+        "--examples",
+        "0"
+      ],
+      "returncode": 0,
+      "seconds": 0.9
+    },
+    {
+      "argv": [
+        "datagen/perturb/sample.py",
+        "--phase",
+        "base",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--backend",
+        "vllm",
+        "--tiers",
+        "amc",
+        "--limit",
+        "16",
+        "--k",
+        "4",
+        "--max-new-tokens",
+        "8192",
+        "--out-dir",
+        "/kaggle/working/e7b-amc"
+      ],
+      "returncode": 0,
+      "seconds": 5259.3
+    },
+    {
+      "argv": [
+        "datagen/perturb/sample.py",
+        "--phase",
+        "base",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--backend",
+        "vllm",
+        "--tiers",
+        "aime",
+        "--limit",
+        "8",
+        "--k",
+        "4",
+        "--max-new-tokens",
+        "16384",
+        "--out-dir",
+        "/kaggle/working/e7b-aime"
+      ],
+      "returncode": 0,
+      "seconds": 10248.2
+    }
+  ],
+  "seconds": 15860.3
+}

@@ -1,0 +1,27 @@
+{
+  "experiment": "e2f-stageb-fp16-s1",
+  "account": "DIDHITI",
+  "bundle_sha1": "bb7883a1a1011f6fde418b3738cdfedf35c4f840",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_generation_features.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--out-dir",
+        "/kaggle/working/features/stageb-fp16-deepseek",
+        "--num-shards",
+        "2",
+        "--shard-index",
+        "1",
+        "--batch-size",
+        "4",
+        "--dtype",
+        "float16"
+      ],
+      "returncode": 0,
+      "seconds": 14681.4
+    }
+  ],
+  "seconds": 14718.7
+}

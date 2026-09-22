@@ -1,0 +1,46 @@
+{
+  "experiment": "e17-base-olmo-think",
+  "account": "Labib",
+  "bundle_sha1": "794a331d6d50f400afc87d23fa70e11b1388ec56",
+  "steps": [
+    {
+      "argv": [
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "vllm"
+      ],
+      "returncode": 0,
+      "seconds": 240.7
+    },
+    {
+      "argv": [
+        "datagen/perturb/sample.py",
+        "--phase",
+        "base",
+        "--model-id",
+        "allenai/Olmo-3-7B-Think",
+        "--backend",
+        "vllm",
+        "--k",
+        "4",
+        "--max-new-tokens",
+        "16384",
+        "--max-hours",
+        "8.5",
+        "--chunk",
+        "4",
+        "--out-dir",
+        "/kaggle/working/e17-olmo-think",
+        "--max-new-tokens",
+        "12288",
+        "--gpu-memory-utilization",
+        "0.95"
+      ],
+      "returncode": 0,
+      "seconds": 34508.0
+    }
+  ],
+  "seconds": 34788.3
+}

@@ -1,0 +1,21 @@
+{
+  "experiment": "e12-labelfree-deepseek",
+  "account": "ISHMAM1",
+  "bundle_sha1": "6df3de283d3e1f85f5b0f1efd626094da1328ef1",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_label_free.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/labelfree-deepseek"
+      ],
+      "returncode": 0,
+      "seconds": 863.3
+    }
+  ],
+  "seconds": 909.9
+}

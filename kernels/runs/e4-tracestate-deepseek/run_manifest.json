@@ -1,0 +1,32 @@
+{
+  "experiment": "e4-tracestate-deepseek",
+  "account": "SALAM",
+  "bundle_sha1": "7216812b2760c8e363db375ea6c8fdc524b02c3c",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_trace_states.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--traces",
+        "runs/e2f-stageb-fp16-s*/features/stageb-fp16-deepseek/shard_*/records.jsonl",
+        "--out-dir",
+        "/kaggle/working/features/tracestate-deepseek",
+        "--dtype",
+        "float16"
+      ],
+      "returncode": 0,
+      "seconds": 1380.9
+    },
+    {
+      "argv": [
+        "datagen/merge_features.py",
+        "--features-dir",
+        "/kaggle/working/features/tracestate-deepseek"
+      ],
+      "returncode": 0,
+      "seconds": 13.5
+    }
+  ],
+  "seconds": 1435.5
+}

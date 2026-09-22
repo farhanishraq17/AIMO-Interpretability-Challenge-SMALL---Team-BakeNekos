@@ -1,0 +1,36 @@
+{
+  "experiment": "e14-agreement-deepseek-s0",
+  "account": "ISHRAQ",
+  "bundle_sha1": "f4de3891c3ced0b297aa34656ff71ac469cd0228",
+  "steps": [
+    {
+      "argv": [
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "vllm"
+      ],
+      "returncode": 0,
+      "seconds": 229.7
+    },
+    {
+      "argv": [
+        "datagen/extract_agreement.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--out-dir",
+        "/kaggle/working/features/agreement-deepseek",
+        "--num-shards",
+        "2",
+        "--shard-index",
+        "0",
+        "--max-hours",
+        "10"
+      ],
+      "returncode": 0,
+      "seconds": 15851.0
+    }
+  ],
+  "seconds": 16125.8
+}

@@ -1,0 +1,30 @@
+{
+  "experiment": "e21-stagea-skywork-official",
+  "account": "TASHIN",
+  "bundle_sha1": "b2187d02a332750ee6f8ac642a8f71e02fad2b9f",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_features.py",
+        "--model-id",
+        "Skywork/Skywork-OR1-Math-7B",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/stagea-skywork-official"
+      ],
+      "returncode": 0,
+      "seconds": 105.4
+    },
+    {
+      "argv": [
+        "datagen/merge_features.py",
+        "--features-dir",
+        "/kaggle/working/features/stagea-skywork-official"
+      ],
+      "returncode": 0,
+      "seconds": 1.1
+    }
+  ],
+  "seconds": 149.7
+}

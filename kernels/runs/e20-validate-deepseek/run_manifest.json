@@ -1,0 +1,73 @@
+{
+  "experiment": "e20-validate-deepseek",
+  "account": "ISHRAQ",
+  "bundle_sha1": "3e36059b4f6ba2cd3151195b5b76ccde1e31d129",
+  "steps": [
+    {
+      "argv": [
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "vllm"
+      ],
+      "returncode": 0,
+      "seconds": 230.6
+    },
+    {
+      "argv": [
+        "datagen/perturb/sample.py",
+        "--phase",
+        "base",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--backend",
+        "vllm",
+        "--k",
+        "4",
+        "--max-new-tokens",
+        "8192",
+        "--max-hours",
+        "3.5",
+        "--chunk",
+        "8",
+        "--out-dir",
+        "/kaggle/working/e20-deepseek",
+        "--pool",
+        "data/deepseek_check/pool.parquet"
+      ],
+      "returncode": 0,
+      "seconds": 10578.5
+    },
+    {
+      "argv": [
+        "datagen/perturb/sample.py",
+        "--phase",
+        "variants",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--backend",
+        "vllm",
+        "--base-records",
+        "/kaggle/working/e20-deepseek/base/shard_*/records.jsonl",
+        "--k",
+        "4",
+        "--max-new-tokens",
+        "8192",
+        "--max-hours",
+        "4.5",
+        "--chunk",
+        "8",
+        "--out-dir",
+        "/kaggle/working/e20-deepseek",
+        "--pool",
+        "data/deepseek_check/pool.parquet",
+        "--variants",
+        "data/deepseek_check/variants.parquet"
+      ],
+      "returncode": 0,
+      "seconds": 11277.5
+    }
+  ],
+  "seconds": 22130.6
+}

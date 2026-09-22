@@ -1,0 +1,30 @@
+{
+  "experiment": "e23-familiarity-b",
+  "account": "Labib",
+  "bundle_sha1": "e1315dc878211bd5450ddd851debc663f5c27f60",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_familiarity.py",
+        "--model-id",
+        "Skywork/Skywork-OR1-Math-7B",
+        "--out-dir",
+        "/kaggle/working/features/familiarity-skywork"
+      ],
+      "returncode": 0,
+      "seconds": 218.3
+    },
+    {
+      "argv": [
+        "datagen/extract_familiarity.py",
+        "--model-id",
+        "allenai/Olmo-3-7B-Think",
+        "--out-dir",
+        "/kaggle/working/features/familiarity-olmo-think"
+      ],
+      "returncode": 0,
+      "seconds": 244.8
+    }
+  ],
+  "seconds": 507.6
+}

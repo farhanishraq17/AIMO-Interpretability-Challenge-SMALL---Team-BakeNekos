@@ -1,0 +1,25 @@
+{
+  "experiment": "e11-gpu-check",
+  "account": "ISHMAM1",
+  "bundle_sha1": "d18c0ff26e57eefca3bb964ee9e8fa874ace0974",
+  "steps": [
+    {
+      "argv": [
+        "-c",
+        "from huggingface_hub import snapshot_download; print(snapshot_download('deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'))"
+      ],
+      "returncode": 0,
+      "seconds": 73.4
+    },
+    {
+      "argv": [
+        "submission/gpu_check.py",
+        "--search-root",
+        "/kaggle/input"
+      ],
+      "returncode": 0,
+      "seconds": 308.6
+    }
+  ],
+  "seconds": 421.0
+}

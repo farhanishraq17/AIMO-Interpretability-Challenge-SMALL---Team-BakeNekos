@@ -77,6 +77,16 @@ $py = "getting-started\.venv\Scripts\python.exe"
 # Official-split holdouts: the frozen E11 artifact and a cross-model probe (needs the e21 features)
 & $py train\eval_official_holdout.py
 
+# E22: problem-level, template-grouped acceptance harness; every later gate is scored here
+& $py train\eval_problem_level.py
+
+# Every generated RESULTS.md section, in the only order that works (~25 min)
+& $py scripts\regenerate_results.py
+
+# E24: the labelled official problems in pool form; E27: leaderboard ZIPs from official labels
+& $py datagen\perturb\official_check_pool.py
+& $py submission\make_e27.py
+
 # Ported from `nakib_v2`; these three need that checkout's label dirs and run outputs to produce
 # numbers, and are kept so the report's sections can be regenerated there
 & $py datagen\build_stagea_olympiad_set.py ; & $py train\eval_stagea_olympiad.py
@@ -147,6 +157,7 @@ train/
   train_fusion.py            E10: nested fusion of text / stagea / tracestate / trace blocks
   eval_official_holdout.py   E21: frozen E11 on the official olympiad rows; cross-model probe
   eval_train_main_v2.py      do models agree on the official rows? does the text block reach them?
+  eval_problem_level.py      E22: problem-level harness (pooled labels, leave-one-template-out)
   eval_stagea_olympiad.py    Stage A probes fitted on self-labels, scored on official rows (ported)
   summarize_selflabels.py    per-model self-label inventory and cross-model agreement (ported)
   results_io.py              section upsert for RESULTS.md
@@ -252,7 +263,8 @@ Six accounts, each with about 30 GPU-hours a week and 12-hour sessions. Roles ar
 
 `kaggle_launch.ACCOUNTS` also registers RSD, Labib, NAKIB, CHOTON, MEDIUM and MR.
 **`Secrets.env` is per-machine and holds only the aliases whose owner set them up.** This
-checkout holds the six above plus RSD and Labib; a teammate's holds:
+checkout holds the six above plus RSD, Labib and **Eshad** (added 22 Sep, fresh quota); a
+teammate's holds:
 
 | Alias | Username | Note |
 | --- | --- | --- |

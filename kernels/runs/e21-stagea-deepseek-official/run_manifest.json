@@ -1,0 +1,30 @@
+{
+  "experiment": "e21-stagea-deepseek-official",
+  "account": "DIDHITI",
+  "bundle_sha1": "8d3a0a0f42a1907a2b08c2f2eea881afab40e108",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_features.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/stagea-deepseek-official"
+      ],
+      "returncode": 0,
+      "seconds": 287.0
+    },
+    {
+      "argv": [
+        "datagen/merge_features.py",
+        "--features-dir",
+        "/kaggle/working/features/stagea-deepseek-official"
+      ],
+      "returncode": 0,
+      "seconds": 17.2
+    }
+  ],
+  "seconds": 348.5
+}

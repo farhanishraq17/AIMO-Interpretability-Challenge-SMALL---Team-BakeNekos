@@ -1,0 +1,30 @@
+{
+  "experiment": "e21-stagea-qwen35-official",
+  "account": "SALAM",
+  "bundle_sha1": "b2187d02a332750ee6f8ac642a8f71e02fad2b9f",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_features.py",
+        "--model-id",
+        "Qwen/Qwen3.5-4B",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/stagea-qwen35-official"
+      ],
+      "returncode": 0,
+      "seconds": 75.7
+    },
+    {
+      "argv": [
+        "datagen/merge_features.py",
+        "--features-dir",
+        "/kaggle/working/features/stagea-qwen35-official"
+      ],
+      "returncode": 0,
+      "seconds": 1.4
+    }
+  ],
+  "seconds": 115.5
+}

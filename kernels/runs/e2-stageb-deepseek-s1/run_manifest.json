@@ -1,0 +1,23 @@
+{
+  "experiment": "e2-stageb-deepseek-s1",
+  "account": "DIDHITI",
+  "bundle_sha1": "19be5a0df882957c21c51341258f75a5f8fa7a04",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_generation_features.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--out-dir",
+        "/kaggle/working/features/stageb-deepseek",
+        "--num-shards",
+        "2",
+        "--shard-index",
+        "1"
+      ],
+      "returncode": 1,
+      "seconds": 9999.9
+    }
+  ],
+  "seconds": 10034.9
+}

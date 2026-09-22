@@ -1,0 +1,18 @@
+{
+  "experiment": "e27d-gpu-check-b",
+  "account": "RSD",
+  "bundle_sha1": "c593d5be5f78447b7787c7b8f36db88e5f8536bc",
+  "steps": [
+    {
+      "argv": [
+        "submission/check_e27d.py",
+        "--models",
+        "Skywork/Skywork-OR1-Math-7B",
+        "allenai/Olmo-3-7B-Think"
+      ],
+      "returncode": 0,
+      "seconds": 320.4
+    }
+  ],
+  "seconds": 369.7
+}

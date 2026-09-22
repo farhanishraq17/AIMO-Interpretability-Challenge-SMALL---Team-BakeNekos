@@ -1,0 +1,30 @@
+{
+  "experiment": "e21-stagea-olmo-think-official",
+  "account": "ISHRAQ",
+  "bundle_sha1": "b2187d02a332750ee6f8ac642a8f71e02fad2b9f",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_features.py",
+        "--model-id",
+        "allenai/Olmo-3-7B-Think",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/stagea-olmo-think-official"
+      ],
+      "returncode": 0,
+      "seconds": 130.7
+    },
+    {
+      "argv": [
+        "datagen/merge_features.py",
+        "--features-dir",
+        "/kaggle/working/features/stagea-olmo-think-official"
+      ],
+      "returncode": 0,
+      "seconds": 2.6
+    }
+  ],
+  "seconds": 196.1
+}

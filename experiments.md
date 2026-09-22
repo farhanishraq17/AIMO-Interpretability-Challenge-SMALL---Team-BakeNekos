@@ -43,16 +43,19 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | Gapfill | Base samples for problems whose variants were already paid for (Qwen, Skywork) | Kaggle (`nakib_v2`) | Done | 26 Qwen + 23 Skywork self-labels; invalidated by E20 (Finding 37) |
 | Stage A olympiad | Do prompt states carry olympiad signal where text does not? | Kaggle (`nakib_v2`) | Done | AUC 0.844 on 12 official Qwen rows, strict control p = 0.073, self-labelled training set (Finding 41) |
 | Official-label tests | Do models agree? Does the text block reach olympiad rows? | local (`nakib_v2`) | Done | Models agree **20/20**, p = 0.0005 (Finding 38); text block AUC 0.617, CI spans 0.5 (Finding 39) |
-| E22 | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | **Planned** | Scores every later gate (PLAN §11) |
-| E23 | Do familiarity/contamination scores predict robustness? | Kaggle | **Planned** | Gate G-M |
-| E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | **Planned** | Gate G-V2: reopens or finally closes self-labelling |
+| E22 | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | Done | Nothing clears chance; problem length best at 0.635, CI [0.42, 0.84] (Finding 46) |
+| E23 | Do familiarity/contamination scores predict robustness? | Kaggle | Done | **G-M fails**; on olympiad problems familiar problems lean spurious, not significant (Finding 47) |
+| E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | **Running** (E24a answer key on Eshad) | Gate G-V2: reopens or finally closes self-labelling |
+| E27 | Per-problem predictions from official labels, to beat the 0.64 constant ceiling | local + Codabench | **Built**, awaiting upload | Three ZIPs; the constants cap is 9/14 (Finding 45) |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---
 
 ## 2. Running now
 
-Nothing. The fleet is idle, and the self-labelling program (E15-E19) is stopped.
+**`e24a-answer-key-skywork` on Eshad** (pushed 22 Sep): Skywork k=8 over the 20 labelled official
+problems, to recover the answers `train-main-v2` does not ship (gate G-V2, PLAN §11). Everything
+else is idle; the original self-labelling program (E15-E19) stays stopped.
 
 **Why it stopped.** E20 compared self-generated `answer_modulus` labels with official ones on
 66 DeepSeek problems: agreement 0.29, Cohen's kappa -0.135, and our measured drops correlate

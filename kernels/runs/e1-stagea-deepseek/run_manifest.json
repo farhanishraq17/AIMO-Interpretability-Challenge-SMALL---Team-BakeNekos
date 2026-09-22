@@ -1,0 +1,30 @@
+{
+  "experiment": "e1-stagea-deepseek",
+  "account": "ISHMAM1",
+  "bundle_sha1": "19be5a0df882957c21c51341258f75a5f8fa7a04",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_features.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/stagea-deepseek"
+      ],
+      "returncode": 0,
+      "seconds": 253.3
+    },
+    {
+      "argv": [
+        "datagen/merge_features.py",
+        "--features-dir",
+        "/kaggle/working/features/stagea-deepseek"
+      ],
+      "returncode": 0,
+      "seconds": 15.6
+    }
+  ],
+  "seconds": 311.3
+}

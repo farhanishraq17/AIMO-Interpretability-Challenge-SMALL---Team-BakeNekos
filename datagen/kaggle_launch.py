@@ -86,7 +86,8 @@ BUNDLE_WARN_BYTES = 900_000
 # NAKIB, CHOTON, MEDIUM and MR come from the `nakib`/`nakib_v2` branches; each alias needs its
 # token in Secrets.env. CHOTON and MEDIUM are the *same Kaggle accounts* as Labib and RSD under
 # a second spelling, so their quota is shared, not additional (Finding 42).
-ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR", "RSD", "Labib", "NAKIB", "CHOTON", "MEDIUM", "MR"]
+# Eshad was added on 22 Sep with a fresh quota.
+ACCOUNTS = ["ISHRAQ", "DIDHITI", "TASHIN", "SALAM", "ISHMAM1", "DESIKALAKAR", "RSD", "Labib", "NAKIB", "CHOTON", "MEDIUM", "MR", "Eshad"]
 
 # Stage B traces used downstream (E4). fp16 only: the dtype benchmark showed bf16 and fp16
 # greedy traces diverge, so the two sets must never be mixed.
@@ -174,6 +175,8 @@ SKYWORK_VARIANT_RECORDS = "runs/e19-variants-skywork/e19-skywork/variants/shard_
 # E20: DeepSeek's officially labelled MATH problems in pool form (datagen/perturb/deepseek_check_pool.py).
 CHECK_POOL = "data/deepseek_check/pool.parquet"
 CHECK_VARIANTS = "data/deepseek_check/variants.parquet"
+# E24: the labelled olympiad problems of train-main-v2 (datagen/perturb/official_check_pool.py).
+OFFICIAL_POOL = "data/official_check/pool.parquet"
 
 # Problems E18 sampled Qwen variants for while their base records stayed on an account this
 # checkout cannot read. Listed literally so the kernel records exactly which problems it
@@ -195,6 +198,13 @@ SKYWORK_GAPFILL_KEYS = (
     "c21ef3d4d630a47e", "d50ba6f1dcbb7572", "e53faab347086059", "e7c519bf1eea1396",
     "eadf4b95241b8c82",
 )
+
+
+def familiarity(model_id: str, out_name: str) -> tuple[str, ...]:
+    return ("datagen/extract_familiarity.py", "--model-id", model_id, "--out-dir", f"{KAGGLE_FEATURES}/{out_name}")
+
+
+FAMILIARITY_FILES = ("datagen/extract_familiarity.py", "datagen/ingest_public.py")
 
 
 def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
@@ -615,6 +625,53 @@ EXPERIMENTS: dict[str, Experiment] = {
             merge(f"{KAGGLE_FEATURES}/stagea-qwen35-olympiad"),
         ),
         bundle_globs=("data/stagea_olympiad/instances.parquet",),
+    ),
+    "e24a-answer-key-skywork": Experiment(
+        # Eshad's first push ran without a GPU (no `nvidia-smi`): the account needs phone verification.
+        account="ISHRAQ",
+        purpose="E24a: an answer key for the 20 olympiad problems train-main-v2 labels for a small-track "
+        "model, which ship without answers. Skywork base phase, k=8, 16k cap, TP=2; 14 problems carry a "
+        "placeholder answer, so the reference is read from each record's sampled answers and kept only when "
+        "all 8 agree. The 6 problems whose answers our pool already knows check the method. Feeds E24b, "
+        "gate G-V2 (PLAN.md section 11).",
+        steps=(
+            VLLM_INSTALL,
+            base_sampling(SKYWORK, "e24a-skywork", "--pool", OFFICIAL_POOL, "--k", "8", max_hours=6.0),
+        ),
+        bundle_globs=(*E7_FILES, OFFICIAL_POOL),
+    ),
+    "e23-familiarity-a": Experiment(
+        account="RSD",
+        purpose="E23: familiarity and contamination scores (mean NLL, Min-K%, Min-K%++, zlib ratio, suffix "
+        "NLL) from one forward pass over each bare problem, for every labelled train problem and all 36 "
+        "train-main-v2 problems. Tests whether spurious means memorized (gate G-M, PLAN.md section 11). "
+        "Qwen3.5-4B, then DeepSeek.",
+        steps=(familiarity(QWEN35, "familiarity-qwen35"), familiarity(DEEPSEEK, "familiarity-deepseek")),
+        bundle_globs=FAMILIARITY_FILES,
+    ),
+    "e23-familiarity-b": Experiment(
+        account="Labib",
+        purpose="E23 for Skywork-OR1-Math-7B, then Olmo-3-7B-Think (see e23-familiarity-a).",
+        steps=(familiarity(SKYWORK, "familiarity-skywork"), familiarity(OLMO_THINK, "familiarity-olmo-think")),
+        bundle_globs=FAMILIARITY_FILES,
+    ),
+    "e27d-gpu-check-a": Experiment(
+        account="TASHIN",
+        purpose="GPU check of dist/solution-e27d-familiarity-small.zip before upload: unpack it as Codabench "
+        "would, load each model from the cache, and score its officially labelled problems with no "
+        "fallback allowed. Qwen3.5-4B and DeepSeek.",
+        steps=(("submission/check_e27d.py", "--models", QWEN35, DEEPSEEK),),
+        bundle_globs=("submission/check_e27d.py", "dist/solution-e27d-familiarity-small.zip",
+                      "data/official_check/pool.parquet", "data/official_check/official_labels.parquet"),
+    ),
+    "e27d-gpu-check-b": Experiment(
+        # SALAM's and DIDHITI's GPU slots were all taken on 22 Sep by another project sharing these
+        # accounts (a segmentation challenge), so their quota is not ours alone either.
+        account="RSD",
+        purpose="The same check for Skywork-OR1-Math-7B and Olmo-3-7B-Think (see e27d-gpu-check-a).",
+        steps=(("submission/check_e27d.py", "--models", SKYWORK, OLMO_THINK),),
+        bundle_globs=("submission/check_e27d.py", "dist/solution-e27d-familiarity-small.zip",
+                      "data/official_check/pool.parquet", "data/official_check/official_labels.parquet"),
     ),
     "e4-tracestate-deepseek": Experiment(
         account="SALAM",

@@ -1,0 +1,53 @@
+{
+  "stage": "E7 base",
+  "args": {
+    "phase": "base",
+    "model_id": "Skywork/Skywork-OR1-Math-7B",
+    "pool": "/tmp/aimo-repo/data/olympiad_pool/pool.parquet",
+    "variants": "/tmp/aimo-repo/data/perturbations/variants.parquet",
+    "base_records": null,
+    "min_base_accuracy": 1.0,
+    "categories": null,
+    "include_confirm": false,
+    "tiers": null,
+    "k": 4,
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "max_new_tokens": 16384,
+    "max_model_len": 18432,
+    "backend": "vllm",
+    "tensor_parallel": 2,
+    "dtype": "float16",
+    "gpu_memory_utilization": 0.9,
+    "enforce_eager": false,
+    "text_only": false,
+    "max_num_seqs": null,
+    "max_hours": 8.5,
+    "local_files_only": false,
+    "allow_lossy_tokenizer": false,
+    "chunk": 4,
+    "limit": null,
+    "num_shards": 1,
+    "shard_index": 0,
+    "seed": 0,
+    "out_dir": "/kaggle/working/e16-skywork"
+  },
+  "backend": "vllm",
+  "backend_version": "0.29.0",
+  "prompt_suffix": "\n\nPlease reason step by step, and put your final answer within \\boxed{}.",
+  "stop_token_ids": [
+    151643
+  ],
+  "tokenizer_class": "TokenizersBackend",
+  "tokenizer_round_trip": true,
+  "selection": {
+    "pool_problems": 505
+  },
+  "n_items": 505,
+  "load_seconds": 224.9,
+  "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+  "items_done_this_session": 100,
+  "generated_tokens": 3398740,
+  "generation_seconds": 30563.9,
+  "tokens_per_second": 111.2
+}

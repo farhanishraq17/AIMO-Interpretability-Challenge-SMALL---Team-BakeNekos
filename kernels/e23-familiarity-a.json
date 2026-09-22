@@ -1,0 +1,69 @@
+{
+  "name": "e23-familiarity-a",
+  "account": "RSD",
+  "kernel": "rsdaiyan/aimo-small-e23-familiarity-a",
+  "accelerator": "NvidiaTeslaT4",
+  "purpose": "E23: familiarity and contamination scores (mean NLL, Min-K%, Min-K%++, zlib ratio, suffix NLL) from one forward pass over each bare problem, for every labelled train problem and all 36 train-main-v2 problems. Tests whether spurious means memorized (gate G-M, PLAN.md section 11). Qwen3.5-4B, then DeepSeek.",
+  "pip": [
+    "transformers==5.13.0",
+    "accelerate==1.13.0",
+    "huggingface-hub==1.22.0",
+    "tokenizers==0.22.2",
+    "safetensors==0.8.0",
+    "scikit-learn==1.8.0",
+    "joblib==1.5.3"
+  ],
+  "steps": [
+    [
+      "datagen/extract_familiarity.py",
+      "--model-id",
+      "Qwen/Qwen3.5-4B",
+      "--out-dir",
+      "/kaggle/working/features/familiarity-qwen35"
+    ],
+    [
+      "datagen/extract_familiarity.py",
+      "--model-id",
+      "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+      "--out-dir",
+      "/kaggle/working/features/familiarity-deepseek"
+    ]
+  ],
+  "dataset_sources": [],
+  "bundle_sha1": "e1315dc878211bd5450ddd851debc663f5c27f60",
+  "bundle_files": [
+    "data/probe_system_prompt.txt",
+    "data/small_track/instances.parquet",
+    "data/small_track/instances_train.parquet",
+    "data/small_track/splits.json",
+    "data/small_track/summary.json",
+    "datagen/extract_agreement.py",
+    "datagen/extract_familiarity.py",
+    "datagen/extract_features.py",
+    "datagen/extract_generation_features.py",
+    "datagen/extract_label_free.py",
+    "datagen/extract_trace_states.py",
+    "datagen/ingest_public.py",
+    "datagen/merge_features.py",
+    "datagen/perturb/transforms.py",
+    "datagen/tokenizer_check.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/__init__.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/artifact.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/config.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/extraction.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/inference.py",
+    "getting-started/solutions/uncertainty-profiling/uncertainty_profile/metrics.py"
+  ],
+  "downloaded_run": {
+    "files": [
+      "runs/e23-familiarity-a/features/familiarity-deepseek/shard_00_of_01/metadata.json",
+      "runs/e23-familiarity-a/features/familiarity-qwen35/shard_00_of_01/metadata.json",
+      "runs/e23-familiarity-a/run_manifest.json"
+    ],
+    "seconds": 429.6,
+    "returncodes": [
+      0,
+      0
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "experiment": "e3-stagea-olmo-smoke",
+  "account": "TASHIN",
+  "bundle_sha1": "19be5a0df882957c21c51341258f75a5f8fa7a04",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_features.py",
+        "--model-id",
+        "allenai/Olmo-3-7B-Instruct",
+        "--system-prompt-file",
+        "data/probe_system_prompt.txt",
+        "--out-dir",
+        "/kaggle/working/features/stagea-olmo-smoke",
+        "--no-filter-model"
+      ],
+      "returncode": 0,
+      "seconds": 254.6
+    },
+    {
+      "argv": [
+        "datagen/merge_features.py",
+        "--features-dir",
+        "/kaggle/working/features/stagea-olmo-smoke"
+      ],
+      "returncode": 0,
+      "seconds": 19.7
+    }
+  ],
+  "seconds": 308.0
+}

@@ -1,0 +1,40 @@
+{
+  "experiment": "e2-bench-dtype",
+  "account": "TASHIN",
+  "bundle_sha1": "a64a7401ce0946829dba575193c735281fbd90fb",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_generation_features.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--out-dir",
+        "/kaggle/working/features/bench-bf16",
+        "--limit",
+        "8",
+        "--max-new-tokens",
+        "512"
+      ],
+      "returncode": 0,
+      "seconds": 400.4
+    },
+    {
+      "argv": [
+        "datagen/extract_generation_features.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--out-dir",
+        "/kaggle/working/features/bench-fp16",
+        "--limit",
+        "8",
+        "--max-new-tokens",
+        "512",
+        "--dtype",
+        "float16"
+      ],
+      "returncode": 0,
+      "seconds": 116.7
+    }
+  ],
+  "seconds": 551.6
+}

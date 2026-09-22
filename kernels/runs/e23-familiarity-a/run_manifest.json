@@ -1,0 +1,30 @@
+{
+  "experiment": "e23-familiarity-a",
+  "account": "RSD",
+  "bundle_sha1": "e1315dc878211bd5450ddd851debc663f5c27f60",
+  "steps": [
+    {
+      "argv": [
+        "datagen/extract_familiarity.py",
+        "--model-id",
+        "Qwen/Qwen3.5-4B",
+        "--out-dir",
+        "/kaggle/working/features/familiarity-qwen35"
+      ],
+      "returncode": 0,
+      "seconds": 139.6
+    },
+    {
+      "argv": [
+        "datagen/extract_familiarity.py",
+        "--model-id",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "--out-dir",
+        "/kaggle/working/features/familiarity-deepseek"
+      ],
+      "returncode": 0,
+      "seconds": 228.7
+    }
+  ],
+  "seconds": 429.6
+}

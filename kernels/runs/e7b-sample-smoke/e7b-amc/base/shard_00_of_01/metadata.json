@@ -1,0 +1,52 @@
+{
+  "stage": "E7 base",
+  "args": {
+    "phase": "base",
+    "model_id": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    "pool": "/tmp/aimo-repo/data/olympiad_pool/pool.parquet",
+    "variants": "/tmp/aimo-repo/data/perturbations/variants.parquet",
+    "base_records": null,
+    "min_base_accuracy": 1.0,
+    "categories": null,
+    "include_confirm": false,
+    "tiers": [
+      "amc"
+    ],
+    "k": 4,
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "max_new_tokens": 8192,
+    "max_model_len": 10240,
+    "backend": "vllm",
+    "tensor_parallel": 2,
+    "dtype": "float16",
+    "gpu_memory_utilization": 0.9,
+    "enforce_eager": false,
+    "local_files_only": false,
+    "allow_lossy_tokenizer": false,
+    "chunk": 32,
+    "limit": 16,
+    "num_shards": 1,
+    "shard_index": 0,
+    "seed": 0,
+    "out_dir": "/kaggle/working/e7b-amc"
+  },
+  "backend": "vllm",
+  "backend_version": "0.29.0",
+  "prompt_suffix": "\n\nPlease reason step by step, and put your final answer within \\boxed{}.",
+  "stop_token_ids": [
+    151645
+  ],
+  "tokenizer_class": "TokenizersBackend",
+  "tokenizer_round_trip": true,
+  "selection": {
+    "pool_problems": 83
+  },
+  "n_items": 16,
+  "load_seconds": 256.4,
+  "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+  "items_done_this_session": 16,
+  "generated_tokens": 435947,
+  "generation_seconds": 4976.2,
+  "tokens_per_second": 87.6
+}

@@ -1,0 +1,18 @@
+{
+  "experiment": "e27d-gpu-check-a",
+  "account": "TASHIN",
+  "bundle_sha1": "c593d5be5f78447b7787c7b8f36db88e5f8536bc",
+  "steps": [
+    {
+      "argv": [
+        "submission/check_e27d.py",
+        "--models",
+        "Qwen/Qwen3.5-4B",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+      ],
+      "returncode": 0,
+      "seconds": 267.6
+    }
+  ],
+  "seconds": 305.4
+}

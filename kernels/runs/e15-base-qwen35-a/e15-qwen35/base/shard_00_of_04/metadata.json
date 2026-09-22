@@ -1,0 +1,53 @@
+{
+  "stage": "E7 base",
+  "args": {
+    "phase": "base",
+    "model_id": "Qwen/Qwen3.5-4B",
+    "pool": "/tmp/aimo-repo/data/olympiad_pool/pool.parquet",
+    "variants": "/tmp/aimo-repo/data/perturbations/variants.parquet",
+    "base_records": null,
+    "min_base_accuracy": 1.0,
+    "categories": null,
+    "include_confirm": false,
+    "tiers": null,
+    "k": 4,
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "max_new_tokens": 16384,
+    "max_model_len": 18432,
+    "backend": "vllm",
+    "tensor_parallel": 1,
+    "dtype": "float16",
+    "gpu_memory_utilization": 0.9,
+    "enforce_eager": false,
+    "text_only": true,
+    "max_num_seqs": 64,
+    "max_hours": 8.5,
+    "local_files_only": false,
+    "allow_lossy_tokenizer": false,
+    "chunk": 4,
+    "limit": null,
+    "num_shards": 4,
+    "shard_index": 0,
+    "seed": 0,
+    "out_dir": "/kaggle/working/e15-qwen35"
+  },
+  "backend": "vllm",
+  "backend_version": "0.29.0",
+  "prompt_suffix": "\n\nPlease reason step by step, and put your final answer within \\boxed{}.",
+  "stop_token_ids": [
+    248046
+  ],
+  "tokenizer_class": "TokenizersBackend",
+  "tokenizer_round_trip": true,
+  "selection": {
+    "pool_problems": 437
+  },
+  "n_items": 110,
+  "load_seconds": 658.5,
+  "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+  "items_done_this_session": 44,
+  "generated_tokens": 2212140,
+  "generation_seconds": 31626.0,
+  "tokens_per_second": 69.9
+}
