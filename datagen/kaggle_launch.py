@@ -700,6 +700,22 @@ EXPERIMENTS: dict[str, Experiment] = {
         bundle_globs=("submission/check_e27d.py", "dist/solution-e27d-familiarity-small.zip",
                       "data/official_check/pool.parquet", "data/official_check/official_labels.parquet"),
     ),
+    "e28-gpu-check-a": Experiment(
+        account="TASHIN",
+        purpose="GPU contract check of the packaged E28d Min-K tail-gap solution for Qwen3.5-4B and DeepSeek. "
+                "The excluded farhanishraqq account is not used.",
+        steps=(("submission/check_e28.py", "--models", QWEN35, DEEPSEEK),),
+        bundle_globs=("submission/check_e28.py", "dist/solution-e28d-min-k-gap-small.zip",
+                      "data/official_check/pool.parquet", "data/official_check/official_labels.parquet"),
+    ),
+    "e28-gpu-check-b": Experiment(
+        account="RSD",
+        purpose="GPU contract check of the packaged E28d Min-K tail-gap solution for Skywork and Olmo-3-Think. "
+                "The excluded farhanishraqq account is not used.",
+        steps=(("submission/check_e28.py", "--models", SKYWORK, OLMO_THINK),),
+        bundle_globs=("submission/check_e28.py", "dist/solution-e28d-min-k-gap-small.zip",
+                      "data/official_check/pool.parquet", "data/official_check/official_labels.parquet"),
+    ),
     "e24b-qwen35": Experiment(
         account="TASHIN",
         purpose="E24b, gate G-V2: do answer_modulus self-labels agree with official labels on olympiad "

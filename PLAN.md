@@ -585,3 +585,24 @@ The four deltas against `e27f` must sum to `e27e` minus `e27f`, which is the con
 Then the best per-model combination keeps the split only where its delta is positive. **That is
 selection on 14 cases**, so whatever it produces ships only if it also survives G2's
 official-row check, and v2 and `e27e` stay the principled fallbacks.
+
+### 11.8 Rank-based familiarity successors (24 Sep)
+
+E27's independent leaderboard result fixes the useful direction: within a model batch, more
+familiar problems lean robust. E28 keeps the same batch-rank policy and asks whether a more
+targeted one-pass statistic is stronger than whole-statement mean NLL.
+
+| ZIP | Statistic | Pre-submission evidence |
+| --- | --- | --- |
+| `solution-e28a-suffix-nll-small.zip` | NLL on the second half, conditioned on the first | MATH AUC 0.675 and balanced accuracy 0.686, against mean NLL's 0.662 / 0.633 |
+| `solution-e28d-min-k-gap-small.zip` | worst-token 10% NLL minus worst-token 20% NLL | official-row AUC 0.646; pooled problem AUC 0.867, template CI [0.728, 0.973], maxT-adjusted p = 0.001 across 12 candidates |
+
+Both compute mean, suffix, and tail NLLs in the same forward pass and fall back to E11 v2's
+per-model constants on any failure. Packaged checks on all four checkpoints returned native
+booleans without fallback; the two-pass T4 checks took 45–147 seconds per model, leaving wide
+headroom under the 3600-second evaluation limit. Checks ran on TASHIN and RSD only, not the
+excluded `farhanishraqq` account.
+
+**Submission discipline:** E28a is submission 942047. E28d gets the final daily slot because it
+is the only candidate to clear the official problem-level gate after family-wise correction.
+The other E28 variants remain local; no leaderboard grid search.

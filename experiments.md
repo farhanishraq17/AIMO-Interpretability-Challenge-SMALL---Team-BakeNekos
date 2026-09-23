@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 20 September 2026, 16:00 UTC.
+Last updated: 24 September 2026.
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.
@@ -47,14 +47,24 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E23 | Do familiarity/contamination scores predict robustness? | Kaggle | Done | **G-M fails**; on olympiad problems familiar problems lean spurious, not significant (Finding 47) |
 | E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | Done | **G-V2 fails**, but the sign flips from E20: kappa +0.29 on 15 pairs vs 0.72 chance agreement (Finding 48) |
 | E27 | Per-problem predictions, to beat the 0.64 constant ceiling | local + Codabench | Partly scored | Official-label models 8/14; **familiarity split inverted: its complement scores 10/14 = 0.71**, a new best (Finding 49) |
+| E28 | Rank-based familiarity successors: suffix NLL and Min-K tail shape | local + Kaggle + Codabench | Running | `suffix_nll` is stronger on MATH; `min_k_gap` clears the official problem-level gate after maxT correction. Both packaged and checked on all four real models without using `farhanishraqq` GPUs |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---
 
 ## 2. Running now
 
-Nothing. E24b finished on 23 Sep (15.8 GPU-hours over four accounts) and gate G-V2 failed, so
-the self-labelling lane stays closed and E25 is dropped (Finding 48).
+**E28.** E27e raised the leaderboard score from 0.64 to 0.71 by calling the more familiar half
+of every model batch robust. E28 tests two controlled successors from the same one-forward-pass
+family. `suffix_nll` improves MATH balanced accuracy from 0.633 to 0.686. The Min-K tail gap
+(`min_k_10 - min_k_20`) reaches problem-level AUC 0.867 on the official olympiad rows, with a
+template-bootstrap CI [0.728, 0.973] and maxT-adjusted p = 0.001 across 12 candidates. Both
+packages passed local tests and real-checkpoint Kaggle checks on TASHIN and RSD; no
+`farhanishraqq` GPU was used. E28a (`suffix_nll`) is Codabench submission 942047; E28d is the
+remaining planned upload.
+
+E24b finished on 23 Sep (15.8 GPU-hours over four accounts) and gate G-V2 failed, so the
+self-labelling lane stays closed and E25 is dropped (Finding 48).
 
 **E24a.** `train-main-v2` ships no answers, so Skywork sampled all 20 labelled problems
 8 times (`e24a-answer-key-skywork`, ISHRAQ; its first push went to Eshad, which ran without a
