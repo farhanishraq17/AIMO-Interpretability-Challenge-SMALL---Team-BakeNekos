@@ -1,16 +1,20 @@
-"""E27d: robust iff the problem is unfamiliar to the model scoring it (memorization hypothesis).
-
-A spurious case is one the model solves as written but not once perturbed, which is what a
-memorized problem looks like. On the 33 official olympiad problems, E23 found familiar problems
-lean spurious: the model's mean token NLL over the bare problem text ranks robust above
-spurious at AUC 0.69 (PROGRESS Finding 47). That direction is the one fixed here, before any
-leaderboard score is seen.
+"""E27d/e: split each batch by how familiar the problem is to the model scoring it.
 
 Each batch is one `model_id`. That model is loaded from the worker cache, every problem gets
-one forward pass, and the less familiar half of the batch (higher NLL) is predicted robust. A
+one forward pass over its bare text, and the batch is split at its median mean-token NLL. A
 median split assumes nothing about the class prior, which the train split and the validation
 set disagree on (Finding 39). If anything fails, the batch falls back to E11 v2's constants so
 it stays valid.
+
+`ROBUST_HALF` fixes which half is called robust, and the two readings have different evidence:
+
+* `"familiar"` - the MATH direction. `problem_nll` ranks robust *below* spurious on DeepSeek's
+  142 Hendrycks MATH instances (AUC 0.68 reversed, 0.58 within length quintiles: Findings 22,
+  47), and E27d's 4/14 on the leaderboard says the validation cases agree, since the opposite
+  split scored far below every constant (Finding 49).
+* `"unfamiliar"` - the memorization reading, from E23's 33 official olympiad problems, where
+  familiar problems lean spurious (AUC 0.69, CI to 0.49). That is what E27d shipped and what
+  the leaderboard rejected.
 """
 
 from __future__ import annotations
@@ -18,6 +22,11 @@ from __future__ import annotations
 import gc
 import sys
 
+ROBUST_HALF = "unfamiliar"  # make_e27.py ships one ZIP per reading
+# Which models get the split. "all", or a comma-separated list; the rest use the constants in
+# FALLBACK_ROBUST, which are the best constants the probes allow (9/14, Finding 45). One ZIP per
+# model decomposes the split's leaderboard gain by model without ever probing a single case.
+SPLIT_MODELS = "all"
 FALLBACK_ROBUST = {"Qwen/Qwen3.5-4B", "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"}
 MAX_TOKENS = 2048
 
@@ -52,17 +61,25 @@ def problem_nll(model_id: str, problems: list[str]) -> list[float]:
             torch.cuda.empty_cache()
 
 
-def upper_half(scores: list[float]) -> list[bool]:
-    """True for the higher-scoring half, ties broken by input order; exactly floor(n/2) are False."""
+def split_half(scores: list[float]) -> list[bool]:
+    """True for the half `ROBUST_HALF` selects; ties break by input order, so floor(n/2) are False."""
     order = sorted(range(len(scores)), key=lambda i: (scores[i], i))
+    if ROBUST_HALF == "familiar":  # low NLL is familiar, so the robust half is at the front
+        order = order[::-1]
     robust = set(order[len(scores) // 2:])
     return [i in robust for i in range(len(scores))]
 
 
+def uses_split(model_id: str) -> bool:
+    return SPLIT_MODELS == "all" or model_id in SPLIT_MODELS.split(",")
+
+
 def are_robust(model_id, problems, reasoning_effort="default"):
     problems = list(problems)
+    if not uses_split(model_id):
+        return [model_id in FALLBACK_ROBUST] * len(problems)
     try:
-        return upper_half(problem_nll(model_id, problems))
+        return split_half(problem_nll(model_id, problems))
     # SystemExit too: `tokenizer_check` raises it for a lossy tokenizer, and it would end the run.
     except (Exception, SystemExit) as exc:  # never let a batch go invalid
         print(f"e27d: {type(exc).__name__}: {exc}; falling back to constants", file=sys.stderr)

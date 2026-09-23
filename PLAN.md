@@ -555,13 +555,33 @@ estimators ship, never the labels: the rules forbid submitting training data.
 
 | ZIP (`dist/`) | Predictions | What its score tells us |
 | --- | --- | --- |
-| `solution-e27a-official-text-small.zip` | char tf-idf on official labels, every model | Whether official-label text transfers to the validation cases |
-| `solution-e27b-official-text-e11-small.zip` | the same, E11 fusion kept for DeepSeek | Whether keeping E11 for DeepSeek helps |
-| `solution-e27c-official-length-small.zip` | problem length only, every model | Whether E22's best signal carries to the validation set |
-| `solution-e27d-familiarity-small.zip` | each model's own NLL of the problem; the less familiar half of each batch robust | Independent test of the memorization direction from E23 (Finding 47) |
+| `solution-e27a-official-text-small.zip` | char tf-idf on official labels, every model | **0.57** (8/14): official-label text carries nothing |
+| `solution-e27b-official-text-e11-small.zip` | the same, E11 fusion kept for DeepSeek | **0.57** |
+| `solution-e27c-official-length-small.zip` | problem length only, every model | **0.57** |
+| `solution-e27d-familiarity-small.zip` | each model's own NLL; the less familiar half robust | **0.29** (4/14): inverted, so its complement scores 10/14 (Finding 49) |
 
-**Pre-registered reading.** A score ≥ 0.71 (10/14) counts as a real gain, since chance moves
-it by one case. A score at or below 0.64 means that estimator carries nothing the constants do
-not. **Caveat:** the validation cells were withheld from `train-main-v2` itself (Finding 35),
-so they may share problems with it. In that case the leaderboard rewards the overlap more than
-it predicts the private test.
+**Read on 22 Sep (Finding 49).** The three official-label models all scored 8/14, one below
+v2, so that route is closed. E27d's 4/14 is below every constant, which can only happen if its
+split is systematically inverted: **familiar problems are robust**, the direction MATH showed
+all along (Findings 22, 47), not the olympiad reading E23 suggested. The overlap caveat is
+retired: had the validation cases reused `train-main-v2` problems, `e27a` would have scored far
+above 0.57.
+
+### 11.7 Decomposing the familiarity split (23 Sep)
+
+`e27e` is `e27d`'s exact complement, so it scores **10/14 = 0.71**, one case above v2. These
+six ZIPs then say where that comes from, per model, never per case:
+
+| Upload | Predicts | Reads as |
+| --- | --- | --- |
+| `solution-e27e-familiar-robust-small.zip` | familiar half robust, every model | The new candidate; confirms 0.71 |
+| `solution-e27f-constants-small.zip` | Qwen and DeepSeek `True`, Skywork and Olmo `False` | The constants baseline, expected 9/14 = 0.64 |
+| `solution-e27g-split-qwen35-small.zip` | split for Qwen only, constants elsewhere | Qwen's share of the gain |
+| `solution-e27h-split-deepseek-small.zip` | split for DeepSeek only | DeepSeek's share |
+| `solution-e27i-split-skywork-small.zip` | split for Skywork only | Skywork's share |
+| `solution-e27j-split-olmo-think-small.zip` | split for Olmo-3-Think only | Olmo's share |
+
+The four deltas against `e27f` must sum to `e27e` minus `e27f`, which is the consistency check.
+Then the best per-model combination keeps the split only where its delta is positive. **That is
+selection on 14 cases**, so whatever it produces ships only if it also survives G2's
+official-row check, and v2 and `e27e` stay the principled fallbacks.

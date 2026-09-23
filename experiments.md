@@ -46,7 +46,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E22 | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | Done | Nothing clears chance; problem length best at 0.635, CI [0.42, 0.84] (Finding 46) |
 | E23 | Do familiarity/contamination scores predict robustness? | Kaggle | Done | **G-M fails**; on olympiad problems familiar problems lean spurious, not significant (Finding 47) |
 | E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | Done | **G-V2 fails**, but the sign flips from E20: kappa +0.29 on 15 pairs vs 0.72 chance agreement (Finding 48) |
-| E27 | Per-problem predictions from official labels, to beat the 0.64 constant ceiling | local + Codabench | **Built**, awaiting upload | Three ZIPs; the constants cap is 9/14 (Finding 45) |
+| E27 | Per-problem predictions, to beat the 0.64 constant ceiling | local + Codabench | Partly scored | Official-label models 8/14; **familiarity split inverted: its complement scores 10/14 = 0.71**, a new best (Finding 49) |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---

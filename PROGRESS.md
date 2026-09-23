@@ -1312,6 +1312,44 @@ we hold broke on the MATH -> olympiad shift, E24 repeated the comparison on the 
   reason: on MATH the labels were wrong, on olympiad problems they are merely unobtainable in
   useful quantity.
 
+**49. The leaderboard rejects the official-label models and, by scoring E27d at 4 of 14, hands
+us a better submission than E11 v2.** (Codabench, Small Model Track, 22 Sep, submissions
+939268-939318.)
+
+| Submission | Score | In 14ths |
+| --- | --- | --- |
+| `e27a` char tf-idf on official labels, every model | 0.57 | 8 |
+| `e27b` the same, E11's fusion kept for DeepSeek | 0.57 | 8 |
+| `e27c` problem length on official labels | 0.57 | 8 |
+| **`e27d` familiarity split, unfamiliar half robust** | **0.29** | **4** |
+| E11 v2, for reference | 0.64 | 9 |
+
+- **Training on the official labels buys nothing.** All three land one case *below* v2, which
+  matches E22: on those 33 problems no signal cleared chance, and a model fitted on them
+  carries that nothing to the validation set.
+- **The validation problems are mostly not `train-main-v2` problems.** `e27a` is a text model
+  fitted on exactly those problems' labels; had the validation cases reused them, it would have
+  scored far above 0.57 through Finding 38's cross-model agreement. So **the leader's 0.79 is a
+  method, not problem overlap** - the caveat in §11.6 is retired.
+- **E27d proves the GPU path runs on the evaluation worker.** Its fallback is E11 v2's
+  constants, which score 0.64; 0.29 can only come from the forward passes actually running.
+- **4 of 14 is a result, not a dud.** The split predicts exactly half of each batch robust, so
+  chance is 7 of 14 and no constant scores below 0.43. Being that far below chance means the
+  predictions are systematically inverted, and **the complement scores 10 of 14 = 0.71**, above
+  v2's 9. `e27e` ships that complement, and the two are exact complements case by case, so the
+  score follows arithmetically rather than by hope.
+- **The direction is the MATH one after all.** `problem_nll` ranks robust below spurious on
+  DeepSeek's 142 MATH instances (0.68 reversed, 0.58 within length quintiles: Findings 22, 47),
+  and the leaderboard agrees: **familiar problems are robust**. E23's olympiad reading, which
+  E27d shipped, was 33 pooled problems with a CI touching 0.5, and it is now rejected.
+- **What this is worth, honestly.** One case above v2 on a 14-case set. The direction rests on
+  the MATH sample (n=142) plus this leaderboard reading, against the E23 olympiad reading it
+  contradicts, so the private test could still side with E23. v2 stays the fallback, and
+  `e27e`'s margin is not large enough to freeze anything on.
+- **Next, without probing a single case:** `e27f` (the constants alone) and `e27g`-`e27j` (the
+  split for one model each) decompose the gain by model, which is the same per-model probing
+  discipline Finding 27 used.
+
 ---
 
 ## 7. Results so far

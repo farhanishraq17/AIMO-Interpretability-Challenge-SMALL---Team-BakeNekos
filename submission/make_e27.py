@@ -13,7 +13,11 @@ to every `model_id`:
 * `e27b-official-text-e11`  the same for Qwen/Skywork/Olmo, E11's fusion kept for DeepSeek
 * `e27c-official-length`    problem length alone, the one signal near significance in E22
 * `e27d-familiarity`        no fitted estimator: the scored model's own NLL of each problem,
-                            upper half of the batch robust (E23's memorization direction)
+                            the unfamiliar half of the batch robust (E23's olympiad direction)
+* `e27e-familiar-robust`    the same split the other way up, the MATH direction (Finding 49)
+* `e27f-constants`          the best constants alone, the baseline the next four are read against
+* `e27g..j-split-<model>`   the familiar-robust split for one model, constants elsewhere, so the
+                            split's leaderboard gain decomposes by model
 
 Only fitted estimators ship, never the table itself: the rules forbid submitting training
 data or labels. The estimators are fitted here, in the pinned venv, from the pinned revision,
@@ -116,13 +120,25 @@ def main() -> None:
         out = archive(DIST / f"solution-{name}-small.zip", entries)
         print(f"wrote {out} ({out.stat().st_size / 1e6:.2f} MB)")
 
-    familiarity = {
-        "solution.py": (SUBMISSION / "e27d-familiarity" / "solution.py").read_bytes(),
-        "tokenizer_check.py": (ROOT / "datagen" / "tokenizer_check.py").read_bytes(),
-        "small.txt": b"",
+    source = (SUBMISSION / "e27d-familiarity" / "solution.py").read_text(encoding="utf-8")
+    tokenizer_check = (ROOT / "datagen" / "tokenizer_check.py").read_bytes()
+    splits = {
+        "e27d-familiarity": ("unfamiliar", "all"),
+        "e27e-familiar-robust": ("familiar", "all"),
+        "e27f-constants": ("familiar", ""),
+        "e27g-split-qwen35": ("familiar", "Qwen/Qwen3.5-4B"),
+        "e27h-split-deepseek": ("familiar", "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"),
+        "e27i-split-skywork": ("familiar", "Skywork/Skywork-OR1-Math-7B"),
+        "e27j-split-olmo-think": ("familiar", "allenai/Olmo-3-7B-Think"),
     }
-    out = archive(DIST / "solution-e27d-familiarity-small.zip", familiarity)
-    print(f"wrote {out} ({out.stat().st_size / 1e6:.2f} MB)")
+    for name, (half, models) in splits.items():
+        variant = (source
+                   .replace('ROBUST_HALF = "unfamiliar"', f'ROBUST_HALF = "{half}"')
+                   .replace('SPLIT_MODELS = "all"', f'SPLIT_MODELS = "{models}"'))
+        assert f'ROBUST_HALF = "{half}"' in variant and f'SPLIT_MODELS = "{models}"' in variant, name
+        entries = {"solution.py": variant.encode(), "tokenizer_check.py": tokenizer_check, "small.txt": b""}
+        out = archive(DIST / f"solution-{name}-small.zip", entries)
+        print(f"wrote {out.name} ({out.stat().st_size / 1e3:.1f} KB)")
 
 
 if __name__ == "__main__":
