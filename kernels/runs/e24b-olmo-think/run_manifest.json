@@ -1,0 +1,77 @@
+{
+  "experiment": "e24b-olmo-think",
+  "account": "Labib",
+  "bundle_sha1": "bcc09fc161cb69a5579aad901a24dcf696f997ab",
+  "steps": [
+    {
+      "argv": [
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "vllm"
+      ],
+      "returncode": 0,
+      "seconds": 270.0
+    },
+    {
+      "argv": [
+        "datagen/perturb/sample.py",
+        "--phase",
+        "base",
+        "--model-id",
+        "allenai/Olmo-3-7B-Think",
+        "--backend",
+        "vllm",
+        "--k",
+        "4",
+        "--max-new-tokens",
+        "12288",
+        "--max-hours",
+        "4.5",
+        "--chunk",
+        "4",
+        "--out-dir",
+        "/kaggle/working/e24b-olmo-think",
+        "--pool",
+        "data/official_check/pool_olmo-think.parquet",
+        "--gpu-memory-utilization",
+        "0.95"
+      ],
+      "returncode": 0,
+      "seconds": 6626.5
+    },
+    {
+      "argv": [
+        "datagen/perturb/sample.py",
+        "--phase",
+        "variants",
+        "--model-id",
+        "allenai/Olmo-3-7B-Think",
+        "--backend",
+        "vllm",
+        "--base-records",
+        "/kaggle/working/e24b-olmo-think/base/shard_*/records.jsonl",
+        "--k",
+        "4",
+        "--max-new-tokens",
+        "12288",
+        "--max-hours",
+        "6.5",
+        "--chunk",
+        "4",
+        "--out-dir",
+        "/kaggle/working/e24b-olmo-think",
+        "--pool",
+        "data/official_check/pool_olmo-think.parquet",
+        "--variants",
+        "data/official_check/variants.parquet",
+        "--gpu-memory-utilization",
+        "0.95"
+      ],
+      "returncode": 0,
+      "seconds": 9197.9
+    }
+  ],
+  "seconds": 16161.8
+}

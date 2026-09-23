@@ -568,4 +568,5 @@ Self-generated `answer_modulus` labels against official labels on the same (mode
 | --- | --- | --- | --- | --- | --- | --- |
 | E20: DeepSeek, Hendrycks MATH | 49 | 38 / 13 | 0.29 | 0.391 | -0.135 [-0.347, 0.041] | -0.25 |
 | E20: DeepSeek, Hendrycks MATH, clear-cut only | 45 | 38 / 11 | 0.27 | 0.422 | -0.085 [-0.270, 0.055] | -0.27 |
-| E24: small track, olympiad | not run yet | | | | | |
+| E24: small track, olympiad | 15 | 12 / 13 | 0.80 | 0.673 | 0.286 [-0.190, 1.000] | 0.20 |
+| E24: small track, olympiad, clear-cut only | 13 | 12 / 12 | 0.85 | 0.458 | -0.083 [-0.226, -0.083] | 0.44 |

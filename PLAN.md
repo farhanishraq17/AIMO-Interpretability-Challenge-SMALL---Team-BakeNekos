@@ -246,7 +246,7 @@ Authoritative run definitions live in `datagen/kaggle_launch.py`.
 | Stage A olympiad (`nakib_v2`) | Do prompt states carry olympiad signal where text does not? | MR | **Done** | AUC 0.844 vs text's 0.688 on 12 official Qwen rows, but the strict control gives p = 0.073 and the training labels were self-labels (Finding 41) |
 | **E22** | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | **Done** | Nothing clears chance; problem length is best at AUC 0.635, CI [0.42, 0.84] (Finding 46) |
 | **E23** | Do familiarity/contamination scores (Min-K%, zlib, suffix NLL) predict robustness? | RSD (Qwen, DeepSeek), Labib (Skywork, Olmo-Think) | **Done** | **G-M fails**, but on olympiad problems familiar problems lean spurious (mean NLL 0.69 unoriented, CI to 0.49); tested on the leaderboard as E27d (Finding 47) |
-| **E24** | Do `answer_modulus` self-labels agree with official labels *on olympiad problems*? | ISHRAQ (E24a); TASHIN, ISHRAQ, RSD, Labib (E24b) | **Running** (E24b; E24a done: 14 of 20 problems answered, 27 pairs) | Gate G-V2: reopens or finally closes Lane E (§11) |
+| **E24** | Do `answer_modulus` self-labels agree with official labels *on olympiad problems*? | ISHRAQ (E24a); TASHIN, ISHRAQ, RSD, Labib (E24b) | **Done** | **G-V2 fails.** kappa +0.286 [-0.19, 1.00] on 15 pairs against 0.72 chance agreement; the direction flips from E20 but the yield is 15 pairs per 15.8 GPU-h (Finding 48) |
 | **E27** | Can per-problem predictions from official labels beat the 0.64 constant ceiling on the leaderboard? | local + Codabench | **Built**, awaiting upload | Three ZIPs (§11.6); the constants cap is 9/14 (Finding 45) |
 
 **Pipeline for every GPU result:**
@@ -497,7 +497,7 @@ E11 v2 (0.64) is the submission. Five things shape what is worth doing in the si
 | **E24a** | **Answer key** for the 20 labelled official problems. 8 overlap our olympiad pool, so their answers are known. The other 12 get Skywork base sampling (k=8) with a placeholder answer, and the reference is the unanimous value in the records' `answers` field. Problems without unanimity are dropped. | ~1 GPU-h | `datagen/perturb/sample.py` (`--pool`, `--problem-keys`), the `deepseek_check_pool.py` pattern | Needs ≥ 12 problems with an integer answer ≥ 13 |
 | **E24b** | **Gate G-V2: do `answer_modulus` self-labels agree with official labels on olympiad problems?** The full E7 pipeline (base k=4, then `answer_modulus` variants k=4) runs for each model on its own official problems. Qwen gets one engine per T4, DeepSeek and Skywork TP=2, and Olmo-3-Think goes last because it is slow. | ~12 GPU-h over 4 accounts | `base_sampling`, `variant_sampling`, `per_gpu`, `datagen/perturb/label.py`, E20's comparison | **Pass:** Cohen's kappa ≥ 0.3 with a bootstrap CI above 0 → Lane E reopens (E25). **Fail:** Lane E closes for good, and the report carries E20 and E24 together |
 | **E23** | **Familiarity and contamination signals** for all 36 official problems plus the 153 DeepSeek MATH problems, under all four models. Signals: mean NLL, Min-K% (k = 10, 20), zlib ratio, suffix NLL given the first half, and each model's NLL relative to the other three. | ~2 GPU-h (4 × ~20 min) | `datagen/extract_label_free.py` (`mean_nll`, `score_problem`), extended in place | **Gate G-M:** problem-level AUC with CI lower bound > 0.5 on E22 **and** within-length AUC > 0.6 on MATH → candidate block |
-| E25 *(only if G-V2 passes)* | Olympiad labelling at scale: the variants phase for eligible pool problems not yet covered (Qwen, Skywork), then a problem-level text + Stage A model trained on olympiad self-labels | ~40 GPU-h | E15–E19 records, the E18/E19 registry pattern, `train_stagea_probes.py` | G2 |
+| ~~E25~~ *(dropped 23 Sep)* | Olympiad labelling at scale. G-V2 failed, and E24 showed the yield would be about one label per GPU-hour on problems selected for difficulty (Finding 48). | — | — | — |
 | E26 *(only if G-M or G-V2 passes)* | Single encoder: one small-track model's Stage A features used as a *problem* representation for every `model_id`, trained on pooled problem-level labels | ~1 GPU-h | `extract_features.py --instances`, `train/eval_official_holdout.py` | G2, plus an organizer ruling (§11.4) |
 
 **Deliberately not planned:**
@@ -514,7 +514,7 @@ These are also added to the §5 table.
 
 | Date | Gate |
 | --- | --- |
-| **29 Sep, G-V2** | E24b decides whether Lane E reopens (E25) or stays closed. |
+| **23 Sep, G-V2: decided (fail)** | E24: on olympiad problems self-labels agree at kappa +0.286, CI [-0.19, 1.00], against chance agreement of 0.72 - the sign flips from E20's -0.135 but the gate is not cleared, and only 15 of 27 pairs could be labelled at all for 15.8 GPU-hours. **Lane E stays closed; E25 is dropped** (Finding 48). |
 | **29 Sep, G-M** | E23 decides whether familiarity becomes a block. |
 | **10 Oct, G2** (as revised in §5, made concrete) | A candidate ships as E11 v3 only if all three hold: its problem-level AUC on E22 has a CI lower bound above 0.5; it beats always-robust in balanced accuracy on the official rows; and one leaderboard submission scores ≥ 0.64. Otherwise v2 is frozen. |
 | **27 Oct** | Freeze. After that, only repeatability and timing runs. |

@@ -1,0 +1,35 @@
+{
+  "experiment": "e24b-qwen35",
+  "account": "TASHIN",
+  "bundle_sha1": "69bcde104b66d2143a111629761200be6969058b",
+  "steps": [
+    {
+      "argv": [
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "vllm"
+      ],
+      "returncode": 0,
+      "seconds": 226.1
+    },
+    {
+      "argv": [
+        "-c",
+        "import os, subprocess, sys\nargvs = [['datagen/perturb/sample.py', '--phase', 'base', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--k', '4', '--max-new-tokens', '24576', '--max-hours', '4.0', '--chunk', '4', '--out-dir', '/kaggle/working/e24b-qwen35', '--pool', 'data/official_check/pool_qwen35.parquet', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '2', '--shard-index', '0'], ['datagen/perturb/sample.py', '--phase', 'base', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--k', '4', '--max-new-tokens', '24576', '--max-hours', '4.0', '--chunk', '4', '--out-dir', '/kaggle/working/e24b-qwen35', '--pool', 'data/official_check/pool_qwen35.parquet', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '2', '--shard-index', '1']]\nprocs = [subprocess.Popen([sys.executable, *a], env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(i)})\n         for i, a in enumerate(argvs)]\nsys.exit(max(p.wait() for p in procs))"
+      ],
+      "returncode": 0,
+      "seconds": 8246.4
+    },
+    {
+      "argv": [
+        "-c",
+        "import os, subprocess, sys\nargvs = [['datagen/perturb/sample.py', '--phase', 'variants', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--base-records', '/kaggle/working/e24b-qwen35/base/shard_*/records.jsonl', '--k', '4', '--max-new-tokens', '24576', '--max-hours', '6.5', '--chunk', '4', '--out-dir', '/kaggle/working/e24b-qwen35', '--pool', 'data/official_check/pool_qwen35.parquet', '--variants', 'data/official_check/variants.parquet', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '2', '--shard-index', '0'], ['datagen/perturb/sample.py', '--phase', 'variants', '--model-id', 'Qwen/Qwen3.5-4B', '--backend', 'vllm', '--base-records', '/kaggle/working/e24b-qwen35/base/shard_*/records.jsonl', '--k', '4', '--max-new-tokens', '24576', '--max-hours', '6.5', '--chunk', '4', '--out-dir', '/kaggle/working/e24b-qwen35', '--pool', 'data/official_check/pool_qwen35.parquet', '--variants', 'data/official_check/variants.parquet', '--tensor-parallel', '1', '--text-only', '--max-num-seqs', '64', '--num-shards', '2', '--shard-index', '1']]\nprocs = [subprocess.Popen([sys.executable, *a], env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(i)})\n         for i, a in enumerate(argvs)]\nsys.exit(max(p.wait() for p in procs))"
+      ],
+      "returncode": 0,
+      "seconds": 5850.2
+    }
+  ],
+  "seconds": 14368.2
+}

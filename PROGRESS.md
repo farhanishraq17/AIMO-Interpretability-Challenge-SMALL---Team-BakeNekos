@@ -1270,6 +1270,48 @@ under each of the four models, bf16, every tokenizer round-trips, 0.4-0.65 s per
   native bools, and took 38 s (Qwen), 130 s (DeepSeek), 50 s (Skywork) and 139 s (Olmo) on T4s
   including model loading.
 
+**48. E24: on olympiad problems the self-labels stop disagreeing with the official ones, but
+gate G-V2 still fails, and the yield is the deeper problem.** (E24a answer key + E24b on
+TASHIN, ISHRAQ, RSD and Labib, 22-23 Sep, 15.8 GPU-hours. `train/compare_selflabels.py`,
+section `Self-labels vs official labels` of `RESULTS.md`.)
+
+E20 rejected `answer_modulus` self-labels on Hendrycks MATH problems. Since every other signal
+we hold broke on the MATH -> olympiad shift, E24 repeated the comparison on the problems
+`train-main-v2` labels, under the perturbation families the competition actually scores.
+
+| Set | Pairs | Agreement | Balanced acc. | Cohen's kappa [95% CI] | Spearman of drops |
+| --- | --- | --- | --- | --- | --- |
+| E20, Hendrycks MATH | 49 | 0.29 | 0.391 | **-0.135** [-0.347, 0.041] | -0.25 |
+| **E24, olympiad** | **15** | **0.80** | 0.673 | **+0.286** [-0.190, 1.000] | +0.20 |
+| E24, clear-cut only | 13 | 0.85 | 0.458 | -0.083 [-0.226, -0.083] | +0.44 |
+
+- **The sign flips with the population.** Every headline number moves from "mildly inverted" on
+  MATH to "weakly positive" on olympiad problems. That is consistent with the pattern in
+  Findings 32, 39 and 47: what holds on MATH need not hold, or even keep its direction, where
+  the competition scores.
+- **It still fails the gate**, which asked for kappa >= 0.3 with the CI above 0. Agreement of
+  0.80 sounds high only until the marginals are accounted for: 80% of our labels and 87% of the
+  official ones are robust, so **chance agreement is already 0.72**. The clear-cut subset
+  disagrees with the full set, which is what noise looks like at this size.
+- **The yield is the harder obstacle.** A pair needs the model to solve the original 4 times
+  out of 4 under our sampling, and these are problems the organizers' own runs solved:
+
+  | Model | Official problems with an answer | Base-eligible for us | Pairs labelled |
+  | --- | --- | --- | --- |
+  | Qwen3.5-4B | 9 | 5 | 5 |
+  | allenai/Olmo-3-7B-Think | 8 | 6 | 6 |
+  | deepseek-ai/DeepSeek-R1-0528-Qwen3-8B | 7 | **1** | 1 |
+  | Skywork-OR1-Math-7B | 3 | 3 | 3 |
+
+  DeepSeek cleared 1 of 7 even at a 24k cap, and its variants phase covered 2 variants before
+  its budget. **15 of the 27 available pairs produced a label for 15.8 GPU-hours**, so a
+  larger olympiad self-labelling programme would cost far more per label than Finding 43
+  estimated on the pool, where the problems were not selected for difficulty.
+- **Decision: Lane E stays closed** (gate G-V2, 23 Sep). The record now covers both
+  populations, and neither supports training on `answer_modulus` labels. What changed is the
+  reason: on MATH the labels were wrong, on olympiad problems they are merely unobtainable in
+  useful quantity.
+
 ---
 
 ## 7. Results so far

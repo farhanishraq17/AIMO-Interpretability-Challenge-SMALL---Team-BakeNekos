@@ -45,7 +45,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | Official-label tests | Do models agree? Does the text block reach olympiad rows? | local (`nakib_v2`) | Done | Models agree **20/20**, p = 0.0005 (Finding 38); text block AUC 0.617, CI spans 0.5 (Finding 39) |
 | E22 | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | Done | Nothing clears chance; problem length best at 0.635, CI [0.42, 0.84] (Finding 46) |
 | E23 | Do familiarity/contamination scores predict robustness? | Kaggle | Done | **G-M fails**; on olympiad problems familiar problems lean spurious, not significant (Finding 47) |
-| E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | **Running** (E24b; E24a answer key done) | Gate G-V2: reopens or finally closes self-labelling |
+| E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | Done | **G-V2 fails**, but the sign flips from E20: kappa +0.29 on 15 pairs vs 0.72 chance agreement (Finding 48) |
 | E27 | Per-problem predictions from official labels, to beat the 0.64 constant ceiling | local + Codabench | **Built**, awaiting upload | Three ZIPs; the constants cap is 9/14 (Finding 45) |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
@@ -53,12 +53,10 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 
 ## 2. Running now
 
-**E24b, gate G-V2** (pushed 22 Sep): each model samples the official problems it is labelled on
-(base phase, then two `answer_modulus` variants each, k=4), to compare self-labels with official
-labels on olympiad problems. `e24b-qwen35` (TASHIN), `e24b-deepseek` (ISHRAQ), `e24b-skywork`
-(RSD), `e24b-olmo-think` (Labib).
+Nothing. E24b finished on 23 Sep (15.8 GPU-hours over four accounts) and gate G-V2 failed, so
+the self-labelling lane stays closed and E25 is dropped (Finding 48).
 
-**E24a is done.** `train-main-v2` ships no answers, so Skywork sampled all 20 labelled problems
+**E24a.** `train-main-v2` ships no answers, so Skywork sampled all 20 labelled problems
 8 times (`e24a-answer-key-skywork`, ISHRAQ; its first push went to Eshad, which ran without a
 GPU and needs phone verification). A reference answer is kept only when all 8 samples agree:
 that happened on 3 of the 6 problems whose answers were already known, matching all 3, and on 8
