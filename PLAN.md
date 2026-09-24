@@ -182,12 +182,14 @@ Every artifact ships per `model_id`, plus a safe fallback of `[False] * len(prob
 
 ### 3.3 Compliance with the extra-data rule
 
-- No extra labelled data for the official types: `rephrase`, `rename`, `domain`, `distract`,
-  `typos`, `expert_perturbations`, `expert_no_solution`.
-- Self-generated labels use **`answer_modulus` only** until the organizers confirm the
-  `confirm` categories.
-- `label.py` carries the compliance tag, so an official-plus-distinct-only training set can
-  always be rebuilt.
+- **Superseded 19 Sep:** the current competition website explicitly retires the prohibition
+  on extra labeled data. Labels for official perturbation families may now be generated and
+  used, provided no evaluation data leak is involved.
+- Existing E15–E24 results are still scientifically valid: they tested whether the cheap
+  `answer_modulus` proxy transferred, and it did not. The rule change does not rescue those
+  labels; it permits a new dataset built from the actual official-family symbolic programs.
+- `label.py` retains its compliance tags for provenance and ablations, not as a current legal
+  restriction.
 
 ### 3.4 E7 labelling program
 
@@ -284,14 +286,15 @@ time.
    (96 GB, HF `generate` only, no vLLM), budget about 3000 s for the whole run. If needed,
    cap tokens, use k=1, or use one rewrite.
 
-### Lane E: self-generated labels — CLOSED (20 Sep, gate G-V)
+### Lane E: answer-modulus self-labels — CLOSED (20 Sep); official-family lane conditionally reopened 25 Sep
 
 E15–E19 and the two `nakib_v2` gapfill runs built the pipeline and produced 26 Qwen and 23
 Skywork `answer_modulus` labels. E20 then ran the same pipeline on 66 DeepSeek problems that
 carry official labels: agreement 0.29, Cohen's kappa −0.135, drops correlating −0.25
-(Finding 31). `answer_modulus` was the only category the extra-data rule allowed, so **there is
-no compliant path to self-generated labels left** and the lane closes. The records stay as a
-documented negative result.
+(Finding 31). Under the rule then in force, `answer_modulus` was the only labelable category,
+so that lane closed. The 19 Sep website clarification now permits labels from the official
+families, but a replacement lane remains blocked on access to their symbolic programs in
+`problems-public`. The old records stay as a documented negative result.
 
 One ported result rests on those labels and is retained only as a measurement: the Stage A
 olympiad probe of Finding 41 (AUC 0.844 on 12 official Qwen rows, strict control p = 0.073).
@@ -437,7 +440,11 @@ Drafted 17 Sep as one message (not yet sent):
    which models?
 3. Does the final **test set** cover all four small-track models, and in what proportions?
    Does `reasoning_effort` apply to the small track?
-4. Can we get access to **`aimo-interp/problems-public`**?
+4. Can we get access to **`aimo-interp/problems-public`**? As of 25 Sep, search indexing shows
+   a 22-row symbolic validation split, but the live Hub API returns 401 and the dataset is not
+   in the public `aimo-interp` listing. The getting-started repository restricts new issue
+   creation, and issue #6 already asks whether self-generated counterfactual evaluation is
+   permitted but has no organizer response.
 5. May several **team members submit from their own Codabench accounts**?
 6. **Bug report.** Under the pinned runtime (transformers 5.13.0), `AutoTokenizer` loads
    DeepSeek-R1-0528-Qwen3-8B as a `LlamaTokenizer` that drops all whitespace. Both
@@ -500,6 +507,7 @@ E11 v2 (0.64) is the submission. Five things shape what is worth doing in the si
 | **E30** | Architecture-invariant norm/cosine trajectories from the existing E21 all-layer archives. | CPU only | E21 archives | **Closed:** 12-way max-T p=0.2049; selected signal reverses on MATH (AUC 0.348) |
 | **E31** | Does the labelled model's prompt state remain stable under deterministic answer-preserving rewrites? Five signals fixed before extraction. | 0.19 GPU-h on TASHIN/RSD | E14 rewrites, E21 prompt path | **Closed:** best AUC 0.735, template CI [0.380, 0.938], max-T p=0.0667, Qwen AUC 0.531 |
 | **E32** | One independent confirmation of E31's selected all-layer cosine sensitivity and fixed direction on 142 DeepSeek MATH rows. | 0.21 h on TASHIN | E31 extractor | **Closed:** AUC 0.545, CI [0.428, 0.658], within-length 0.510, split BA 0.527 |
+| **E33** *(blocked on access)* | Generate official-family labels from the symbolic programs in `problems-public`, fit one frozen cross-model stability model, and evaluate once on `train-main-v2` without tuning on it. | Estimate only after inspecting the 22 programs | `problems-public`, E7 sampler, E22 harness | **Start only after access. Pass:** problem AUC >= 0.75, 19-template CI lower > 0.5, worst non-degenerate per-model AUC >= 0.60, and balanced accuracy beats the constants. One Codabench submission maximum. |
 | ~~E25~~ *(dropped 23 Sep)* | Olympiad labelling at scale. G-V2 failed, and E24 showed the yield would be about one label per GPU-hour on problems selected for difficulty (Finding 48). | — | — | — |
 | E26 *(only if G-M or G-V2 passes)* | Single encoder: one small-track model's Stage A features used as a *problem* representation for every `model_id`, trained on pooled problem-level labels | ~1 GPU-h | `extract_features.py --instances`, `train/eval_official_holdout.py` | G2, plus an organizer ruling (§11.4) |
 
@@ -526,8 +534,8 @@ These are also added to the §5 table.
 
 | Week (2026) | Experiments | Report track |
 | --- | --- | --- |
-| **Sep 22–28** | E22 (CPU). E24a, then E24b across ISHRAQ, DIDHITI, TASHIN and SALAM. E23 on RSD. | Outline; negative-results table (E12, E14, E20, E21, the probe-selection artifact, the tokenizer bug) |
-| Sep 29 – Oct 5 | G-V2 and G-M. If either passes, launch E25 or E26; if both fail, GPU work stops. | Figures: layer curves (Finding 11), transfer failure (Findings 32, 39), 20/20 agreement (Finding 38) |
+| **Sep 25–28** | No GPU work. Request `problems-public` access through Discord/registration support; preserve E27e/E27h (0.71) and E11 v2 (0.64). | Add E30–E32 and the rule correction to the negative-results record. |
+| Sep 29 – Oct 5 | Only if access arrives: inspect all 22 symbolic programs, freeze E33's generator/model once, estimate cost, then generate training labels. Otherwise no experiment. | Figures: layer curves (Finding 11), transfer failure (Findings 32, 39, 53), 20/20 agreement (Finding 38) |
 | Oct 6–12 | G2 (10 Oct). If it passes: E11 v3 build, Docker load test, GPU check. | Method and data-provenance sections: label-rule archaeology, the `pool_id` bug, Finding 44 |
 | Oct 13–26 | Runtime and repeatability; the ablations the report needs | Full draft |
 | Oct 27 – Nov 1 | Freeze 27 Oct; last upload by 30 Oct | Polish |
@@ -535,12 +543,17 @@ These are also added to the §5 table.
 
 ### 11.4 Needs you (supersedes §9)
 
-1. **Send the organizer message** (§10), adding one question: *may a solution load a cached
-   small-track model other than the `model_id` it was called with?* E26 depends on the answer.
-   Old §9 items 1 and 3 are done or overtaken: the probes were re-measured (Finding 27), and RSD
-   and Labib replaced the two dead tokens.
-2. **Submit the Fields compute-grant form.** It matters only if E25 runs.
-3. **Nothing on Codabench until G2.**
+1. **Send this through the challenge Discord or registration support** (new GitHub issues are
+   restricted): *The current website permits extra labeled data, but
+   `aimo-interp/problems-public` returns 401 and is absent from the public organization list.
+   Could you grant registered participants access or explain the access procedure? May labels
+   generated from its symbolic programs and official perturbation families be used for model
+   training? Are more labeled rows for the four Small Models Track checkpoints planned?*
+2. Also ask whether a solution may load a cached small-track model other than the `model_id`
+   it was called with; E26 depends on the answer.
+3. **No new Codabench upload:** retain E27e/E27h at 0.71, with E11 v2 at 0.64 as fallback.
+4. **No E33 GPU spend until access arrives and the generator, candidate, holdout and gate are
+   frozen in the repository.**
 
 ### 11.5 Housekeeping, bundled with E22
 
@@ -554,7 +567,7 @@ These are also added to the §5 table.
 Another team reached **0.79 (11/14)** on 21 Sep. The probes show v2's constants are the ceiling
 for constants (9/14, Finding 45), so the only way up is per-problem prediction. **E27** fits
 three estimators on the 33 official problems, labels pooled across configurations. The
-estimators ship, never the labels: the rules forbid submitting training data.
+estimators ship, not the labels; their training provenance is documented for reproducibility.
 
 | ZIP (`dist/`) | Predictions | What its score tells us |
 | --- | --- | --- |

@@ -9,7 +9,7 @@ Companion documents:
 - `RESULTS.md`: generated metrics.
 - `CLAUDE.md`: working conventions and commands.
 
-Last updated: 19 September 2026.
+Last updated: 25 September 2026.
 
 ---
 
@@ -885,8 +885,9 @@ DeepSeek's officially labelled MATH problems,
   - **E15-E19 labels are not training data.** The 26 Qwen and 19 Skywork self-labels are set
     aside, and the labelling program stops. The base-phase and variants records stay for the
     report as a negative result.
-  - The compliant category we were allowed to label turns out not to measure the target, so
-    self-labelling under the extra-data rule has no cheap path left.
+  - The only category permitted under the rule at the time turns out not to measure the
+    target. The 19 Sep rule change permits an official-family replacement, but that needs the
+    inaccessible symbolic programs rather than more `answer_modulus` volume.
   - Official labels (34 small-track rows) plus DeepSeek's 152 are now the whole training set.
 - **What it saves.** About 40 GPU-hours a week that E15-E19 would have consumed.
 
@@ -1170,11 +1171,10 @@ never been downloaded.** (Audit of `kernels list --mine` across that checkout's 
   2425 GPU-seconds per item against Qwen's 567. **That 4.3x gap is unexplained** - E19 generated
   at 19.9 tok/s where E22 generated at 116.6 under a byte-identical vLLM config - and host
   throttling is the guess, not a measurement.
-- **The binding ceiling was compliance, not volume.** Only `answer_modulus` is labelable under
-  the extra-data rule, so every label we could legally manufacture measures robustness under a
-  *changed requested output* while the competition scores *answer-preserving rewrites*. Scaling
-  volume scales the proxy, not the validation of it - which is exactly what Finding 31 then
-  measured.
+- **At the time, the binding ceiling was compliance, not volume.** Only `answer_modulus` was
+  labelable, so every label measured robustness under a *changed requested output* while the
+  competition scores *answer-preserving rewrites*. The 19 Sep clarification later removed
+  that rule; Finding 54 records the conditional official-family route it opens.
 
 **44. Merging the organizers' split with the older tables corrupted two DeepSeek labels.**
 (Found while porting Finding 33; fixed in `datagen/ingest_public.py`.)
@@ -1424,6 +1424,26 @@ it misses the pre-registered gate.** (`e31-counterfactual-a/b` on TASHIN and RSD
 - **Fleet constraint respected:** E31/E32 used TASHIN and RSD only, never the excluded
   `farhanishraqq` GPU account.
 
+**54. The data rule reopened, but the symbolic dataset needed for a clean new experiment is
+still inaccessible.** (Official website, GitHub and Hugging Face audit, 25 Sep.)
+
+- The current website says the restriction on extra labeled data was retired on 19 Sep.
+  Self-generated labels for official perturbation families are therefore allowed; leakage of
+  evaluation data remains forbidden. This supersedes this repository's old §3.3 reading.
+- `aimo-interp/problems-public` is indexed as a 22-row symbolic validation dataset, with
+  programs, constraints, templates and original results. The live Hub API returns **401**, and
+  it is absent from the seven datasets currently visible under the official organization.
+- No substitute release appeared: `train-main-v2` remains at commit `23791d9b` from 17 Sep;
+  the getting-started and baselines heads remain `de794053` and `7e883996`; the other visible
+  datasets were last changed in May.
+- The official getting-started repository restricts new issue creation. Existing issue #6
+  already asks whether self-generated counterfactual evaluation is permitted and is still
+  unanswered. The next contact should therefore go through the challenge Discord or organizer
+  registration channel, requesting `problems-public` access rather than opening a duplicate.
+- **Conditional E33 is now frozen, not launched:** train only on new labels generated from the
+  symbolic programs; score once on the external official `train-main-v2` rows using the E22
+  19-template harness. No rewrite, layer, threshold or rank-fraction search on that holdout.
+
 ---
 
 ## 7. Results so far
@@ -1610,24 +1630,28 @@ deterministically.
 
 ## 10. Open questions and blockers
 
-**For the organizers** (drafted 17 Sep, not sent yet):
+**For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
+new GitHub issues are restricted):
 
-1. Will labelled training data be released for Qwen3.5-4B, Skywork-OR1-Math-7B and
-   Olmo-3-7B-Think? If not, may we label them ourselves with non-official perturbation types?
-2. How many cases does the Competition Phase validation set hold, and for which models?
-3. Does the final test set cover all four small-track models, and in what proportions? Does
+1. The website now permits extra labeled data, but `aimo-interp/problems-public` returns 401.
+   Can registered participants get access, and may labels generated from its symbolic programs
+   and official perturbation families be used for training?
+2. Will more labelled rows be released for Qwen3.5-4B, Skywork-OR1-Math-7B and
+   Olmo-3-7B-Think?
+3. How many cases does the Competition Phase validation set hold, and for which models?
+4. Does the final test set cover all four small-track models, and in what proportions? Does
    `reasoning_effort` apply to the small track?
-4. Bug report: under transformers 5.13, `AutoTokenizer` strips whitespace for DeepSeek
+5. Bug report: under transformers 5.13, `AutoTokenizer` strips whitespace for DeepSeek
    (Finding 14). This affects `solutions/trained-probe` and
    `aimo-interp/baselines/scripts/encode.py`.
-5. Still open from earlier: access to `problems-public`.
 
-**Requiring your accounts:**
+**Requiring you:**
 
-- Upload `dist/solution-e11-v2-qwen-true-small.zip` to the **Small Model Track** task; the
-  Main Track task rejects `small.txt`. Expected score: about 0.53.
-- Send the organizer message above.
-- Submit the Fields Model compute-grant form (`https://forms.gle/oYkYDN1EtSVeSfMd9`).
+- Send the organizer message above through the challenge Discord or registration support.
+- If access is granted, add a Hugging Face token with permission to read
+  `aimo-interp/problems-public`; do not paste it into the repository or chat.
+- No leaderboard action is currently needed: E27e/E27h at 0.71 remains the performance
+  candidate and E11 v2 at 0.64 remains the conservative fallback.
 
 **Housekeeping:**
 
@@ -1642,19 +1666,16 @@ deterministically.
 
 ## 11. Next steps
 
-Ranked by value (18 Sep):
+Ranked by value (25 Sep):
 
-1. **Finish the first labels.** When E18 (Qwen) and E19 (Skywork) finish, run `label.py`, then
-   `train/summarize_labelling.py`. That gives up to about 53 Qwen and 101 Skywork labels.
-2. **Train per-model models on them** the way E11 was trained for DeepSeek: text + Stage A
-   hidden states under grouped CV. Stage A features for the pool problems need one forward
-   pass per problem (about 1 s each).
-3. **Check that self-labels mean something.** `answer_modulus` robustness is not the official
-   perturbations' robustness. Run the same pipeline on DeepSeek, where official labels exist,
-   and compare.
-4. **Submit E11 v3 only where a per-model model beats its constant** under CV. The leaderboard
-   is about 14 cases, so it cannot settle small differences.
-5. **Send the organizer message** (drafted 17 Sep). Official labels for the three models would
-   replace steps 1–3.
-6. **Olmo-3-Think labelling** moves to the Fields compute grant; on T4s it runs one or two
-   sequences at a time.
+1. **Request `problems-public` access and official-family label clarification.** This is the
+   only identified route to genuinely new evidence rather than another search over the same
+   34 rows and 14 leaderboard cases.
+2. **Do not start E33 until access exists.** First inspect the 22 symbolic programs, freeze one
+   generator and one model, estimate the sampling cost, and commit the complete protocol.
+3. **Keep `train-main-v2` external to E33 training.** Score it once with the existing E22
+   19-template harness; do not tune rewrites, layers, thresholds or rank fractions on it.
+4. **Retain the current submissions.** E27e/E27h (0.71) is the performance candidate; E11 v2
+   (0.64) is the conservative fallback. No new Codabench upload without E33 clearing its gate.
+5. **If access is denied or no response arrives, stop GPU experimentation** and focus on the
+   technical report, reproducibility, runtime measurements and negative-result figures.

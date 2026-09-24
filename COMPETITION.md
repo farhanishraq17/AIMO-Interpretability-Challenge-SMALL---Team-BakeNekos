@@ -180,7 +180,11 @@ The leaderboard metric is raw accuracy, which depends on the class prior, while 
 4. **Transparency.** Organizers must be able to reproduce the score from the report alone. Document training data, training codebase, and the submission bundle. The submission may depend only on documented resources.
 5. **Reviewing.** Award-considered teams peer-review up to 3 other reports, 15–30 Nov 2026.
 
-Proposal-paper extra (overfitting control): do not use extra **labeled** data for the same perturbation types as the final validation set. Unlabeled data and labels for *other* perturbation types are allowed.
+**Data-rule clarification (website, 19 Sep 2026):** the organizers retired the proposal-paper
+restriction on extra labeled data. Extra labeled training data and self-generated perturbation
+labels are allowed; evaluation-data leakage remains forbidden. Large test-time perturbation
+generation is discouraged by the shared 3600-second inference budget, not by a separate rule.
+The website and getting-started repository override the proposal paper where they differ.
 
 Open participation: no affiliation, team-size, or career-level restrictions. You do **not** need to have competed in AIMO.
 
@@ -290,7 +294,7 @@ The public sample is a **packaging and contract check**, not a preview of privat
 | --- | --- |
 | [`aimo-interp/train-main-v2`](https://huggingface.co/datasets/aimo-interp/train-main-v2) | **82 officially labelled rows covering all four small-track models** (34 labelled small-track rows) on olympiad problems, schema `model_id / reasoning_effort / problem / is_robust / max_drop`. Linked from neither the website nor the upstream README; found by listing the org. Summarize with `scripts/inspect_train_main_v2.py` (pinned revision `23791d9b`). Findings 30, 33, 34 |
 | [`aimo-interp/val-sample`](https://huggingface.co/datasets/aimo-interp/val-sample) | 28 public validation rows; mixed models; import with `uv run scripts/import_hf_dataset.py` |
-| [`aimo-interp/problems-public`](https://huggingface.co/datasets/aimo-interp/problems-public) | Problems + symbolic chains (AIME 2026, AIMO 2 reference, …). **Still 401 as of 19 Sep 2026** |
+| [`aimo-interp/problems-public`](https://huggingface.co/datasets/aimo-interp/problems-public) | Problems + symbolic chains (AIME 2026, AIMO 2 reference, …). Search indexing shows a 22-row validation split, but the live Hub API returns 401 and the dataset is absent from the public organization listing as of 25 Sep 2026. |
 | [`aimo-interp/augmented-sample-math-agg`](https://huggingface.co/datasets/aimo-interp/augmented-sample-math-agg) | Larger labeled aggregate for `qwen3-8b:low` (Hendrycks MATH). Used by the uncertainty baseline |
 
 Local import layout after `import_hf_dataset.py`:

@@ -81,7 +81,7 @@ pairs to test**: Qwen 9, Olmo 8, DeepSeek 7, Skywork 3.
 
 **Why it stopped.** E20 compared self-generated `answer_modulus` labels with official ones on
 66 DeepSeek problems: agreement 0.29, Cohen's kappa -0.135, and our measured drops correlate
-with the official drops at -0.25 (Finding 31). The category the extra-data rule let us label
+with the official drops at -0.25 (Finding 31). The category the then-current rule let us label
 does not measure the robustness the competition scores.
 
 **What replaced it.** `aimo-interp/train-main-v2` (published 17 Sep, ingested 20 Sep) carries
@@ -367,7 +367,8 @@ Neither run used the excluded `farhanishraqq` GPU account.
 - **Every shortcut has now failed:** label-free forward-pass signals (E12), test-time answer
   agreement (E14), self-generated labels (E20), and cross-model transfer (E21). Each is a
   measured negative result for the report.
-- **Labels are the binding constraint.** 32 official small-track rows is not a training set,
-  and the extra-data rule leaves no compliant way to make more.
+- **Labels are the binding constraint.** 34 official small-track rows are not a training set.
+  The 19 Sep rule change permits new official-family labels, but their symbolic source remains
+  inaccessible (Finding 54).
 - **E11 v2 (0.64) is the submission** until more labels exist. The open ask is to the
   organizers: is more training data coming?
