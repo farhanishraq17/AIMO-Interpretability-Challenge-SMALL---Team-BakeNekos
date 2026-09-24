@@ -18,14 +18,17 @@ def main() -> None:
     source = SOURCE.read_text(encoding="utf-8")
     tokenizer_check = (ROOT / "datagen" / "tokenizer_check.py").read_bytes()
     variants = {
-        "e28a-suffix-nll": "suffix_nll",
-        "e28b-mean-suffix": "mean_suffix",
-        "e28c-min-k-20": "min_k_20",
-        "e28d-min-k-gap": "min_k_gap",
+        "e28a-suffix-nll": ("suffix_nll", "all"),
+        "e28b-mean-suffix": ("mean_suffix", "all"),
+        "e28c-min-k-20": ("min_k_20", "all"),
+        "e28d-min-k-gap": ("min_k_gap", "all"),
+        "e29a-deepseek-min-k-gap": ("min_k_gap", "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"),
     }
-    for name, score_mode in variants.items():
+    for name, (score_mode, split_models) in variants.items():
         variant = source.replace('SCORE_MODE = "suffix_nll"', f'SCORE_MODE = "{score_mode}"')
+        variant = variant.replace('SPLIT_MODELS = "all"', f'SPLIT_MODELS = "{split_models}"')
         assert f'SCORE_MODE = "{score_mode}"' in variant
+        assert f'SPLIT_MODELS = "{split_models}"' in variant
         out = archive(DIST / f"solution-{name}-small.zip", {
             "solution.py": variant.encode(),
             "tokenizer_check.py": tokenizer_check,

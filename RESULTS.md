@@ -591,3 +591,34 @@ All candidates call the familiar half of each complete per-model batch robust. N
 | `mean_suffix_mink10` | 0.649 | 0.668 | 0.348 | 0.450 | 0.471 | 0.373 |
 
 The selected problem-level candidate is **`min_k_gap`**: AUC **0.867**, template-bootstrap 95% CI [0.728, 0.973], ordinary permutation p = 0.0010. Because it was selected from 12 candidates, the maxT family-wise adjusted p-value is **0.0010**.
+
+## E28: cross-model stability
+
+The three rows are the pre-registered E27/E28 statistics, not a new candidate search. Problem labels are pooled across configurations, ranks are recomputed inside the official-problem set for each scoring model, and `without X` averages the other three ranks. The stability gate is worst leave-one-model-out AUC >= 0.65.
+
+| Statistic | All four AUC | Without Qwen | Without Skywork | Without Olmo | Without DeepSeek | Worst | Minimum pairwise rho | Gate |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `mean_nll` | 0.264 | 0.258 | 0.253 | 0.286 | 0.242 | **0.242** | 0.853 | fail |
+| `suffix_nll` | 0.346 | 0.368 | 0.346 | 0.368 | 0.330 | **0.330** | 0.809 | fail |
+| `min_k_gap` | 0.808 | 0.835 | 0.764 | 0.731 | 0.802 | **0.731** | -0.337 | **pass** |
+
+Evaluator-shaped batches (AUC / familiar-half accuracy / n):
+
+| Statistic | Qwen | Skywork | Olmo | DeepSeek |
+| --- | --- | --- | --- | --- |
+| `mean_nll` | 0.375 / 0.333 / 12 | 0.000 / 0.333 / 3 | 0.286 / 0.333 / 9 | 0.333 / 0.400 / 10 |
+| `suffix_nll` | 0.344 / 0.333 / 12 | 0.000 / 0.333 / 3 | 0.357 / 0.556 / 9 | 0.381 / 0.600 / 10 |
+| `min_k_gap` | 0.469 / 0.500 / 12 | 1.000 / 1.000 / 3 | 0.643 / 0.556 / 9 | 0.762 / 0.600 / 10 |
+
+## E29: controlled DeepSeek-only transfer
+
+Submission 942281 applies the stable `min_k_gap` split only to DeepSeek and keeps the E11 v2
+constants for Qwen, Skywork, and Olmo. The official local scorer reports coverage 1.0 with no
+invalid predictions. Codabench scores it **8/14 = 0.57**, below E27e/E27h's **10/14 = 0.71**.
+The tail-gap transfer is therefore rejected; no fraction or ensemble tuning follows on the
+14-case public validation set.
+
+The all-model `min_k_gap` package was also retried unchanged after submission 942257 failed at
+ingestion. Retry 942361 completed and scored **4/14 = 0.29**. Thus the statistic's strong
+official-data stability does not transfer to the public validation set either globally or in
+the DeepSeek-only policy; the branch is closed.

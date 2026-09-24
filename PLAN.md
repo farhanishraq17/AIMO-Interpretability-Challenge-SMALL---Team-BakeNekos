@@ -515,7 +515,7 @@ These are also added to the §5 table.
 | Date | Gate |
 | --- | --- |
 | **23 Sep, G-V2: decided (fail)** | E24: on olympiad problems self-labels agree at kappa +0.286, CI [-0.19, 1.00], against chance agreement of 0.72 - the sign flips from E20's -0.135 but the gate is not cleared, and only 15 of 27 pairs could be labelled at all for 15.8 GPU-hours. **Lane E stays closed; E25 is dropped** (Finding 48). |
-| **29 Sep, G-M** | E23 decides whether familiarity becomes a block. |
+| **24 Sep, G-M: decided (fail)** | E23's seven pre-registered familiarity signals all fail: no candidate has both an olympiad CI lower bound above 0.5 and MATH within-length AUC above 0.6. E27/E28's later rank policies are reported as controlled leaderboard follow-ups, not as a reopened candidate block. |
 | **10 Oct, G2** (as revised in §5, made concrete) | A candidate ships as E11 v3 only if all three hold: its problem-level AUC on E22 has a CI lower bound above 0.5; it beats always-robust in balanced accuracy on the official rows; and one leaderboard submission scores ≥ 0.64. Otherwise v2 is frozen. |
 | **27 Oct** | Freeze. After that, only repeatability and timing runs. |
 
@@ -603,6 +603,23 @@ booleans without fallback; the two-pass T4 checks took 45–147 seconds per mode
 headroom under the 3600-second evaluation limit. Checks ran on TASHIN and RSD only, not the
 excluded `farhanishraqq` account.
 
-**Submission discipline:** E28a is submission 942047. E28d gets the final daily slot because it
-is the only candidate to clear the official problem-level gate after family-wise correction.
-The other E28 variants remain local; no leaderboard grid search.
+**Submission read (24 Sep):** E28a is submission 942047 and scored **0.71**, exactly tying
+E27e. E28d first failed in Codabench ingestion as 942257; an exact retry, submission 942361,
+finished and scored **4/14 = 0.29** despite coverage 1.0 locally. Reject Min-K gap as a hidden-set
+transfer signal. The other E28 variants remain local; no leaderboard grid search.
+
+### 11.9 Cross-model stability and a DeepSeek-only successor (24 Sep)
+
+`train/eval_e28_stability.py` stress-tests only the three pre-registered statistics. Min-K gap
+keeps problem-level AUC above 0.73 when any one scoring model is removed; mean and suffix NLL
+fall below 0.37. On evaluator-shaped official batches, Min-K gap is strongest for DeepSeek
+(AUC 0.762, familiar-half accuracy 0.600). This agrees with the hidden-set decomposition:
+DeepSeek's E27 split supplies the whole +1-case gain, while Qwen and Skywork each contribute 0
+(Olmo remains queued).
+
+`solution-e29a-deepseek-min-k-gap-small.zip` therefore applies Min-K gap only to DeepSeek and
+uses the proven E11 constants elsewhere. It passes the official local scorer (coverage 1.0,
+zero invalid predictions), but submission 942281 scores **8/14 = 0.57**, below E27e/E27h's
+10/14 = 0.71. Together with all-model E28d's 4/14, **both controlled transfer tests fail:**
+retain E27 and close the tail-gap branch. Do not tune the fraction or add weighted ensembles
+on the 14 cases.

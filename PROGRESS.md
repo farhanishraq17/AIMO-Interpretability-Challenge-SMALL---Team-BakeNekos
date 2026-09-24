@@ -1350,6 +1350,35 @@ us a better submission than E11 v2.** (Codabench, Small Model Track, 22 Sep, sub
   split for one model each) decompose the gain by model, which is the same per-model probing
   discipline Finding 27 used.
 
+**50. The E27 gain is DeepSeek-specific; Min-K tail shape passes offline stability but fails
+both controlled transfers.** (Codabench submissions 941763-942361; E28 Kaggle checks
+on TASHIN and RSD; `train/eval_e28_stability.py`, 24 Sep.)
+
+- **The decomposition is already informative.** Constants score 9/14. Splitting only Qwen or
+  Skywork by mean NLL stays at 9/14, while splitting only DeepSeek reaches **10/14 = 0.71**,
+  the same score as splitting every model. Olmo remains queued. Thus the observed gain belongs
+  to DeepSeek; changing the other completed models adds zero net cases.
+- **Suffix NLL does not improve the independent leaderboard result.** E28a calls the familiar
+  half robust using suffix NLL and scores **0.71**, tying E27e. It is useful confirmation of the
+  familiarity family, not a new best.
+- **Min-K gap survives a stricter offline stability test.** The selected statistic is
+  `min_k_10 - min_k_20`, with lower gaps called familiar. Averaging model-wise ranks over the
+  official problems gives AUC 0.808 after ranks are recomputed inside that set. Leaving out
+  Qwen, Skywork, Olmo or DeepSeek gives 0.835, 0.764, 0.731 and 0.802 respectively; the
+  pre-registered worst-case gate of 0.65 therefore passes. Mean NLL's worst omission is 0.242
+  and suffix NLL's is 0.330. On DeepSeek's own 10 labelled rows, Min-K gap has AUC **0.762**.
+- **The E28d infrastructure failure was resolved by one exact retry, and the result fails.**
+  Submission 942257 failed on the Codabench ingestion host before scoring. The unchanged ZIP
+  was retried once as submission 942361 and scored **4/14 = 0.29**. It still passes the official
+  local ingestion/scoring path with coverage 1.0 and zero invalid predictions, so this is a
+  genuine transfer failure rather than a packaging failure.
+- **E29a is the single follow-up, and it fails.** Submission 942281 applies Min-K gap only to
+  DeepSeek and keeps Qwen=True, Skywork=False and Olmo=False. It passes five policy tests and
+  the official local scorer, but scores **8/14 = 0.57** on Codabench, two cases below E27's
+  10/14. Combined with E28d's 4/14, this rejects the tail-gap family and retains E27e/E27h as
+  the best policy. No rank-fraction or ensemble search is justified on 14 cases.
+- **Fleet constraint respected:** no `farhanishraqq` GPU was used for E28/E29.
+
 ---
 
 ## 7. Results so far
