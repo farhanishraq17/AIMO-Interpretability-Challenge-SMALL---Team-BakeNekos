@@ -85,6 +85,10 @@ def build_items(args: argparse.Namespace) -> tuple[list[dict], dict]:
     pool = pool[~pool["pool_id"].duplicated(keep=False)]
     if args.tiers:
         pool = pool[pool["tier"].isin(args.tiers)]
+    if getattr(args, "sources", None):
+        pool = pool[pool["source"].isin(args.sources)]
+    if getattr(args, "exclude_problem_keys", None):
+        pool = pool[~pool["problem_key"].isin(set(args.exclude_problem_keys))]
     if args.problem_keys:
         # Re-sample a named set of problems, e.g. ones whose base records were lost with an
         # account. Keyed on `problem_key` rather than `pool_id` because the latter is not unique.
@@ -273,8 +277,13 @@ def main() -> None:
     parser.add_argument("--base-records", default=None, help="glob of base-phase records.jsonl (variants phase)")
     parser.add_argument("--min-base-accuracy", type=float, default=1.0)
     parser.add_argument("--categories", nargs="+", default=None)
-    parser.add_argument("--include-confirm", action="store_true", help="also sample categories awaiting organizer confirmation")
+    parser.add_argument("--include-confirm", action="store_true",
+                        help="also sample official-like categories retained under their historical confirm tag")
     parser.add_argument("--tiers", nargs="+", default=None, choices=["amc", "aime", "olympiad"])
+    parser.add_argument("--sources", nargs="+", default=None,
+                        help="restrict to named pool sources, e.g. aime-2024")
+    parser.add_argument("--exclude-problem-keys", nargs="+", default=None,
+                        help="exclude problem_key values, used to prevent official-label overlap")
     parser.add_argument("--problem-keys", nargs="+", default=None,
                         help="restrict to these problem_key values (unlike pool_id, they are unique)")
     parser.add_argument("--k", type=int, default=8, help="samples per item")

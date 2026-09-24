@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 24 September 2026.
+Last updated: 25 September 2026.
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.
@@ -49,11 +49,22 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E27 | Per-problem predictions, to beat the 0.64 constant ceiling | local + Codabench | Partly scored | Official-label models 8/14; **familiarity split inverted: its complement scores 10/14 = 0.71**, a new best (Finding 49) |
 | E28 | Rank-based familiarity successors: suffix NLL and Min-K tail shape | local + Kaggle + Codabench | Done | E28a ties the best at **0.71**; the exact E28d retry scores **4/14 = 0.29**, rejecting Min-K gap despite its offline stability |
 | E29 | Apply the stable Min-K gap only where E27 found hidden-set gain | local + Codabench | Done | DeepSeek-only tail gap, constants elsewhere; submission 942281 scored **8/14 = 0.57**, so the transfer is rejected |
+| E30 | Architecture-invariant activation geometry | local | Done | Family-wise test fails and the selected signal reverses on independent MATH data |
+| E31 | Prompt-state sensitivity to answer-preserving rewrites | Kaggle + local | Done | Best AUC 0.735, but template CI and max-T test fail; Qwen is near chance |
+| E32 | Independent confirmation of E31 on DeepSeek MATH | Kaggle + local | Done | AUC 0.545, CI [0.428, 0.658]; lane closed |
+| **E34a** | Can official-like surface perturbations yield a usable new AIME label set? | Kaggle (`tashintahir`) | **Running** | Pre-registered yield pilot on 30 AIME 2024 + 22 non-overlapping AIME 2026 problems; no predictor or submission |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---
 
 ## 2. Running now
+
+**E34a is running.** Kernel `tashintahir/aimo-small-e34a-qwen-aime-surface` was launched on
+25 Sep. Its protocol was committed before output existed (`E34_PROTOCOL.md`): Qwen3.5-4B,
+k=4, fixed `latex_to_plaintext` and `premise_reorder` families, 30 AIME 2024 development
+problems, and 22 AIME 2026 problems after excluding all eight `train-main-v2` overlaps.
+E34a measures label yield and class balance only. It cannot authorize a submission; only a
+pass can authorize the already-frozen E34b training/holdout experiment.
 
 **E28-E29 complete.** E28a (`suffix_nll`, submission 942047) scored 0.71, tying rather than
 improving E27e. E28d's first run (942257) failed at ingestion, but an exact retry (942361)

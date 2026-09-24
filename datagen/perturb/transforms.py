@@ -1,13 +1,14 @@
 """Answer-aware perturbations for self-generated robustness labels (PLAN.md §3.3-§3.4).
 
-**Compliance comes first.** The competition forbids extra *labelled* data for the official
-perturbation types: rephrase, rename, domain, distract, typos, expert_perturbations,
-expert_no_solution. Every category below carries a compliance tag:
+**Provenance comes first.** Since the 19 September 2026 clarification, the competition permits
+extra labelled data for the official perturbation types, while evaluation leakage remains
+forbidden. Every category below retains its historical compliance tag so older experiments can
+be reconstructed and newer ones can explicitly select official-like surface transformations:
 
 * `distinct`: changes what is asked or how the answer must be reported, and matches no
   official type. Safe to label.
-* `confirm`: meaning-preserving surface changes that an organizer could reasonably count as
-  `rephrase` or `typos`. Use them unlabelled, or labelled only after written confirmation.
+* `confirm`: meaning-preserving surface changes that resemble official `rephrase` or `typos`
+  families. These are labelable under the current rule, but must remain provenance-marked.
 
 The label pipeline must filter on this tag. The tag records a judgement call, and the
 report must state it.

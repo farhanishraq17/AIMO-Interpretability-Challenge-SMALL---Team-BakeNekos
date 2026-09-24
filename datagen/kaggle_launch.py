@@ -175,6 +175,10 @@ E7_FILES = ("datagen/perturb/*.py", "data/olympiad_pool/pool.parquet")
 QWEN_RECORDS = "runs/e15-base-qwen35-*/e15-qwen35/base/shard_*/records.jsonl"
 SKYWORK_RECORDS = "runs/e16-base-skywork/e16-skywork/base/shard_*/records.jsonl"
 VARIANTS = "data/perturbations/variants.parquet"
+E34_EXCLUDED_KEYS = (
+    "b93905359e1ad28d", "481b6519bb1d6745", "bee4a132e28e5e13", "879734d7c7d769bc",
+    "9fc9278a2ba9d5ce", "388d76023fcb3a79", "3f23a5b7d61a00db", "4640f89c3952f24d",
+)
 SKYWORK_VARIANT_RECORDS = "runs/e19-variants-skywork/e19-skywork/variants/shard_*/records.jsonl"
 # E20: DeepSeek's officially labelled MATH problems in pool form (datagen/perturb/deepseek_check_pool.py).
 CHECK_POOL = "data/deepseek_check/pool.parquet"
@@ -283,10 +287,11 @@ def variant_sampling(
     model_id: str, out_name: str, base_records: str, *extra: str,
     max_new_tokens: int = 16384, chunk: int = 4, max_hours: float = 8.5,
 ) -> tuple[str, ...]:
-    """E7 variants phase: k samples of every compliant variant of each problem the model always solves.
+    """E7 variants phase: k samples of selected variants of each problem the model always solves.
 
-    Only `compliance == "distinct"` categories (today `answer_modulus`) are sampled, the ones the
-    extra-data rule lets us label. Eligibility comes from the base-phase records in the bundle.
+    The default preserves the historical `distinct`-only behavior. New experiments may opt into
+    provenance-tagged official-like families with `--include-confirm`, as allowed by the current
+    extra-labelled-data rule. Eligibility comes from the base-phase records in the bundle.
     """
     return (
         "datagen/perturb/sample.py", "--phase", "variants",
@@ -762,6 +767,45 @@ EXPERIMENTS: dict[str, Experiment] = {
                 "--dataset-id", "hendrycks-math-test-reference-100",
             ),
         ),
+    ),
+    "e34a-qwen-aime-surface": Experiment(
+        account="TASHIN",
+        purpose="E34a pre-registered pilot: create genuinely new Qwen3.5-4B robustness labels "
+        "from AIME 2024 (development) and an untouched AIME 2026 holdout. Eight AIME 2026 "
+        "problems overlapping train-main-v2 are excluded before sampling. The perturbation set "
+        "is frozen to latex_to_plaintext and premise_reorder; k=4, official 0.10/0.25 label "
+        "bands, no feature or threshold search, and no use of the excluded farhanishraqq GPU.",
+        steps=(
+            VLLM_INSTALL,
+            per_gpu(*(
+                base_sampling(
+                    QWEN35, "e34a-qwen-aime-surface", "--tensor-parallel", "1", "--text-only",
+                    "--max-num-seqs", "64", "--tiers", "aime", "--exclude-problem-keys",
+                    *E34_EXCLUDED_KEYS, "--num-shards", "2", "--shard-index", str(gpu),
+                    max_new_tokens=12288, max_hours=5.0,
+                )
+                for gpu in (0, 1)
+            )),
+            per_gpu(*(
+                variant_sampling(
+                    QWEN35, "e34a-qwen-aime-surface",
+                    "/kaggle/working/e34a-qwen-aime-surface/base/shard_*/records.jsonl",
+                    "--tensor-parallel", "1", "--text-only", "--max-num-seqs", "64",
+                    "--tiers", "aime", "--exclude-problem-keys", *E34_EXCLUDED_KEYS,
+                    "--include-confirm", "--categories", "latex_to_plaintext", "premise_reorder",
+                    "--num-shards", "2", "--shard-index", str(gpu),
+                    max_new_tokens=12288, max_hours=5.0,
+                )
+                for gpu in (0, 1)
+            )),
+            (
+                "datagen/perturb/label.py",
+                "--base-glob", "/kaggle/working/e34a-qwen-aime-surface/base/shard_*/records.jsonl",
+                "--variants-glob", "/kaggle/working/e34a-qwen-aime-surface/variants/shard_*/records.jsonl",
+                "--out-dir", "/kaggle/working/e34a-qwen-aime-labels",
+            ),
+        ),
+        bundle_globs=(*E7_FILES, VARIANTS, "datagen/ingest_public.py"),
     ),
     "e24b-qwen35": Experiment(
         account="TASHIN",

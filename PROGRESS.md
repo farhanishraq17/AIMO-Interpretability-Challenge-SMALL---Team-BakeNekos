@@ -1628,6 +1628,24 @@ deterministically.
 
 ---
 
+**55. E34 creates a genuinely new validation population before another feature search.**
+(`E34_PROTOCOL.md`, `e34a-qwen-aime-surface`, launched 25 Sep on TASHIN.)
+
+- The 0.79 Small Models score is 11/14; beating it requires 12/14, two more correct cases
+  than E27e/E27h's 10/14. Prior submission vectors are not combined to infer hidden labels.
+- E34a uses 30 AIME 2024 problems and 22 AIME 2026 problems after removing the eight that
+  overlap `train-main-v2`. No current official label participates in fitting or selection.
+- The generator is frozen to `latex_to_plaintext` and `premise_reorder`, Qwen3.5-4B, k=4,
+  temperature 0.6, top-p 0.95 and a 12,288-token cap. The official 0.10/0.25 bands apply.
+- E34a is a yield and class-balance pilot only. Its gate was written before the GPU run and
+  fits no classifier. Passing authorizes E34b; failure closes the lane without a submission.
+- E34b is already frozen: train on new OlympiadBench+AIME-2024 labels, evaluate once on
+  untouched AMC+AIME-2026 labels, then permit one fixed official-transfer measurement only
+  if the independent holdout clears every gate in `E34_PROTOCOL.md`.
+- Kernel version 1 is running at
+  `https://www.kaggle.com/code/tashintahir/aimo-small-e34a-qwen-aime-surface`. The excluded
+  `farhanishraqq` GPU account is not used.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
@@ -1668,14 +1686,16 @@ new GitHub issues are restricted):
 
 Ranked by value (25 Sep):
 
-1. **Request `problems-public` access and official-family label clarification.** This is the
-   only identified route to genuinely new evidence rather than another search over the same
-   34 rows and 14 leaderboard cases.
-2. **Do not start E33 until access exists.** First inspect the 22 symbolic programs, freeze one
-   generator and one model, estimate the sampling cost, and commit the complete protocol.
-3. **Keep `train-main-v2` external to E33 training.** Score it once with the existing E22
-   19-template harness; do not tune rewrites, layers, thresholds or rank fractions on it.
-4. **Retain the current submissions.** E27e/E27h (0.71) is the performance candidate; E11 v2
-   (0.64) is the conservative fallback. No new Codabench upload without E33 clearing its gate.
-5. **If access is denied or no response arrives, stop GPU experimentation** and focus on the
-   technical report, reproducibility, runtime measurements and negative-result figures.
+1. **Let E34a finish, then apply its frozen yield gate.** Download the output and run
+   `train/eval_e34_yield.py`; do not alter its families or thresholds after seeing the result.
+2. **Only if E34a passes, run E34b exactly as pre-registered.** The new AMC+AIME-2026
+   holdout—not current official labels—decides whether the candidate survives.
+3. **Request `problems-public` access and official-family label clarification.** E33 remains
+   blocked until legitimate access exists; cached search snippets are not reconstructed.
+4. **Keep `train-main-v2` external to E34 fitting.** It may receive one frozen transfer
+   measurement after E34b passes; never tune rewrites, layers, thresholds or ranks on it.
+5. **Retain the current submissions.** E27e/E27h (0.71) is the performance candidate; E11 v2
+   (0.64) is the conservative fallback. No new Codabench upload without E33 or E34 clearing
+   its independent-validation gate.
+6. **If E34a fails and access is denied, stop GPU experimentation** and focus on the technical
+   report, reproducibility, runtime measurements and negative-result figures.

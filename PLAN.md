@@ -508,6 +508,8 @@ E11 v2 (0.64) is the submission. Five things shape what is worth doing in the si
 | **E31** | Does the labelled model's prompt state remain stable under deterministic answer-preserving rewrites? Five signals fixed before extraction. | 0.19 GPU-h on TASHIN/RSD | E14 rewrites, E21 prompt path | **Closed:** best AUC 0.735, template CI [0.380, 0.938], max-T p=0.0667, Qwen AUC 0.531 |
 | **E32** | One independent confirmation of E31's selected all-layer cosine sensitivity and fixed direction on 142 DeepSeek MATH rows. | 0.21 h on TASHIN | E31 extractor | **Closed:** AUC 0.545, CI [0.428, 0.658], within-length 0.510, split BA 0.527 |
 | **E33** *(blocked on access)* | Generate official-family labels from the symbolic programs in `problems-public`, fit one frozen cross-model stability model, and evaluate once on `train-main-v2` without tuning on it. | Estimate only after inspecting the 22 programs | `problems-public`, E7 sampler, E22 harness | **Start only after access. Pass:** problem AUC >= 0.75, 19-template CI lower > 0.5, worst non-degenerate per-model AUC >= 0.60, and balanced accuracy beats the constants. One Codabench submission maximum. |
+| **E34a** *(running 25 Sep)* | Can the two already-built official-like surface families produce enough genuinely new AIME labels to justify scaling? | TASHIN, <=10 h | AIME 2024/2026 pool, E7 sampler | Yield-only gate in `E34_PROTOCOL.md`; no model fit and no submission |
+| **E34b** *(blocked on E34a)* | Fit one frozen character model on new OlympiadBench+AIME-2024 labels and score once on untouched AMC+AIME-2026 labels | Fleet estimate only after E34a | Exact E34a generator and label bands | Holdout n>=25, AUC>=0.75, CI low>0.5, BA>=0.67, per-source AUC>=0.60; then one frozen official-transfer check |
 | ~~E25~~ *(dropped 23 Sep)* | Olympiad labelling at scale. G-V2 failed, and E24 showed the yield would be about one label per GPU-hour on problems selected for difficulty (Finding 48). | — | — | — |
 | E26 *(only if G-M or G-V2 passes)* | Single encoder: one small-track model's Stage A features used as a *problem* representation for every `model_id`, trained on pooled problem-level labels | ~1 GPU-h | `extract_features.py --instances`, `train/eval_official_holdout.py` | G2, plus an organizer ruling (§11.4) |
 
@@ -534,8 +536,8 @@ These are also added to the §5 table.
 
 | Week (2026) | Experiments | Report track |
 | --- | --- | --- |
-| **Sep 25–28** | No GPU work. Request `problems-public` access through Discord/registration support; preserve E27e/E27h (0.71) and E11 v2 (0.64). | Add E30–E32 and the rule correction to the negative-results record. |
-| Sep 29 – Oct 5 | Only if access arrives: inspect all 22 symbolic programs, freeze E33's generator/model once, estimate cost, then generate training labels. Otherwise no experiment. | Figures: layer curves (Finding 11), transfer failure (Findings 32, 39, 53), 20/20 agreement (Finding 38) |
+| **Sep 25–28** | Run only the pre-registered E34a yield pilot; request `problems-public` access; preserve E27e/E27h (0.71) and E11 v2 (0.64). | Add E30–E34a and the rule correction to the record. |
+| Sep 29 – Oct 5 | If E34a passes, run frozen E34b. If `problems-public` access arrives, inspect it without changing E34. Otherwise no new experiment. | Figures: layer curves (Finding 11), transfer failure (Findings 32, 39, 53), 20/20 agreement (Finding 38) |
 | Oct 6–12 | G2 (10 Oct). If it passes: E11 v3 build, Docker load test, GPU check. | Method and data-provenance sections: label-rule archaeology, the `pool_id` bug, Finding 44 |
 | Oct 13–26 | Runtime and repeatability; the ablations the report needs | Full draft |
 | Oct 27 – Nov 1 | Freeze 27 Oct; last upload by 30 Oct | Polish |
