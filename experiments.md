@@ -323,6 +323,24 @@ renumbered onto our sequence (Findings 33-43). Three runs and four local analyse
 
 ---
 
+### E30–E31: architecture-invariant and counterfactual activation geometry (local + TASHIN/RSD, 24 Sep)
+
+E30 reduced the existing E21 all-layer archives to 12 norm/cosine trajectory scalars. Its
+best official-data result (`mean_growth`, AUC 0.813) did not survive the 12-way max-T test
+(p=0.2049) and reversed on 142 untouched DeepSeek MATH rows (AUC 0.348).
+
+E31 then tested a stronger causal proxy: how much the labelled model's prompt state changes
+under deterministic answer-preserving rewrites. Five measures and a lower-is-robust direction
+were fixed before extraction. All 34 official rows completed without truncation. All-layer
+mean cosine distance was best (AUC 0.735), but its 19-template CI [0.380, 0.938], corrected
+p=0.0667 and Qwen AUC 0.531 fail the locked gate. It is not a submission. E32 is the single
+independent check of that already-selected signal on DeepSeek MATH; no layer or perturbation
+search is reopened. E32 completed all 142 rows without truncation and rejected the signal:
+AUC 0.545, CI [0.428, 0.658], within-length AUC 0.510 and deployable median-split balanced
+accuracy 0.527. The counterfactual lane is closed without packaging or a submission.
+
+Neither run used the excluded `farhanishraqq` GPU account.
+
 ## 4. Failures worth remembering
 
 | What broke | Where | Fix |

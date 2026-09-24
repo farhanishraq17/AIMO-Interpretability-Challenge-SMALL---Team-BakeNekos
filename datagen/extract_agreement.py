@@ -27,7 +27,6 @@ from __future__ import annotations
 import argparse
 import json
 import platform
-import random
 import re
 import sys
 import time
@@ -43,44 +42,7 @@ from answers import last_boxed, normalize_integer  # noqa: E402
 from extract_features import DEFAULT_INSTANCES, assign_shards  # noqa: E402
 from sample import HfBackend, VllmBackend, encode_prompt  # noqa: E402
 from tokenizer_check import load_checked_tokenizer  # noqa: E402
-from transforms import _MATH_SPAN, latex_to_plaintext, premise_reorder  # noqa: E402
-
-_LONG_WORD = re.compile(r"\b[A-Za-z]{6,}\b")
-DISTRACTORS = (
-    "Note that this problem appeared in a regional competition held in the spring.",
-    "A student once spent 45 minutes on a similar question.",
-    "Recall that 2024 is divisible by 11.",
-    "Some solvers find it helpful to draw a diagram first.",
-    "The number 7 is the fourth prime number.",
-)
-
-
-def typos(problem: str, rng: random.Random) -> str | None:
-    math = [m.span() for m in _MATH_SPAN.finditer(problem)]
-    words = [m for m in _LONG_WORD.finditer(problem) if not any(a <= m.start() < b for a, b in math)]
-    if len(words) < 3:
-        return None
-    pieces, last = [], 0
-    for m in sorted(rng.sample(words, 3), key=lambda m: m.start()):
-        word, i = m.group(), rng.randrange(1, len(m.group()) - 2)
-        pieces += [problem[last : m.start()], word[:i] + word[i + 1] + word[i] + word[i + 2 :]]
-        last = m.end()
-    return "".join(pieces) + problem[last:]
-
-
-def distract(problem: str, rng: random.Random) -> str:
-    return f"{problem.rstrip()} {rng.choice(DISTRACTORS)}"
-
-
-def rewrites(problem: str) -> dict[str, str]:
-    """kind -> rewritten problem, deterministic per problem; kinds that do not apply are absent."""
-    candidates = {
-        "latex_to_plaintext": getattr(latex_to_plaintext(problem, 0, random.Random(problem)), "problem", None),
-        "premise_reorder": getattr(premise_reorder(problem, 0, random.Random(problem)), "problem", None),
-        "typos": typos(problem, random.Random(problem)),
-        "distract": distract(problem, random.Random(problem)),
-    }
-    return {k: v for k, v in candidates.items() if v and v.strip() != problem.strip()}
+from counterfactual_rewrites import distract, rewrites, typos  # noqa: E402, F401
 
 
 def final_answer(text: str) -> str | None:

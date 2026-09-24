@@ -28,6 +28,7 @@ import os
 import pickle
 import re
 import subprocess
+import sys
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -71,6 +72,9 @@ BUNDLE_FILES = [
     "datagen/merge_features.py",
     "datagen/extract_label_free.py",
     "datagen/extract_agreement.py",
+    "datagen/extract_counterfactual_geometry.py",
+    "datagen/counterfactual_geometry.py",
+    "datagen/counterfactual_rewrites.py",
     "datagen/perturb/transforms.py",
     "data/small_track/instances.parquet",
     "data/small_track/instances_train.parquet",
@@ -232,6 +236,16 @@ def familiarity(model_id: str, out_name: str) -> tuple[str, ...]:
 
 
 FAMILIARITY_FILES = ("datagen/extract_familiarity.py", "datagen/ingest_public.py")
+
+
+def counterfactual_geometry(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
+    return (
+        "datagen/extract_counterfactual_geometry.py",
+        "--model-id", model_id,
+        "--system-prompt-file", SYSTEM_PROMPT_PATH,
+        "--out-dir", f"{KAGGLE_FEATURES}/{out_name}",
+        *extra,
+    )
 
 
 def agreement(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
@@ -716,6 +730,39 @@ EXPERIMENTS: dict[str, Experiment] = {
         bundle_globs=("submission/check_e28.py", "dist/solution-e28d-min-k-gap-small.zip",
                       "data/official_check/pool.parquet", "data/official_check/official_labels.parquet"),
     ),
+    "e31-counterfactual-a": Experiment(
+        account="TASHIN",
+        purpose="E31: pre-registered prompt-rewrite activation sensitivity on the official train-main-v2 "
+                "labels. Qwen3.5-4B then DeepSeek; no generation and no use of the excluded "
+                "farhanishraqq account.",
+        steps=(
+            counterfactual_geometry(QWEN35, "e31-counterfactual-qwen35"),
+            counterfactual_geometry(DEEPSEEK, "e31-counterfactual-deepseek"),
+        ),
+    ),
+    "e31-counterfactual-b": Experiment(
+        account="RSD",
+        purpose="E31 for Skywork-OR1-Math-7B then Olmo-3-7B-Think. This is the second independent "
+                "architecture pair for the pre-registered cross-model stability gate.",
+        steps=(
+            counterfactual_geometry(SKYWORK, "e31-counterfactual-skywork"),
+            counterfactual_geometry(OLMO_THINK, "e31-counterfactual-olmo-think"),
+        ),
+    ),
+    "e32-counterfactual-deepseek-math": Experiment(
+        account="TASHIN",
+        purpose="E32: one untouched-population confirmation of E31's selected all-layer cosine "
+                "sensitivity signal and fixed lower-is-robust direction on all 142 labelled DeepSeek "
+                "Hendrycks MATH rows. No candidate search and no excluded-account GPU use.",
+        steps=(
+            counterfactual_geometry(
+                DEEPSEEK,
+                "e32-counterfactual-deepseek-math",
+                "--dataset-id", "hendrycks-math-train-reference-500",
+                "--dataset-id", "hendrycks-math-test-reference-100",
+            ),
+        ),
+    ),
     "e24b-qwen35": Experiment(
         account="TASHIN",
         purpose="E24b, gate G-V2: do answer_modulus self-labels agree with official labels on olympiad "
@@ -965,6 +1012,10 @@ def build(name: str, account: str | None = None) -> Path:
 
 
 def main() -> None:
+    # Kaggle's JSON logs can contain non-CP1252 characters. Configure the Windows console
+    # before printing so `logs` cannot fail after a successful download.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("list")

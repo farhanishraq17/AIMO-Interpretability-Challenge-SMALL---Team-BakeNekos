@@ -622,3 +622,58 @@ The all-model `min_k_gap` package was also retried unchanged after submission 94
 ingestion. Retry 942361 completed and scored **4/14 = 0.29**. Thus the statistic's strong
 official-data stability does not transfer to the public validation set either globally or in
 the DeepSeek-only policy; the branch is closed.
+
+## E30: architecture-invariant activation geometry
+
+34 official small-track rows over 20 problems and 19 near-duplicate templates. Signals are ranked inside each model; direction is learned leave-one-template-out. The maxT p-value corrects selection over all 12 pre-registered geometry signals.
+
+| Signal | LOTO AUC | Template 95% CI | Balanced acc. | Positive-direction folds | maxT p | Gate |
+| --- | --- | --- | --- | --- | --- | --- |
+| `mean_growth` | 0.813 | [0.600, 0.976] | 0.703 | 19/19 | 0.2049 | fail |
+| `max_coschange_tail` | 0.780 | [0.524, 0.963] | 0.632 | 19/19 | 0.3618 | fail |
+| `final_mean_max_cosdist` | 0.698 | [0.375, 0.955] | 0.665 | 0/19 | 0.8251 | fail |
+| `max_growth` | 0.665 | [0.329, 0.920] | 0.484 | 0/19 | 0.9380 | fail |
+| `last_growth` | 0.599 | [0.310, 0.863] | 0.560 | 19/19 | 0.9990 | fail |
+| `max_relchange_tail` | 0.599 | [0.271, 0.906] | 0.522 | 19/19 | 0.9990 | fail |
+| `mean_coschange_tail` | 0.423 | [0.133, 0.722] | 0.484 | 1/19 | 1.0000 | fail |
+| `final_last_max_cosdist` | 0.264 | [0.048, 0.544] | 0.412 | 2/19 | 1.0000 | fail |
+| `last_relchange_tail` | 0.154 | [0.000, 0.389] | 0.335 | 15/19 | 1.0000 | fail |
+| `mean_relchange_tail` | 0.132 | [0.000, 0.329] | 0.231 | 4/19 | 1.0000 | fail |
+| `final_last_mean_cosdist` | 0.049 | [0.000, 0.171] | 0.115 | 4/19 | 1.0000 | fail |
+| `last_coschange_tail` | 0.000 | [0.000, 0.000] | 0.000 | 8/19 | 1.0000 | fail |
+
+### Independent confirmation of the selected signal
+
+`mean_growth` was selected only after the 12-way official-data screen, so it is checked once on the untouched DeepSeek Hendrycks MATH rows in the same archive. The official-data direction is higher growth -> robust.
+
+| Set | n | Robust | AUC | 95% CI | Within-length AUC | p | Spearman with length |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Hendrycks MATH | 142 | 39 | 0.348 | [0.250, 0.449] | 0.438 | 0.9974 | -0.464 |
+
+**Decision:** E30 closes: the 12-way discovery is not family-wise significant and its selected signal reverses on the independent MATH set. Do not spend GPU or leaderboard submissions on activation geometry.
+
+## E31 — counterfactual activation sensitivity
+
+Pre-registered answer-preserving rewrite experiment on all 34 official small-track rows (20 problems, 19 near-duplicate templates). Signals are ranked within model; robust is predicted to have lower sensitivity. Confidence intervals bootstrap near-duplicate templates and p-values use within-model permutations with max-T correction across all five signals.
+
+| signal | pooled AUC | template-bootstrap 95% CI | max-T p | length-residual AUC | LOMO threshold BA |
+|---|---:|---:|---:|---:|---:|
+| `cf_cosine_auc` | 0.735 | [0.380, 0.938] | 0.0667 | 0.654 | 0.696 |
+| `cf_cosine_tail_mean` | 0.694 | [0.338, 0.904] | 0.1417 | 0.646 | 0.562 |
+| `cf_cosine_tail_max` | 0.633 | [0.276, 0.844] | 0.3283 | 0.604 | 0.583 |
+| `cf_js_next_mean` | 0.537 | [0.221, 0.743] | 0.7033 | 0.512 | 0.504 |
+| `cf_cosine_slope` | 0.517 | [0.120, 0.767] | 0.7720 | 0.517 | 0.558 |
+
+Selected signal per-model AUCs: Qwen3.5-4B 0.531, Skywork-OR1-Math-7B 1.000, Olmo-3-7B-Think 0.929, DeepSeek-R1-0528-Qwen3-8B 0.762.
+
+**Decision: E31 fails the pre-registered gate and is not submitted to Codabench.**
+
+## E32 — independent counterfactual-sensitivity confirmation
+
+E31 selected all-layer mean cosine distance only after its five-way official-data screen. E32 fixes that signal and its direction (lower rewrite sensitivity predicts robust) and tests it once on the untouched 142 DeepSeek Hendrycks MATH rows.
+
+| n | Robust | AUC | bootstrap 95% CI | within-length AUC | split-half BA | one-sided p | length rho | Gate |
+|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 142 | 39 | 0.545 | [0.428, 0.658] | 0.510 | 0.527 | 0.2061 | 0.161 | fail |
+
+**Decision: the signal does not independently confirm; close the counterfactual-sensitivity lane without a submission.**

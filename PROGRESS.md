@@ -1379,6 +1379,51 @@ on TASHIN and RSD; `train/eval_e28_stability.py`, 24 Sep.)
   the best policy. No rank-fraction or ensemble search is justified on 14 cases.
 - **Fleet constraint respected:** no `farhanishraqq` GPU was used for E28/E29.
 
+**51. Static activation geometry is an attractive official-data artifact that reverses on
+the independent MATH set.** (`train/eval_e30_geometry.py`, 24 Sep; no new GPU.)
+
+- Twelve architecture-invariant layer-trajectory scalars were computed from the existing E21
+  all-layer archives. `mean_growth` led the 34 official rows at leave-one-template-out AUC
+  **0.813**, template-bootstrap CI [0.600, 0.976], but its max-T p-value after the 12-way
+  screen was **0.2049**.
+- The selected direction then reversed on the untouched 142-row DeepSeek MATH set: AUC
+  **0.348**, CI [0.250, 0.449], within-length AUC 0.438.
+- **Decision:** E30 closes without GPU work or a submission. This is the second warning after
+  Min-K gap that a strong official-row geometry can fail on a new population.
+
+**52. Counterfactual prompt-state sensitivity is the strongest new official-data signal, but
+it misses the pre-registered gate.** (`e31-counterfactual-a/b` on TASHIN and RSD;
+`train/eval_e31_counterfactual.py`, 24 Sep.)
+
+- E31 ran the original problem and every applicable deterministic answer-preserving rewrite
+  through the labelled model, with no generation. All 34 official rows completed, every
+  tokenizer round-tripped, and no prompt truncated.
+- The fixed prediction was that robust rows move less under rewrites. Mean cosine distance
+  over all transformer layers reached pooled within-model-rank AUC **0.735**, but its
+  19-template bootstrap CI was **[0.380, 0.938]** and the max-T p-value correcting the five
+  registered signals was **0.0667**. Length-residual AUC was 0.654 and leave-one-model-out
+  threshold balanced accuracy 0.696.
+- The model split is the warning: Qwen 0.531, Skywork 1.000 on only three rows, Olmo 0.929,
+  DeepSeek 0.762. The locked gate also required every model AUC >= 0.65.
+- **Decision:** E31 is not submitted. Its single permitted follow-up is E32: the already
+  selected all-layer statistic and lower-is-robust direction on 142 untouched DeepSeek MATH
+  rows. No perturbation or layer search is reopened.
+
+**53. E32 rejects counterfactual activation sensitivity on an independent population.**
+(`e32-counterfactual-deepseek-math` on TASHIN; `train/eval_e32_counterfactual_math.py`,
+24 Sep, 0.21 h wall time.)
+
+- All **142** labelled DeepSeek Hendrycks MATH rows completed (459 forward passes), with no
+  truncation and a round-tripping tokenizer. The signal and lower-is-robust direction were
+  inherited unchanged from E31.
+- All five locked criteria fail: AUC **0.545**, bootstrap CI **[0.428, 0.658]**, within-length
+  AUC **0.510**, median-split balanced accuracy **0.527**, and one-sided p **0.2061**.
+- **Decision:** the E31/E32 counterfactual-sensitivity lane closes without packaging or a
+  Codabench upload. Do not tune rewrites or layers on these same labels. E27e/E27h remain the
+  best measured policy at 10/14 = 0.71.
+- **Fleet constraint respected:** E31/E32 used TASHIN and RSD only, never the excluded
+  `farhanishraqq` GPU account.
+
 ---
 
 ## 7. Results so far
