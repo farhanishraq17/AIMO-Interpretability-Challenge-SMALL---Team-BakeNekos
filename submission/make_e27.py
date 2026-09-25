@@ -20,6 +20,8 @@ to every `model_id`:
                             split's leaderboard gain decomposes by model
 * `e27k-tilted`             the same split, but Skywork and Olmo call one fewer problem robust,
                             which is the robust count their measured balance implies (Finding 45)
+* `e27m..p`                 e27k with one more or one fewer robust for Qwen or DeepSeek: a search
+                            past the counts the probes imply, so read them as such
 
 Only fitted estimators ship, never the table itself: the rules forbid submitting training
 data or labels. The estimators are fitted here, in the pinned venv, from the pinned revision,
@@ -46,6 +48,9 @@ sys.path.insert(0, str(ROOT / "train"))
 sys.path.insert(0, str(SUBMISSION))
 
 from build import archive  # noqa: E402
+
+QWEN = "Qwen/Qwen3.5-4B"
+DEEPSEEK = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
 from e27_features import log_length  # noqa: E402  (pickled by reference, shipped alongside)
 from eval_problem_level import load_problems  # noqa: E402
 from train_stagea_probes import text_model  # noqa: E402
@@ -125,6 +130,11 @@ def main() -> None:
     source = (SUBMISSION / "e27d-familiarity" / "solution.py").read_text(encoding="utf-8")
     tokenizer_check = (ROOT / "datagen" / "tokenizer_check.py").read_bytes()
     tilt = '{"Skywork/Skywork-OR1-Math-7B": -1, "allenai/Olmo-3-7B-Think": -1}'
+
+    def base_tilt(model_id: str, step: int) -> str:
+        """e27k's tilts plus one step for `model_id`, as a dict literal for the shipped source."""
+        return tilt[:-1] + f', "{model_id}": {step}' + "}"
+
     splits = {
         "e27d-familiarity": ("unfamiliar", "all", "{}"),
         "e27e-familiar-robust": ("familiar", "all", "{}"),
@@ -134,6 +144,12 @@ def main() -> None:
         "e27i-split-skywork": ("familiar", "Skywork/Skywork-OR1-Math-7B", "{}"),
         "e27j-split-olmo-think": ("familiar", "allenai/Olmo-3-7B-Think", "{}"),
         "e27k-tilted": ("familiar", "all", tilt),
+        # e27k already uses the count each model's measured balance implies, so these four search
+        # one step either way for the two models it leaves alone (Finding 60's stopping point).
+        "e27m-qwen-down": ("familiar", "all", base_tilt(QWEN, -1)),
+        "e27n-deepseek-down": ("familiar", "all", base_tilt(DEEPSEEK, -1)),
+        "e27o-qwen-up": ("familiar", "all", base_tilt(QWEN, +1)),
+        "e27p-deepseek-up": ("familiar", "all", base_tilt(DEEPSEEK, +1)),
     }
     for name, (half, models, tilts) in splits.items():
         variant = (source
