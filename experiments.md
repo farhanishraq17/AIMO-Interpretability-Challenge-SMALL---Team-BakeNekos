@@ -69,6 +69,12 @@ problems, but only one original was correct in all four samples (1.92%). It yiel
 `latex_to_plaintext` label, no `premise_reorder` label and no spurious label. This misses every
 yield/class-balance requirement in `E34_PROTOCOL.md`; E34b is closed and no submission follows.
 
+**E27's decomposition is complete (26 Sep).** The rebuilt per-model ZIPs scored constants 9/14,
+Qwen-only 9/14, DeepSeek-only 10/14, Skywork-only 9/14 and **Olmo-only 9/14**, the cell Finding 50
+left queued; all four splits together score 10/14. The deltas sum to +1 as they must, and since
+per-model contributions are additive, **10/14 is the ceiling of the familiarity family**. The same
+split scores 0.353 on the official rows, where always-robust reaches 0.706 (Finding 58).
+
 **E28-E29 complete.** E28a (`suffix_nll`, submission 942047) scored 0.71, tying rather than
 improving E27e. E28d's first run (942257) failed at ingestion, but an exact retry (942361)
 finished and scored **4/14 = 0.29**; the official local path still reports coverage 1.0 and

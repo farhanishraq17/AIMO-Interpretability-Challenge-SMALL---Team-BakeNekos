@@ -1335,9 +1335,11 @@ us a better submission than E11 v2.** (Codabench, Small Model Track, 22 Sep, sub
   constants, which score 0.64; 0.29 can only come from the forward passes actually running.
 - **4 of 14 is a result, not a dud.** The split predicts exactly half of each batch robust, so
   chance is 7 of 14 and no constant scores below 0.43. Being that far below chance means the
-  predictions are systematically inverted, and **the complement scores 10 of 14 = 0.71**, above
-  v2's 9. `e27e` ships that complement, and the two are exact complements case by case, so the
-  score follows arithmetically rather than by hope.
+  predictions are systematically inverted, and **the opposite split scores 10 of 14 = 0.71**,
+  above v2's 9. `e27e` ships that split. (Correction: the two are exact complements only for an
+  even batch. With an odd one both call the median problem robust, so what holds is
+  `score(d) + score(e) = ` non-median cases `+ 2 x` medians both get right. Here 4 + 10 = 14
+  with 2 medians correct, which is consistent, and `e27e` did score 0.71.)
 - **The direction is the MATH one after all.** `problem_nll` ranks robust below spurious on
   DeepSeek's 142 MATH instances (0.68 reversed, 0.58 within length quintiles: Findings 22, 47),
   and the leaderboard agrees: **familiar problems are robust**. E23's olympiad reading, which
@@ -1443,6 +1445,48 @@ still inaccessible.** (Official website, GitHub and Hugging Face audit, 25 Sep.)
 - **Conditional E33 is now frozen, not launched:** train only on new labels generated from the
   symbolic programs; score once on the external official `train-main-v2` rows using the E22
   19-template harness. No rewrite, layer, threshold or rank-fraction search on that holdout.
+
+**58. The per-model decomposition closes: Olmo adds nothing, and 10 of 14 is the ceiling of the
+whole familiarity family.** (Codabench, Small Model Track, 26 Sep, submissions 945323-945329.
+Completes the Olmo cell Finding 50 left queued, with an independent rebuild of the same
+policies.)
+
+| Submission | Score | In 14ths | Delta vs constants |
+| --- | --- | --- | --- |
+| `e27f` best constants alone | 0.64 | 9 | — |
+| `e27g` split for Qwen only | 0.64 | 9 | 0 |
+| **`e27h` split for DeepSeek only** | **0.71** | 10 | **+1** |
+| `e27i` split for Skywork only | 0.64 | 9 | 0 |
+| **`e27j` split for Olmo-3-Think only** | 0.64 | 9 | **0** |
+| `e27e` split for all four | 0.71 | 10 | +1 |
+
+- **Olmo was the missing cell and it is zero**, so all four deltas are now measured: Qwen 0,
+  DeepSeek +1, Skywork 0, Olmo 0. They sum to +1, exactly `e27e` minus `e27f`, which is the
+  consistency check passing.
+- **That closes the family, not just the search.** Each model's cases are disjoint, so the
+  score is the sum of per-model correct counts and the best combination takes each model's
+  better option independently. With three ties and one +1, **no recombination of
+  split-versus-constant can exceed 10 of 14**. Finding 50 reached the same DeepSeek-specific
+  reading from a different set of submissions; this completes the argument for the ceiling.
+- **`e27f` scoring exactly 9 confirms Finding 45 directly**: plain constants reproduce E11 v2's
+  score, so the DeepSeek fusion is worth precisely what answering `True` for DeepSeek is worth.
+- **The official rows still say the opposite.** Scoring the same familiar-robust split offline
+  on the 34 official rows, using E23's stored NLLs:
+
+  | | Qwen | Skywork | Olmo-3-Think | DeepSeek | Pooled |
+  | --- | --- | --- | --- | --- | --- |
+  | Familiar-robust split | 0.333 | 0.333 | 0.333 | 0.400 | **0.353** |
+  | Best constants | 0.667 | 0.333 | 0.222 | 0.700 | 0.529 |
+  | Always robust | — | — | — | — | 0.706 |
+
+  The split is inverted there, which is E23's reading (Finding 47) and the opposite of both
+  MATH and the hidden set. **Gate G2's official-row leg would therefore block the policy that
+  wins on the leaderboard**, and that conflict is a freeze decision, not a modelling one.
+- **What is not justified.** A tilted split - Skywork and Olmo calling one fewer problem robust,
+  the count their measured balance implies - is built and verified as
+  `dist/solution-e27k-tilted-small.zip`, but it is per-model tuning on 14 cases, which
+  Finding 50 already ruled out for the tail-gap family. It stays unsubmitted unless offline
+  evidence justifies it.
 
 ---
 

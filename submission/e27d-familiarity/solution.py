@@ -27,6 +27,11 @@ ROBUST_HALF = "unfamiliar"  # make_e27.py ships one ZIP per reading
 # FALLBACK_ROBUST, which are the best constants the probes allow (9/14, Finding 45). One ZIP per
 # model decomposes the split's leaderboard gain by model without ever probing a single case.
 SPLIT_MODELS = "all"
+# How many of each batch to call robust, as ceil(n/2) + TILT[model]. The probes measured each
+# model's robust-minus-spurious balance on the validation set: +1 for Qwen and DeepSeek, -1 for
+# Skywork and Olmo (Finding 45). With an odd batch, ceil(n/2) is already the +1 count, so only
+# the two spurious-leaning models need a tilt. An empty mapping is the plain median split.
+TILT = {}
 FALLBACK_ROBUST = {"Qwen/Qwen3.5-4B", "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"}
 MAX_TOKENS = 2048
 
@@ -61,12 +66,13 @@ def problem_nll(model_id: str, problems: list[str]) -> list[float]:
             torch.cuda.empty_cache()
 
 
-def split_half(scores: list[float]) -> list[bool]:
-    """True for the half `ROBUST_HALF` selects; ties break by input order, so floor(n/2) are False."""
-    order = sorted(range(len(scores)), key=lambda i: (scores[i], i))
-    if ROBUST_HALF == "familiar":  # low NLL is familiar, so the robust half is at the front
-        order = order[::-1]
-    robust = set(order[len(scores) // 2:])
+def split_half(scores: list[float], model_id: str = "") -> list[bool]:
+    """Call the `ROBUST_HALF` end of the batch robust; ties break by input order."""
+    order = sorted(range(len(scores)), key=lambda i: (scores[i], i))  # ascending NLL: familiar first
+    if ROBUST_HALF == "unfamiliar":
+        order.reverse()
+    n_robust = (len(scores) + 1) // 2 + TILT.get(model_id, 0)
+    robust = set(order[: max(0, min(len(scores), n_robust))])
     return [i in robust for i in range(len(scores))]
 
 
@@ -79,7 +85,7 @@ def are_robust(model_id, problems, reasoning_effort="default"):
     if not uses_split(model_id):
         return [model_id in FALLBACK_ROBUST] * len(problems)
     try:
-        return split_half(problem_nll(model_id, problems))
+        return split_half(problem_nll(model_id, problems), model_id)
     # SystemExit too: `tokenizer_check` raises it for a lossy tokenizer, and it would end the run.
     except (Exception, SystemExit) as exc:  # never let a batch go invalid
         print(f"e27d: {type(exc).__name__}: {exc}; falling back to constants", file=sys.stderr)

@@ -590,22 +590,25 @@ above 0.57.
 
 ### 11.7 Decomposing the familiarity split (23 Sep)
 
-`e27e` is `e27d`'s exact complement, so it scores **10/14 = 0.71**, one case above v2. These
-six ZIPs then say where that comes from, per model, never per case:
+`e27e` turns `e27d`'s split the other way up. These six ZIPs then say where the gain comes
+from, per model, never per case. **Scored 26 Sep** (Finding 58):
 
-| Upload | Predicts | Reads as |
+| Upload | Predicts | Score |
 | --- | --- | --- |
-| `solution-e27e-familiar-robust-small.zip` | familiar half robust, every model | The new candidate; confirms 0.71 |
-| `solution-e27f-constants-small.zip` | Qwen and DeepSeek `True`, Skywork and Olmo `False` | The constants baseline, expected 9/14 = 0.64 |
-| `solution-e27g-split-qwen35-small.zip` | split for Qwen only, constants elsewhere | Qwen's share of the gain |
-| `solution-e27h-split-deepseek-small.zip` | split for DeepSeek only | DeepSeek's share |
-| `solution-e27i-split-skywork-small.zip` | split for Skywork only | Skywork's share |
-| `solution-e27j-split-olmo-think-small.zip` | split for Olmo-3-Think only | Olmo's share |
+| `solution-e27e-familiar-robust-small.zip` | familiar half robust, every model | **0.71** (10/14) |
+| `solution-e27f-constants-small.zip` | Qwen and DeepSeek `True`, Skywork and Olmo `False` | 0.64 (9/14), confirming Finding 45 |
+| `solution-e27g-split-qwen35-small.zip` | split for Qwen only, constants elsewhere | 0.64 (delta 0) |
+| `solution-e27h-split-deepseek-small.zip` | split for DeepSeek only | **0.71** (delta +1) |
+| `solution-e27i-split-skywork-small.zip` | split for Skywork only | 0.64 (delta 0) |
+| `solution-e27j-split-olmo-think-small.zip` | split for Olmo-3-Think only | 0.64 (delta 0) |
 
-The four deltas against `e27f` must sum to `e27e` minus `e27f`, which is the consistency check.
-Then the best per-model combination keeps the split only where its delta is positive. **That is
-selection on 14 cases**, so whatever it produces ships only if it also survives G2's
-official-row check, and v2 and `e27e` stay the principled fallbacks.
+The deltas sum to +1, matching `e27e` minus `e27f`, so the check passes and the Olmo cell that
+Finding 50 left queued is filled. Per-model contributions are additive, so **10/14 is the
+ceiling of this family**: no recombination reaches 11. The same split scores **0.353 on the 34
+official rows** against 0.706 for always-robust, so G2's official-row leg would block the
+leaderboard winner - a freeze decision (§11.10 in spirit, resolved at 27 Oct), not a modelling
+one. `dist/solution-e27k-tilted-small.zip` (Skywork and Olmo call one fewer problem robust)
+exists but is **held**: it is 14-case tuning of exactly the kind Finding 50 ruled out.
 
 ### 11.8 Rank-based familiarity successors (24 Sep)
 

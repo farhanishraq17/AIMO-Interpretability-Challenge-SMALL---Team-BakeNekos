@@ -18,6 +18,8 @@ to every `model_id`:
 * `e27f-constants`          the best constants alone, the baseline the next four are read against
 * `e27g..j-split-<model>`   the familiar-robust split for one model, constants elsewhere, so the
                             split's leaderboard gain decomposes by model
+* `e27k-tilted`             the same split, but Skywork and Olmo call one fewer problem robust,
+                            which is the robust count their measured balance implies (Finding 45)
 
 Only fitted estimators ship, never the table itself: the rules forbid submitting training
 data or labels. The estimators are fitted here, in the pinned venv, from the pinned revision,
@@ -122,19 +124,22 @@ def main() -> None:
 
     source = (SUBMISSION / "e27d-familiarity" / "solution.py").read_text(encoding="utf-8")
     tokenizer_check = (ROOT / "datagen" / "tokenizer_check.py").read_bytes()
+    tilt = '{"Skywork/Skywork-OR1-Math-7B": -1, "allenai/Olmo-3-7B-Think": -1}'
     splits = {
-        "e27d-familiarity": ("unfamiliar", "all"),
-        "e27e-familiar-robust": ("familiar", "all"),
-        "e27f-constants": ("familiar", ""),
-        "e27g-split-qwen35": ("familiar", "Qwen/Qwen3.5-4B"),
-        "e27h-split-deepseek": ("familiar", "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"),
-        "e27i-split-skywork": ("familiar", "Skywork/Skywork-OR1-Math-7B"),
-        "e27j-split-olmo-think": ("familiar", "allenai/Olmo-3-7B-Think"),
+        "e27d-familiarity": ("unfamiliar", "all", "{}"),
+        "e27e-familiar-robust": ("familiar", "all", "{}"),
+        "e27f-constants": ("familiar", "", "{}"),
+        "e27g-split-qwen35": ("familiar", "Qwen/Qwen3.5-4B", "{}"),
+        "e27h-split-deepseek": ("familiar", "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B", "{}"),
+        "e27i-split-skywork": ("familiar", "Skywork/Skywork-OR1-Math-7B", "{}"),
+        "e27j-split-olmo-think": ("familiar", "allenai/Olmo-3-7B-Think", "{}"),
+        "e27k-tilted": ("familiar", "all", tilt),
     }
-    for name, (half, models) in splits.items():
+    for name, (half, models, tilts) in splits.items():
         variant = (source
                    .replace('ROBUST_HALF = "unfamiliar"', f'ROBUST_HALF = "{half}"')
-                   .replace('SPLIT_MODELS = "all"', f'SPLIT_MODELS = "{models}"'))
+                   .replace('SPLIT_MODELS = "all"', f'SPLIT_MODELS = "{models}"')
+                   .replace("TILT = {}", f"TILT = {tilts}"))
         assert f'ROBUST_HALF = "{half}"' in variant and f'SPLIT_MODELS = "{models}"' in variant, name
         entries = {"solution.py": variant.encode(), "tokenizer_check.py": tokenizer_check, "small.txt": b""}
         out = archive(DIST / f"solution-{name}-small.zip", entries)
