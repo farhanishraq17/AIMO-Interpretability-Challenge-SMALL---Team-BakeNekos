@@ -1,6 +1,9 @@
 # E36: budget-path reasoning diagnostics
 
-Status: pre-registered before any E36 label/feature association was computed.
+Status: completed 25 September 2026.  The ranking gates passed strongly, but the frozen
+absolute-threshold balanced-accuracy gate missed by 0.0025, so E36 formally failed and did not
+authorize AIMO extraction or a submission.  E37 is the one independently pre-registered
+confirmation of the unchanged score with rank calibration.
 
 ## Motivation
 
@@ -92,3 +95,12 @@ Only then may one frozen Small Models submission be built and uploaded.  No runt
 feature, threshold, per-model direction or rank fraction may be changed after seeing Putnam,
 official-label or leaderboard results.  E27e/E27h at 0.71 remains the deployed candidate until
 all gates clear.
+
+## Result
+
+MATH-Perturb yielded 1,001 eligible model configurations (769 robust, 232 spurious) over 264
+problems.  Putnam yielded 206 (100 robust, 106 spurious) over 72 problems.  The unchanged model
+scored ROC-AUC **0.765**, problem-bootstrap 95% CI **[0.687, 0.839]**.  Per-model AUCs were
+0.771 (1.7B), 0.814 (14B), 0.680 (4B), and 0.794 (8B).  The frozen MATH OOF threshold produced
+balanced accuracy **0.598**, below the required 0.60.  Therefore `passed=false`; no official
+AIMO label was loaded for E36 and no Codabench bundle was built.
