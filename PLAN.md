@@ -429,18 +429,17 @@ Submit the form this week: https://forms.gle/oYkYDN1EtSVeSfMd9. Long-cap olympia
 
 Drafted 17 Sep as one message (not yet sent):
 
-1. **Partly self-answered (Finding 30):** `aimo-interp/train-main-v2` labels all four models,
-   but only 34 small-track rows. Will it **grow**, or is a larger per-model train split coming?
-   If not, may we label them ourselves with non-official perturbation types (answer-modulus,
-   notation change, premise reorder)? Note E20 found `answer_modulus` does not track the
-   official types, so this matters less than it did.
+1. **Answered, 26 Sep (Finding 59):** the split will **not** grow beyond "a couple samples"
+   for Skywork, and generating additional training data from `train-main-v2` is explicitly
+   allowed. The acceptance set is final at 34 small-track rows.
 2. **Partly self-answered (Finding 35):** the small-track task was recreated 16 Sep 22:35 UTC
    as v8, and the `train-main-v2` commit log shows 7 rows withheld "used by the small-track
    validation set" that day. Still ask: how many cases does the validation set hold, and for
    which models?
 3. Does the final **test set** cover all four small-track models, and in what proportions?
    Does `reasoning_effort` apply to the small track?
-4. Can we get access to **`aimo-interp/problems-public`**? As of 25 Sep, search indexing shows
+4. **Answered, 26 Sep:** `aimo-interp/problems-public` is **private and cannot be shared**;
+   the 401 is intentional. E33, which depended on its symbolic programs, is dead. As of 25 Sep, search indexing shows
    a 22-row symbolic validation split, but the live Hub API returns 401 and the dataset is not
    in the public `aimo-interp` listing. The getting-started repository restricts new issue
    creation, and issue #6 already asks whether self-generated counterfactual evaluation is

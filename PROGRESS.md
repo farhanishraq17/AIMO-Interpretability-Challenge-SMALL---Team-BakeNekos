@@ -1446,48 +1446,6 @@ still inaccessible.** (Official website, GitHub and Hugging Face audit, 25 Sep.)
   symbolic programs; score once on the external official `train-main-v2` rows using the E22
   19-template harness. No rewrite, layer, threshold or rank-fraction search on that holdout.
 
-**58. The per-model decomposition closes: Olmo adds nothing, and 10 of 14 is the ceiling of the
-whole familiarity family.** (Codabench, Small Model Track, 26 Sep, submissions 945323-945329.
-Completes the Olmo cell Finding 50 left queued, with an independent rebuild of the same
-policies.)
-
-| Submission | Score | In 14ths | Delta vs constants |
-| --- | --- | --- | --- |
-| `e27f` best constants alone | 0.64 | 9 | — |
-| `e27g` split for Qwen only | 0.64 | 9 | 0 |
-| **`e27h` split for DeepSeek only** | **0.71** | 10 | **+1** |
-| `e27i` split for Skywork only | 0.64 | 9 | 0 |
-| **`e27j` split for Olmo-3-Think only** | 0.64 | 9 | **0** |
-| `e27e` split for all four | 0.71 | 10 | +1 |
-
-- **Olmo was the missing cell and it is zero**, so all four deltas are now measured: Qwen 0,
-  DeepSeek +1, Skywork 0, Olmo 0. They sum to +1, exactly `e27e` minus `e27f`, which is the
-  consistency check passing.
-- **That closes the family, not just the search.** Each model's cases are disjoint, so the
-  score is the sum of per-model correct counts and the best combination takes each model's
-  better option independently. With three ties and one +1, **no recombination of
-  split-versus-constant can exceed 10 of 14**. Finding 50 reached the same DeepSeek-specific
-  reading from a different set of submissions; this completes the argument for the ceiling.
-- **`e27f` scoring exactly 9 confirms Finding 45 directly**: plain constants reproduce E11 v2's
-  score, so the DeepSeek fusion is worth precisely what answering `True` for DeepSeek is worth.
-- **The official rows still say the opposite.** Scoring the same familiar-robust split offline
-  on the 34 official rows, using E23's stored NLLs:
-
-  | | Qwen | Skywork | Olmo-3-Think | DeepSeek | Pooled |
-  | --- | --- | --- | --- | --- | --- |
-  | Familiar-robust split | 0.333 | 0.333 | 0.333 | 0.400 | **0.353** |
-  | Best constants | 0.667 | 0.333 | 0.222 | 0.700 | 0.529 |
-  | Always robust | — | — | — | — | 0.706 |
-
-  The split is inverted there, which is E23's reading (Finding 47) and the opposite of both
-  MATH and the hidden set. **Gate G2's official-row leg would therefore block the policy that
-  wins on the leaderboard**, and that conflict is a freeze decision, not a modelling one.
-- **What is not justified.** A tilted split - Skywork and Olmo calling one fewer problem robust,
-  the count their measured balance implies - is built and verified as
-  `dist/solution-e27k-tilted-small.zip`, but it is per-model tuning on 14 cases, which
-  Finding 50 already ruled out for the tail-gap family. It stays unsubmitted unless offline
-  evidence justifies it.
-
 ---
 
 ## 7. Results so far
@@ -1720,6 +1678,77 @@ deterministically.
 - The current official FAQ also clarifies temperature 1.0, top-k 40, top-p 0.95 and a
   100,000-token maximum. Those settings explain why E34's 0.6/12,288 pilot is not an exact
   reproduction, but they do not license reopening E34 after its frozen failure.
+
+**58. The per-model decomposition closes: Olmo adds nothing, and 10 of 14 is the ceiling of the
+whole familiarity family.** (Codabench, Small Model Track, 26 Sep, submissions 945323-945329.
+Completes the Olmo cell Finding 50 left queued, with an independent rebuild of the same
+policies.)
+
+| Submission | Score | In 14ths | Delta vs constants |
+| --- | --- | --- | --- |
+| `e27f` best constants alone | 0.64 | 9 | — |
+| `e27g` split for Qwen only | 0.64 | 9 | 0 |
+| **`e27h` split for DeepSeek only** | **0.71** | 10 | **+1** |
+| `e27i` split for Skywork only | 0.64 | 9 | 0 |
+| **`e27j` split for Olmo-3-Think only** | 0.64 | 9 | **0** |
+| `e27e` split for all four | 0.71 | 10 | +1 |
+
+- **Olmo was the missing cell and it is zero**, so all four deltas are now measured: Qwen 0,
+  DeepSeek +1, Skywork 0, Olmo 0. They sum to +1, exactly `e27e` minus `e27f`, which is the
+  consistency check passing.
+- **That closes the family, not just the search.** Each model's cases are disjoint, so the
+  score is the sum of per-model correct counts and the best combination takes each model's
+  better option independently. With three ties and one +1, **no recombination of
+  split-versus-constant can exceed 10 of 14**. Finding 50 reached the same DeepSeek-specific
+  reading from a different set of submissions; this completes the argument for the ceiling.
+- **`e27f` scoring exactly 9 confirms Finding 45 directly**: plain constants reproduce E11 v2's
+  score, so the DeepSeek fusion is worth precisely what answering `True` for DeepSeek is worth.
+- **The official rows still say the opposite.** Scoring the same familiar-robust split offline
+  on the 34 official rows, using E23's stored NLLs:
+
+  | | Qwen | Skywork | Olmo-3-Think | DeepSeek | Pooled |
+  | --- | --- | --- | --- | --- | --- |
+  | Familiar-robust split | 0.333 | 0.333 | 0.333 | 0.400 | **0.353** |
+  | Best constants | 0.667 | 0.333 | 0.222 | 0.700 | 0.529 |
+  | Always robust | — | — | — | — | 0.706 |
+
+  The split is inverted there, which is E23's reading (Finding 47) and the opposite of both
+  MATH and the hidden set. **Gate G2's official-row leg would therefore block the policy that
+  wins on the leaderboard**, and that conflict is a freeze decision, not a modelling one.
+- **What is not justified.** A tilted split - Skywork and Olmo calling one fewer problem robust,
+  the count their measured balance implies - is built and verified as
+  `dist/solution-e27k-tilted-small.zip`, but it is per-model tuning on 14 cases, which
+  Finding 50 already ruled out for the tail-gap family. It stays unsubmitted unless offline
+  evidence justifies it.
+
+**59. The organizers answered: `problems-public` is private for good, the official labels are
+final, and generating training data from `train-main-v2` is explicitly allowed.** (Michal
+Spiegel, challenge Discord, 26 Sep 2026, answering the questions Finding 54 routed there.)
+
+- **`aimo-interp/problems-public` is a private dataset they cannot share.** The 401 was never a
+  permissions bug and the name is simply confusing. **E33 is dead**, not frozen: it was
+  conditional on those symbolic programs, and no substitute exists.
+- **The official label pool is final.** "Currently, we plan to add only a couple samples for the
+  `Skywork/Skywork-OR1-Math-7B` model. Nothing else is planned." So the acceptance set stays at
+  34 small-track rows over 20 problems, plus a few Skywork rows. **Every gate scored on official
+  rows is permanently underpowered** - E22's harness will not grow, and the conflict in
+  Finding 58, where the leaderboard and the official rows disagree about familiarity, cannot be
+  settled by waiting for more data.
+- **"Feel free to use it to generate any additional data for training."** With the 19 Sep rule
+  retirement (Finding 54), this closes the compliance question that shaped E15-E24: seeding
+  generated data from the official train set is sanctioned, and self-generated labels for the
+  official perturbation families are allowed.
+- **Permission was never the binding constraint, though.** Yield is. A self-label needs the
+  model to solve the original in all four samples: E24 got 15 usable pairs from 27 (DeepSeek 1
+  of 7, Finding 48) and E34a got one label from 52 problems (Finding 56). The 36 official
+  problems are the only seed now blessed, and they are the same problems our sampling already
+  struggles on.
+- **What it changes for the plan.** Nothing to wait for, and one option reopened: perturbing the
+  official problems with the *official* families and checking our derived labels against the
+  official ones - the comparison E24 could not make when only `answer_modulus` was compliant.
+  At 20 problems it is an audit of the pipeline, not a training set.
+
+---
 
 ## 10. Open questions and blockers
 
