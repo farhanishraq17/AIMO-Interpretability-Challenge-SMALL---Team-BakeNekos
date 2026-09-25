@@ -78,13 +78,34 @@ restarting and its download does not overwrite the previous one. The Nasif gpt-o
 first launch were still running at 15:37, so gpt-oss survived the warm-load bug (its first token is
 presumably swallowed by the harmony parser, leaving a single NDJSON line).
 
+**LF-7. gpt-oss:20b at `low` finished the whole panel in one session; 1.1% of its replies are
+tool calls Ollama cannot serve.** `l1-gptoss20b-low` (Samin, 15:28-19:12 UTC) wrote all 637
+completions: 1.18M generated tokens at 89.6 tok/s, mean 1,876 tokens, none truncated, 98% with a
+`\boxed{}` answer (Results, "L1: panel run health"). 7 completions failed with HTTP 500. The serve
+log pairs each one with `harmony parser: no reverse mapping found for function name
+harmonyFunctionName=python`: gpt-oss tried to call its built-in python tool, which the panel does
+not provide. Seeds are fixed per sample, so a plain retry would most likely reproduce the call.
+They stay recorded as errors and are graded as no answer. If `medium`/`high` show a much higher
+rate, a retry with a fresh seed is the fix.
+
+**LF-8. Idle accounts now run backwards "helper" copies of the slowest jobs.** A `-b` job samples
+the same model and effort as its base job but walks the work list in reverse, so it meets the
+forward session instead of duplicating it. For gpt-oss `medium`/`high`, that also puts the three
+extra samples of each original first, the part G-L1b needs and the forward runs reach last.
+Finished keys are now shared by model and effort across job folders, so a continuation of the base
+job skips whatever a helper finished once both are downloaded. Pushed 19:47-19:50 UTC on 25 Sep:
+DeepSeek-8B-b and qwen3-32b-b on RSD, gpt-oss medium-b and high-b on ISHRAQ. MUBAMAN was tried
+first and still got no GPU (LF-5). Eshad refused with "Maximum batch CPU session count of 5
+reached": another project's five `kagri-mk2-*` kernels fill that account's session limit, and the
+same holds for every account running five of them.
+
 ## 3. Fleet state (25 Sep, ~15:10 UTC; quota resets 26 Sep 00:00 UTC)
 
 GPU hours used of 30, from `klarge.py accounts`:
 
 | Account | Used | Note |
 | --- | --- | --- |
-| MUBAMAN | 0.0 | new; still no GPU at 15:27 UTC despite reported verification (LF-5) |
+| MUBAMAN | 0.0 | new; still no GPU at 15:27 and 19:47 UTC despite reported verification (LF-5, LF-8) |
 | Eshad | 0.0 | slots held by small-track kernels |
 | Nasif | 0.2 | |
 | RSD | 10.8 | new to this track; same account as MEDIUM on the teammate's machine |
@@ -97,7 +118,10 @@ GPU hours used of 30, from `klarge.py accounts`:
 ## 4. Open items
 
 - After the first-launch jobs end (~23:45 UTC), download them and push continuation sessions
-  (11 h each) for every job that did not finish (LF-6).
+  (11 h each) for every job that did not finish (LF-6). Scheduled task
+  `aimo-large-l1-continuations` does this at 00:30 UTC on 26 Sep. Accounts running five
+  `kagri-mk2-*` kernels will refuse pushes until those finish (LF-8).
+- Helpers (LF-8) run until ~07:00-07:45 UTC on 26 Sep; download them with `klarge.py output <job>-b`.
 - Two Ollama servers per kernel, one per GPU, would roughly double throughput for models that fit
   one T4 (qwen3-4b, DeepSeek-8B). Not built; add if continuation time runs short.
 - Reference answers for the 46 originals, needed to grade L1 (L1-a).

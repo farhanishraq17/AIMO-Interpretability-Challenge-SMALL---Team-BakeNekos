@@ -51,12 +51,12 @@ PANEL_ITEMS = "data/panel/items.jsonl"  # scripts/build_items.py
 
 
 def panel(model: str, efforts: list[str], parallel: int, num_ctx: int, temperature: float, top_p: float,
-          hours: float = 11.0) -> dict:
+          hours: float = 11.0, reverse: bool = False) -> dict:
     # `hours` stops new requests; in-flight ones (up to ~45 min at 32k) must still end inside
     # Kaggle's 12 h session. The first launch used 8.3 to end before the quota reset.
     """An Ollama panel job on T4x2: `model` samples every panel item under each effort."""
     config = dict(model=model, efforts=efforts, k=4, parallel=parallel, num_ctx=num_ctx,
-                  num_predict=num_ctx - 1024, temperature=temperature, top_p=top_p, hours=hours)
+                  num_predict=num_ctx - 1024, temperature=temperature, top_p=top_p, hours=hours, reverse=reverse)
     return dict(script="ollama_panel.py", accelerator="NvidiaTeslaT4", internet=True, config=config, items=PANEL_ITEMS)
 
 
@@ -77,6 +77,12 @@ JOBS: dict[str, dict] = {
     "l1-qwen3-30b-a3b": panel("qwen3:30b-a3b", ["think"], 8, 16384, 0.6, 0.95),
     "l1-qwen3-32b": panel("qwen3:32b", ["think"], 3, 16384, 0.6, 0.95),
     # Smoke tests: the first L1 push died at warm-load (streamed NDJSON), so check a short run end to end.
+    # `-b` helpers: the same model and effort, walking the list backwards (originals' extra samples
+    # first). They share finished keys with the base job, which is the one `progress` continues.
+    "l1-gptoss20b-high-b": panel("gpt-oss:20b", ["high"], 8, 32768, 1.0, 1.0, reverse=True),
+    "l1-gptoss20b-medium-b": panel("gpt-oss:20b", ["medium"], 8, 24576, 1.0, 1.0, reverse=True),
+    "l1-dsr1-8b-b": panel("deepseek-r1:8b", ["think"], 8, 16384, 0.6, 0.95, reverse=True),
+    "l1-qwen3-32b-b": panel("qwen3:32b", ["think"], 3, 16384, 0.6, 0.95, reverse=True),
     # MUBAMAN's pushes ran with no GPU and no internet (unverified account), so these reran on RSD.
     "l1-smoke-qwen3-4b": panel("qwen3:4b", ["think"], 8, 4096, 0.6, 0.95, hours=0.2),
     "l1-smoke-gptoss20b": panel("gpt-oss:20b", ["low", "high"], 8, 4096, 1.0, 1.0, hours=0.25),
@@ -146,11 +152,22 @@ def payload_files(job: str, shard: int, shards: int) -> dict[str, bytes]:
         lines = (ROOT / spec["items"]).read_text(encoding="utf-8").splitlines()
         files["items.jsonl"] = "".join(line + "\n" for i, line in enumerate(lines) if i % shards == shard).encode()
         files["config.json"] = json.dumps(spec["config"]).encode()
-        done = {tuple(json.loads(line)[k] for k in ("item_id", "effort", "sample"))
-                for path in RUNS_DIR.glob(f"{job}/s*/records*.jsonl")
-                for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
-        files["done.json"] = json.dumps(sorted(done)).encode()
+        files["done.json"] = json.dumps(sorted(done_keys(spec["config"]))).encode()
     return files
+
+
+def done_keys(config: dict) -> set[tuple]:
+    """(item, effort, sample) already downloaded for this model and effort, from any panel job
+    (a base job and its `-b` helper share work). Smoke runs used a 4k budget, so they never count."""
+    done = set()
+    for path in RUNS_DIR.glob("l1-*/s*/records*.jsonl"):
+        if "smoke" in path.parts[-3]:
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            record = json.loads(line) if line.strip() else {}
+            if record.get("model") == config["model"] and record.get("effort") in config["efforts"]:
+                done.add((record["item_id"], record["effort"], record["sample"]))
+    return done
 
 
 def payload_zip(files: dict[str, bytes]) -> tuple[str, str]:
@@ -244,11 +261,12 @@ def main() -> None:
                 print(f"{row['job']:24s} s{row['shard']:<2d} {row['account']:9s} {state.splitlines()[-1] if state else ''}")
     elif args.command == "progress":  # downloaded completions vs the panel's total, per job
         items = [json.loads(line) for line in (ROOT / PANEL_ITEMS).read_text(encoding="utf-8").splitlines()]
-        panels = {j for j, s in JOBS.items() if "items" in s and "smoke" not in j}  # smoke runs are never continued
+        # Base jobs only: smoke runs are never continued, and `-b` helpers count toward their base job.
+        panels = {j for j, s in JOBS.items() if "items" in s and "smoke" not in j and not s["config"]["reverse"]}
         for job in sorted({r["job"] for r in launched(args.job)} & panels):
             config = JOBS[job]["config"]
             total = len(config["efforts"]) * sum(item.get("k", config["k"]) for item in items)
-            done = len(json.loads(payload_files(job, 0, 1)["done.json"]))
+            done = len(done_keys(config))
             print(f"{job:24s} {done:5d}/{total:<5d} {'DONE' if done >= total else 'UNFINISHED'}")
     elif args.command == "output":
         def fetch(row: dict) -> str:

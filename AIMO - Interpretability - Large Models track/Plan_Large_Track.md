@@ -55,7 +55,7 @@ Over all 71 labelled `train-main-v2` rows it scores **0.732**; for gpt-oss-120b 
 | ID | Question | Compute | Status | Gate / outcome |
 | --- | --- | --- | --- | --- |
 | **L0** | What does `NvidiaH100` allocate, and are the gpt-oss-120b weights mountable? | 4 short kernels | **Done** | T4x2 on 4/4; weights mount; internet on (LF-3) |
-| **L1** | Proxy panel: sample every panel item (46 originals x k=4, 453 official variants x k=1) with models that fit T4x2 via Ollama | 8 jobs x 8.3 h, then 11 h continuations | **Running** (all 8 since 15:28 UTC); only gpt-oss `low` is expected to finish in one session (LF-6) | Feeds G-L1 |
+| **L1** | Proxy panel: sample every panel item (46 originals x k=4, 453 official variants x k=1) with models that fit T4x2 via Ollama | 8 jobs x 8.3 h, 4 reverse helpers, then 11 h continuations | gpt-oss `low` **done** (637/637, LF-7); 7 running; helpers for gpt-oss medium/high, DeepSeek-8B, qwen3-32b since 19:50 UTC (LF-8) | Feeds G-L1 |
 | **L1-a** | Grade L1: extract `\boxed{}`, score against original answers (perturbations preserve the answer) | CPU | Needs reference answers for the 46 originals | Calibration and signals below |
 | **L2** | Label-free gpt-oss signal at test time, e.g. answer agreement over k samples | eval GPU | Only if G-L1 passes | Must fit 3600 s with the four small models |
 | **L3** | First Main-Track ZIP: small-track solution for the four + "robust" constant for gpt-oss-120b | CPU | Not started | Load-tested in `Dockerfile.competition`; upload is the user's call |
@@ -73,7 +73,9 @@ to every number):
 Placement (25 Sep relaunch): Samin gpt-oss low + qwen3-32b (15:28; MUBAMAN still had no GPU),
 Labib qwen3-30b-a3b + qwen3-14b, Mashrafi DeepSeek-8B + qwen3-4b (15:23). gpt-oss medium + high
 stay on Nasif from the first launch, which were still running when every other old kernel had
-crashed; if they turn out dead, they move to RSD once its smoke tests finish. RSD and Labib are the same
+crashed. Helpers (25 Sep 19:50 UTC): RSD DeepSeek-8B-b + qwen3-32b-b, ISHRAQ gpt-oss medium-b +
+high-b. MUBAMAN still gets no GPU, and accounts running five `kagri-mk2-*` kernels refuse new
+pushes (LF-8). RSD and Labib are the same
 accounts as MEDIUM and CHOTON on the teammate's machine: their quota is shared with small-track work.
 
 ## 3. Decision gates

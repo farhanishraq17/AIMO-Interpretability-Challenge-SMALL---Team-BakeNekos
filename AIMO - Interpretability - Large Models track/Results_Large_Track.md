@@ -65,5 +65,6 @@ Means over (problem, perturbation family) rows.
 
 | job | model | effort | completions | errors | truncated | boxed | mean_tokens |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| l1-gptoss20b-low | gpt-oss:20b | low | 637 | 7 | 0.000 | 0.980 | 1876.029 |
 | l1-smoke-gptoss20b | gpt-oss:20b | low | 37 | 0 | 0.027 | 0.973 | 1758.946 |
 | l1-smoke-qwen3-4b | qwen3:4b | think | 24 | 0 | 1.000 | 0.000 | 3072.000 |

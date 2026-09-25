@@ -99,7 +99,8 @@ def work_list():
             for item in ITEMS:
                 if sample < item.get("k", CONFIG["k"]) and (item["item_id"], effort, sample) not in done:
                     todo.append((item, effort, sample))
-    return todo
+    # A helper session runs the list backwards, so it meets the forward session instead of racing it.
+    return todo[::-1] if CONFIG.get("reverse") else todo
 
 
 LOCK = threading.Lock()
