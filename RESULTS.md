@@ -677,3 +677,19 @@ E31 selected all-layer mean cosine distance only after its five-way official-dat
 | 142 | 39 | 0.545 | [0.428, 0.658] | 0.510 | 0.527 | 0.2061 | 0.161 | fail |
 
 **Decision: the signal does not independently confirm; close the counterfactual-sensitivity lane without a submission.**
+
+## E34a — independent AIME label-yield gate
+
+Pre-registered in `E34_PROTOCOL.md` before GPU output. Qwen3.5-4B sampled 30 AIME 2024
+problems and 22 AIME 2026 problems after excluding all eight overlaps with `train-main-v2`.
+
+| Measurement | Result | Frozen requirement |
+| --- | ---: | ---: |
+| Originals sampled | 52/52 | 52 |
+| Eligible originals (4/4 correct) | **1 (1.92%)** | AIME-2024 >=8; AIME-2026 >=5 |
+| Clear-cut robust / spurious | **1 / 0** | >=4 / >=4 |
+| Eligible `latex_to_plaintext` rows | **1** | >=4 |
+| Eligible `premise_reorder` rows | **0** | >=4 |
+
+**Decision: fail.** Both shards completed and all records resolved, but label yield and class
+coverage miss every substantive gate. E34b is not launched and no Codabench submission follows.

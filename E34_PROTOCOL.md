@@ -1,6 +1,6 @@
 # E34: new official-like labels with a frozen external holdout
 
-Status: pre-registered 25 September 2026, before any E34 GPU output exists.
+Status: E34a completed 25 September 2026 and failed its frozen yield gate. E34b is closed.
 
 ## Objective
 
@@ -79,3 +79,21 @@ Scores from prior Codabench probes may be used to state the 10/14 baseline, but 
 which cases were missed, choose per-row predictions, or select an ensemble. The inaccessible
 `problems-public` dataset must be obtained through organizer-granted access; cached snippets are
 not reconstructed.
+
+## E34a result
+
+Kernel version 1 completed on `tashintahir` after sampling all 52 declared originals. Only
+**1/52 (1.92%)** met the frozen eligibility rule of 4/4 correct original samples. That problem
+produced one `latex_to_plaintext` row, labelled robust; there were no eligible
+`premise_reorder` rows and no spurious labels.
+
+The frozen gate therefore failed every substantive condition:
+
+- AIME 2024 clear-cut: 1, required 8;
+- AIME 2026 clear-cut: 0, required 5;
+- robust/spurious: 1/0, required at least 4/4;
+- perturbation-family coverage: 1/0 rows, required at least 4/4.
+
+This is a scientific yield failure, not an execution failure: both base shards finished all
+26 assigned problems, the tokenizer round-tripped correctly, and all 52 base records resolved.
+E34b is not launched and no Codabench submission is made.

@@ -1646,6 +1646,21 @@ deterministically.
   `https://www.kaggle.com/code/tashintahir/aimo-small-e34a-qwen-aime-surface`. The excluded
   `farhanishraqq` GPU account is not used.
 
+**56. E34a fails before modelling: Qwen solves only 1/52 new AIME originals four times.**
+(`e34a-qwen-aime-surface`, TASHIN, completed 25 Sep; frozen gate in `E34_PROTOCOL.md`.)
+
+- Both base shards completed all 26 assigned problems, all 52 records resolved, and the
+  checked tokenizer round-tripped correctly. This is not an interrupted-run artifact.
+- With k=4 at temperature 0.6 and a 12,288-token cap, only one problem reached the required
+  base accuracy of 1.0: **1.92% eligibility**, versus E34a's minimum of 8 AIME 2024 and 5
+  unseen AIME 2026 clear-cut labels.
+- That one problem yielded one robust `latex_to_plaintext` row. There was no eligible
+  `premise_reorder` row and no spurious label, so every class-balance and family-coverage gate
+  also failed.
+- E34b is dropped without training a predictor. Lowering eligibility, changing sampling, or
+  adding rewrite families after seeing this result would violate the pre-registration.
+- No Codabench submission was made. E27e/E27h at 0.71 and E11 v2 at 0.64 remain unchanged.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
@@ -1686,16 +1701,12 @@ new GitHub issues are restricted):
 
 Ranked by value (25 Sep):
 
-1. **Let E34a finish, then apply its frozen yield gate.** Download the output and run
-   `train/eval_e34_yield.py`; do not alter its families or thresholds after seeing the result.
-2. **Only if E34a passes, run E34b exactly as pre-registered.** The new AMC+AIME-2026
-   holdout—not current official labels—decides whether the candidate survives.
-3. **Request `problems-public` access and official-family label clarification.** E33 remains
+1. **Request `problems-public` access and official-family label clarification.** E33 remains
    blocked until legitimate access exists; cached search snippets are not reconstructed.
-4. **Keep `train-main-v2` external to E34 fitting.** It may receive one frozen transfer
-   measurement after E34b passes; never tune rewrites, layers, thresholds or ranks on it.
-5. **Retain the current submissions.** E27e/E27h (0.71) is the performance candidate; E11 v2
+2. **Do not relax E34a after failure.** Its 1/52 yield closes E34b; no eligibility, sampling,
+   perturbation or threshold change follows from this result.
+3. **Retain the current submissions.** E27e/E27h (0.71) is the performance candidate; E11 v2
    (0.64) is the conservative fallback. No new Codabench upload without E33 or E34 clearing
    its independent-validation gate.
-6. **If E34a fails and access is denied, stop GPU experimentation** and focus on the technical
+4. **If access is denied, stop GPU experimentation** and focus on the technical
    report, reproducibility, runtime measurements and negative-result figures.

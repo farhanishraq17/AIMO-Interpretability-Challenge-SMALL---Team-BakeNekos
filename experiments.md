@@ -52,19 +52,17 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E30 | Architecture-invariant activation geometry | local | Done | Family-wise test fails and the selected signal reverses on independent MATH data |
 | E31 | Prompt-state sensitivity to answer-preserving rewrites | Kaggle + local | Done | Best AUC 0.735, but template CI and max-T test fail; Qwen is near chance |
 | E32 | Independent confirmation of E31 on DeepSeek MATH | Kaggle + local | Done | AUC 0.545, CI [0.428, 0.658]; lane closed |
-| **E34a** | Can official-like surface perturbations yield a usable new AIME label set? | Kaggle (`tashintahir`) | **Running** | Pre-registered yield pilot on 30 AIME 2024 + 22 non-overlapping AIME 2026 problems; no predictor or submission |
+| **E34a** | Can official-like surface perturbations yield a usable new AIME label set? | Kaggle (`tashintahir`) | **Done — failed gate** | Only 1/52 originals was 4/4 correct; one robust label, no spurious label; E34b closed and no submission |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---
 
 ## 2. Running now
 
-**E34a is running.** Kernel `tashintahir/aimo-small-e34a-qwen-aime-surface` was launched on
-25 Sep. Its protocol was committed before output existed (`E34_PROTOCOL.md`): Qwen3.5-4B,
-k=4, fixed `latex_to_plaintext` and `premise_reorder` families, 30 AIME 2024 development
-problems, and 22 AIME 2026 problems after excluding all eight `train-main-v2` overlaps.
-E34a measures label yield and class balance only. It cannot authorize a submission; only a
-pass can authorize the already-frozen E34b training/holdout experiment.
+**E34a completed and failed its pre-registered gate.** Both base shards processed all 52
+problems, but only one original was correct in all four samples (1.92%). It yielded one robust
+`latex_to_plaintext` label, no `premise_reorder` label and no spurious label. This misses every
+yield/class-balance requirement in `E34_PROTOCOL.md`; E34b is closed and no submission follows.
 
 **E28-E29 complete.** E28a (`suffix_nll`, submission 942047) scored 0.71, tying rather than
 improving E27e. E28d's first run (942257) failed at ingestion, but an exact retry (942361)
