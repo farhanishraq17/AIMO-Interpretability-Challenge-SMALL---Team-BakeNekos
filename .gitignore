@@ -8,6 +8,8 @@ Secrets.env
 *.pyc
 .venv/
 .local_deps/
+.e36deps/
+local_e36_deps/
 
 # Generated, regenerable outputs
 data/
