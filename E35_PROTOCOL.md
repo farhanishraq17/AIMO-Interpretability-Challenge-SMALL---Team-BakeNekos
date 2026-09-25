@@ -1,7 +1,7 @@
 # E35: external robustness labels with a source-disjoint holdout
 
-Status: pre-registered 25 September 2026, before downloading or inspecting any row-level
-correctness outcomes from the source archive.
+Status: completed 25 September 2026; failed the frozen external holdout gate and closed before
+any official-label evaluation.
 
 ## Motivation
 
@@ -76,3 +76,20 @@ Passing the external gates authorizes one transfer measurement, with no refit ch
 Only if every transfer gate passes may one frozen E35 submission be built and uploaded. There
 is no leaderboard-conditioned revision. E27e/E27h at 0.71 remains the performance candidate and
 E11 v2 at 0.64 remains the conservative fallback unless E35 clears every gate.
+
+## Result
+
+The committed evaluator required two schema-only ID canonicalisations: MATH-Perturb stores
+`#base`, `#simple`, and `#hard` in the paired IDs; Putnam stores `orig`/`var` plus the variation
+number. The adapters were checked without reading correctness and do not change the frozen
+pairing or scientific choices.
+
+MATH-Perturb yielded 233 clear-cut training problems (191 robust, 42 spurious). The untouched
+Putnam holdout yielded 48 (23 robust, 25 spurious). The fixed ensemble scored:
+
+- ROC-AUC **0.609**, bootstrap 95% CI **[0.442, 0.769]**;
+- fixed half-rank balanced accuracy **0.646**.
+
+The sample-size and balanced-accuracy gates passed, but the AUC >= 0.65 and CI-lower-bound >
+0.50 gates failed. Per protocol, no `train-main-v2` labels were loaded, no official transfer
+measurement was run, and no Codabench submission was made.

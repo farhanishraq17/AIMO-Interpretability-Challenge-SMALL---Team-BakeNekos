@@ -53,11 +53,16 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E31 | Prompt-state sensitivity to answer-preserving rewrites | Kaggle + local | Done | Best AUC 0.735, but template CI and max-T test fail; Qwen is near chance |
 | E32 | Independent confirmation of E31 on DeepSeek MATH | Kaggle + local | Done | AUC 0.545, CI [0.428, 0.658]; lane closed |
 | **E34a** | Can official-like surface perturbations yield a usable new AIME label set? | Kaggle (`tashintahir`) | **Done — failed gate** | Only 1/52 originals was 4/4 correct; one robust label, no spurious label; E34b closed and no submission |
+| **E35** | Do independently published robustness labels support a source-transferring problem-text model? | local | **Done — failed gate** | Putnam holdout AUC 0.609, CI [0.442, 0.769]; official transfer not opened |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
 
 ---
 
 ## 2. Running now
+
+**E35 completed and failed its pre-registered external gate.** The frozen MATH-Perturb to
+Putnam-AXIOM transfer produced AUC 0.609 with CI [0.442, 0.769]. No official labels were scored
+and no submission was made.
 
 **E34a completed and failed its pre-registered gate.** Both base shards processed all 52
 problems, but only one original was correct in all four samples (1.92%). It yielded one robust

@@ -693,3 +693,22 @@ problems and 22 AIME 2026 problems after excluding all eight overlaps with `trai
 
 **Decision: fail.** Both shards completed and all records resolved, but label yield and class
 coverage miss every substantive gate. E34b is not launched and no Codabench submission follows.
+
+## E35 — external robustness labels, source-disjoint holdout
+
+Pre-registered in `E35_PROTOCOL.md` before downloading row-level outcomes. Clear-cut labels
+pool the four Qwen3 sizes at a fixed 16,384-token budget. MATH-Perturb is the sole training
+source; Putnam-AXIOM is scored once as the untouched holdout.
+
+| Set | n | Robust | Spurious |
+| --- | ---: | ---: | ---: |
+| MATH-Perturb train | 233 | 191 | 42 |
+| Putnam-AXIOM holdout | 48 | 23 | 25 |
+
+| Frozen estimator | Holdout AUC | Bootstrap 95% CI | Half-rank balanced acc. | Gate |
+| --- | ---: | ---: | ---: | --- |
+| character + word TF-IDF logistic mean | **0.609** | **[0.442, 0.769]** | **0.646** | fail |
+
+**Decision: fail.** The holdout is balanced enough and the fixed decision exceeds the 0.60
+balanced-accuracy gate, but ranking misses AUC 0.65 and its interval crosses 0.5. The official
+transfer stage is not run and no submission follows.

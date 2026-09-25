@@ -10,10 +10,16 @@ from eval_e35_external import BUDGET, derive_labels
 
 
 def row(problem: str, model: str, variant: str, correct: bool) -> dict:
+    if variant in {"base", "simple", "hard"}:
+        problem_id = f"{problem}#{variant}"
+    elif variant == "original":
+        problem_id = f"putnam_orig_2000::{problem}"
+    else:
+        problem_id = f"putnam_var_2000::{problem}_0"
     return {
         "model": model,
         "token_budget": BUDGET,
-        "problem_id": problem,
+        "problem_id": problem_id,
         "question": f"question {problem} {variant}",
         "variant": variant,
         "correct_strict": correct,
@@ -42,7 +48,7 @@ class E35LabelTest(unittest.TestCase):
         # Original wording must be identical across model configurations.
         frame.loc[frame["variant"] == "base", "question"] = frame.loc[
             frame["variant"] == "base", "problem_id"
-        ].map(lambda value: f"question {value}")
+        ].map(lambda value: f"question {value.split('#')[0]}")
         labels = derive_labels(frame, "math_perturb").set_index("problem_id")
         self.assertEqual(set(labels.index), {"robust", "spurious"})
         self.assertTrue(bool(labels.loc["robust", "is_robust"]))

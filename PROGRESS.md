@@ -1661,6 +1661,22 @@ deterministically.
   adding rewrite families after seeing this result would violate the pre-registration.
 - No Codabench submission was made. E27e/E27h at 0.71 and E11 v2 at 0.64 remain unchanged.
 
+**57. E35 finds real external robustness labels, but problem-text ranking does not transfer.**
+(`E35_PROTOCOL.md`, completed locally 25 Sep.)
+
+- `ssubhnil/Qwen3-Math-Eval@f64c82f` supplies strict per-problem correctness for four Qwen3
+  sizes on paired MATH-Perturb and Putnam-AXIOM variants. E35 was committed before downloading
+  row-level outcomes; MATH-Perturb was fixed as train and Putnam as the one-shot holdout.
+- Frozen clear-cut aggregation produced 233 train problems (191 robust, 42 spurious) and a
+  balanced 48-problem holdout (23 robust, 25 spurious).
+- The fixed character+word TF-IDF ensemble reaches **AUC 0.609**, bootstrap CI
+  **[0.442, 0.769]**, and fixed half-rank balanced accuracy **0.646**.
+- Balanced accuracy passes, but the AUC and CI gates fail. The official-transfer clause never
+  opens: `train-main-v2` is not scored, and there is no Codabench submission or post-hoc tuning.
+- The current official FAQ also clarifies temperature 1.0, top-k 40, top-p 0.95 and a
+  100,000-token maximum. Those settings explain why E34's 0.6/12,288 pilot is not an exact
+  reproduction, but they do not license reopening E34 after its frozen failure.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
@@ -1705,8 +1721,10 @@ Ranked by value (25 Sep):
    blocked until legitimate access exists; cached search snippets are not reconstructed.
 2. **Do not relax E34a after failure.** Its 1/52 yield closes E34b; no eligibility, sampling,
    perturbation or threshold change follows from this result.
-3. **Retain the current submissions.** E27e/E27h (0.71) is the performance candidate; E11 v2
+3. **Do not tune E35 on Putnam.** Its independent AUC gate failed; no vectorizer, threshold,
+   aggregation band or source substitution follows from the holdout outcome.
+4. **Retain the current submissions.** E27e/E27h (0.71) is the performance candidate; E11 v2
    (0.64) is the conservative fallback. No new Codabench upload without E33 or E34 clearing
    its independent-validation gate.
-4. **If access is denied, stop GPU experimentation** and focus on the technical
+5. **If access is denied, stop GPU experimentation** and focus on the technical
    report, reproducibility, runtime measurements and negative-result figures.

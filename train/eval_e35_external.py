@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -38,6 +39,23 @@ def derive_labels(frame: pd.DataFrame, source: str) -> pd.DataFrame:
     frame = frame.loc[frame["token_budget"] == BUDGET].copy()
     if frame.empty:
         raise ValueError(f"no {BUDGET}-token rows")
+    # The archive encodes the paired variant in problem_id. Canonicalising only removes that
+    # documented suffix/prefix; it does not inspect correctness or change the frozen pairing.
+    if source == "math_perturb":
+        suffix = "#" + frame["variant"].astype(str)
+        valid = [str(value).endswith(tag) for value, tag in zip(frame["problem_id"], suffix)]
+        if not all(valid):
+            raise ValueError("unexpected MATH-Perturb problem_id format")
+        frame["problem_id"] = [str(value)[: -len(tag)] for value, tag in zip(frame["problem_id"], suffix)]
+    elif source == "putnam_axiom":
+        def putnam_id(value: object, variant: object) -> str:
+            pattern = r"^putnam_orig_(.+::.+)$" if variant == "original" else r"^putnam_var_(.+::.+)_\d+$"
+            match = re.fullmatch(pattern, str(value))
+            if match is None:
+                raise ValueError(f"unexpected Putnam problem_id format: {value!r}")
+            return "putnam_" + match.group(1)
+
+        frame["problem_id"] = [putnam_id(value, variant) for value, variant in zip(frame["problem_id"], frame["variant"])]
 
     by_config = []
     for (problem_id, model), part in frame.groupby(["problem_id", "model"], sort=True):
@@ -152,11 +170,11 @@ def evaluate(math: pd.DataFrame, putnam: pd.DataFrame, bootstrap: int = 5_000) -
     }
     train_counts, holdout_counts = counts(train), counts(holdout)
     gates = {
-        "train_at_least_30_each": min(train_counts["robust"], train_counts["spurious"]) >= 30,
-        "holdout_at_least_20_each": min(holdout_counts["robust"], holdout_counts["spurious"]) >= 20,
-        "auc_at_least_0_65": auc >= 0.65,
-        "auc_ci_lower_above_0_50": ci[0] > 0.50,
-        "balanced_accuracy_at_least_0_60": balanced >= 0.60,
+        "train_at_least_30_each": bool(min(train_counts["robust"], train_counts["spurious"]) >= 30),
+        "holdout_at_least_20_each": bool(min(holdout_counts["robust"], holdout_counts["spurious"]) >= 20),
+        "auc_at_least_0_65": bool(auc >= 0.65),
+        "auc_ci_lower_above_0_50": bool(ci[0] > 0.50),
+        "balanced_accuracy_at_least_0_60": bool(balanced >= 0.60),
     }
     return {
         "train": train_counts,
@@ -166,7 +184,7 @@ def evaluate(math: pd.DataFrame, putnam: pd.DataFrame, bootstrap: int = 5_000) -
         "holdout_balanced_accuracy": balanced,
         "holdout_predicted_robust": int(pred.sum()),
         "gates": gates,
-        "passed": all(gates.values()),
+        "passed": bool(all(gates.values())),
     }
 
 
