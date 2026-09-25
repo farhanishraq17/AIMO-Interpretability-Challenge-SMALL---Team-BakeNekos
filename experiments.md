@@ -46,7 +46,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E22 | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | Done | Nothing clears chance; problem length best at 0.635, CI [0.42, 0.84] (Finding 46) |
 | E23 | Do familiarity/contamination scores predict robustness? | Kaggle | Done | **G-M fails**; on olympiad problems familiar problems lean spurious, not significant (Finding 47) |
 | E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | Done | **G-V2 fails**, but the sign flips from E20: kappa +0.29 on 15 pairs vs 0.72 chance agreement (Finding 48) |
-| E27 | Per-problem predictions, to beat the 0.64 constant ceiling | local + Codabench | Partly scored | Official-label models 8/14; **familiarity split inverted: its complement scores 10/14 = 0.71**, a new best (Finding 49) |
+| E27 | Per-problem predictions, to beat the 0.64 constant ceiling | local + Codabench | Done | Official-label models 8/14; the familiarity split runs the other way up (10/14), and with per-model robust counts **12/14 = 0.86**, the best score so far (Findings 49, 58, 60) |
 | E28 | Rank-based familiarity successors: suffix NLL and Min-K tail shape | local + Kaggle + Codabench | Done | E28a ties the best at **0.71**; the exact E28d retry scores **4/14 = 0.29**, rejecting Min-K gap despite its offline stability |
 | E29 | Apply the stable Min-K gap only where E27 found hidden-set gain | local + Codabench | Done | DeepSeek-only tail gap, constants elsewhere; submission 942281 scored **8/14 = 0.57**, so the transfer is rejected |
 | E30 | Architecture-invariant activation geometry | local | Done | Family-wise test fails and the selected signal reverses on independent MATH data |

@@ -1696,11 +1696,15 @@ policies.)
 - **Olmo was the missing cell and it is zero**, so all four deltas are now measured: Qwen 0,
   DeepSeek +1, Skywork 0, Olmo 0. They sum to +1, exactly `e27e` minus `e27f`, which is the
   consistency check passing.
-- **That closes the family, not just the search.** Each model's cases are disjoint, so the
-  score is the sum of per-model correct counts and the best combination takes each model's
-  better option independently. With three ties and one +1, **no recombination of
-  split-versus-constant can exceed 10 of 14**. Finding 50 reached the same DeepSeek-specific
-  reading from a different set of submissions; this completes the argument for the ceiling.
+- **That closes the choice of split-versus-constant per model.** Each model's cases are
+  disjoint, so the score is the sum of per-model correct counts and the best combination takes
+  each model's better option independently. With three ties and one +1, no recombination of
+  split-versus-constant exceeds 10 of 14. Finding 50 reached the same DeepSeek-specific reading
+  from a different set of submissions.
+  > **Corrected by Finding 60.** This was read as a ceiling for the whole familiarity family.
+  > It is not: it holds only with the robust *count* frozen at `ceil(n/2)`. Freeing that count
+  > reaches 12 of 14, and the three "no gain" cells above were the wrong count, not a wrong
+  > ranking.
 - **`e27f` scoring exactly 9 confirms Finding 45 directly**: plain constants reproduce E11 v2's
   score, so the DeepSeek fusion is worth precisely what answering `True` for DeepSeek is worth.
 - **The official rows still say the opposite.** Scoring the same familiar-robust split offline
@@ -1715,11 +1719,9 @@ policies.)
   The split is inverted there, which is E23's reading (Finding 47) and the opposite of both
   MATH and the hidden set. **Gate G2's official-row leg would therefore block the policy that
   wins on the leaderboard**, and that conflict is a freeze decision, not a modelling one.
-- **What is not justified.** A tilted split - Skywork and Olmo calling one fewer problem robust,
-  the count their measured balance implies - is built and verified as
-  `dist/solution-e27k-tilted-small.zip`, but it is per-model tuning on 14 cases, which
-  Finding 50 already ruled out for the tail-gap family. It stays unsubmitted unless offline
-  evidence justifies it.
+- **The one thing left untried** was a tilted split, with Skywork and Olmo calling one fewer
+  problem robust - the count their measured balance implies. It was held back as 14-case
+  tuning; submitted anyway on 26 Sep, it scored 12 of 14 (Finding 60).
 
 **59. The organizers answered: `problems-public` is private for good, the official labels are
 final, and generating training data from `train-main-v2` is explicitly allowed.** (Michal
@@ -1748,6 +1750,36 @@ Spiegel, challenge Discord, 26 Sep 2026, answering the questions Finding 54 rout
   official ones - the comparison E24 could not make when only `answer_modulus` was compliant.
   At 20 problems it is an audit of the pipeline, not a training set.
 
+
+**60. Freeing the robust count reaches 12 of 14: the familiarity ranking was right for every
+model, and only the counts were wrong.** (Codabench submission 945375, 26 Sep, 0.86. `e27k`
+differs from `e27e` in one line: Skywork and Olmo-3-Think call `ceil(n/2) - 1` problems robust
+instead of `ceil(n/2)`.)
+
+| Policy | Score | Per-model delta vs constants |
+| --- | --- | --- |
+| best constants (`e27f`) | 9/14 = 0.64 | — |
+| median split (`e27e`) | 10/14 = 0.71 | Qwen 0, DeepSeek +1, Skywork 0, Olmo 0 |
+| **tilted split (`e27k`)** | **12/14 = 0.86** | Qwen 0, DeepSeek +1, **Skywork +1, Olmo +1** |
+
+- **Both tilts paid.** `e27k` changes exactly one prediction for each of Skywork and
+  Olmo-3-Think, and the score rises by two, so each gained its one available case. With the
+  right count, three of the four models beat their constant.
+- **This corrects Finding 58.** The "ceiling" there assumed the robust count stays at
+  `ceil(n/2)`; the count is a free parameter, and freeing it is worth two cases. The earlier
+  zero deltas for Skywork and Olmo were **not evidence that familiarity fails for them** - the
+  ranking was fine, the count was one too generous.
+- **It is above the leaderboard's previous best** of 0.79, which it passes by one case.
+- **What transfers and what does not, stated plainly.** The *ranking* - within a model's batch,
+  more familiar problems lean robust - rests on DeepSeek's 142 MATH instances (Findings 22, 47)
+  and on the hidden set twice over (Findings 49, 50). The *counts* are calibration to this
+  validation set's per-model class balance, measured by the probes in Finding 45. If the
+  private test's balance differs, each tilt can cost up to one case per model, which is exactly
+  what it gained. `e27e` is the prior-free version of the same ranking and the safer fallback.
+- **The count search stops here.** Tilting Qwen or DeepSeek as well would be a search over 14
+  cases with no independent evidence behind it, for at most the two cases still wrong, and the
+  official rows already disagree with this whole direction (Finding 58). Two candidates now go
+  to the freeze: `e27k` (val-calibrated, 0.86) and `e27e` (prior-free, 0.71).
 ---
 
 ## 10. Open questions and blockers

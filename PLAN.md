@@ -265,7 +265,8 @@ Authoritative run definitions live in `datagen/kaggle_launch.py`.
 
 ### Lane A: a safe leaderboard entry (done)
 
-E11 v2 scores 0.64. It stays the fallback for every later submission.
+E11 v2 scores 0.64. Superseded on the leaderboard by `e27e` (0.71) and `e27k` (0.86), but it
+remains the zero-GPU fallback any later submission can fall back to (Findings 49, 60).
 
 ### Lane B: text + hidden-state fusion (DeepSeek; frozen)
 
@@ -555,7 +556,8 @@ These are also added to the §5 table.
    training? Are more labeled rows for the four Small Models Track checkpoints planned?*
 2. Also ask whether a solution may load a cached small-track model other than the `model_id`
    it was called with; E26 depends on the answer.
-3. **No new Codabench upload:** retain E27e/E27h at 0.71, with E11 v2 at 0.64 as fallback.
+3. **Best submission is now `e27k` at 0.86** (12/14, Finding 60), with `e27e` at 0.71 as the
+   prior-free version and E11 v2 at 0.64 as the zero-GPU fallback.
 4. **No E33 GPU spend until access arrives and the generator, candidate, holdout and gate are
    frozen in the repository.**
 
@@ -606,8 +608,11 @@ Finding 50 left queued is filled. Per-model contributions are additive, so **10/
 ceiling of this family**: no recombination reaches 11. The same split scores **0.353 on the 34
 official rows** against 0.706 for always-robust, so G2's official-row leg would block the
 leaderboard winner - a freeze decision (§11.10 in spirit, resolved at 27 Oct), not a modelling
-one. `dist/solution-e27k-tilted-small.zip` (Skywork and Olmo call one fewer problem robust)
-exists but is **held**: it is 14-case tuning of exactly the kind Finding 50 ruled out.
+one. `dist/solution-e27k-tilted-small.zip` (Skywork and Olmo call one fewer problem robust) was
+submitted on 26 Sep and scored **12/14 = 0.86**, the best result so far and one case above the
+previous leaderboard best. Both tilts gained, so the familiarity ranking holds for every model
+and only the counts were wrong (Finding 60). The count search stops there: the counts are
+calibration to this validation set, and `e27e` is the prior-free fallback.
 
 ### 11.8 Rank-based familiarity successors (24 Sep)
 
