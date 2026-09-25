@@ -73,6 +73,7 @@ BUNDLE_FILES = [
     "datagen/extract_label_free.py",
     "datagen/extract_agreement.py",
     "datagen/extract_counterfactual_geometry.py",
+    "datagen/extract_budget_path.py",
     "datagen/counterfactual_geometry.py",
     "datagen/counterfactual_rewrites.py",
     "datagen/perturb/transforms.py",
@@ -80,6 +81,8 @@ BUNDLE_FILES = [
     "data/small_track/instances_train.parquet",
     "data/small_track/splits.json",
     "data/small_track/summary.json",
+    "data/train_main/rows.parquet",
+    "train/eval_e36_budget_path.py",
 ]
 BUNDLE_DIRS = ["getting-started/solutions/uncertainty-profiling/uncertainty_profile"]
 
@@ -247,6 +250,15 @@ def counterfactual_geometry(model_id: str, out_name: str, *extra: str) -> tuple[
         "datagen/extract_counterfactual_geometry.py",
         "--model-id", model_id,
         "--system-prompt-file", SYSTEM_PROMPT_PATH,
+        "--out-dir", f"{KAGGLE_FEATURES}/{out_name}",
+        *extra,
+    )
+
+
+def budget_path(model_id: str, out_name: str, *extra: str) -> tuple[str, ...]:
+    return (
+        "datagen/extract_budget_path.py",
+        "--model-id", model_id,
         "--out-dir", f"{KAGGLE_FEATURES}/{out_name}",
         *extra,
     )
@@ -806,6 +818,39 @@ EXPERIMENTS: dict[str, Experiment] = {
             ),
         ),
         bundle_globs=(*E7_FILES, VARIANTS, "datagen/ingest_public.py"),
+    ),
+    "e37-official-qwen": Experiment(
+        account="TASHIN",
+        purpose="E37 conditional AIMO transfer: frozen four-budget reasoning-path features for "
+                "the 12 labelled Qwen3.5-4B configurations. No excluded-account GPU use.",
+        steps=(
+            VLLM_INSTALL,
+            budget_path(
+                QWEN35, "e37-budget-qwen35", "--tensor-parallel", "1", "--text-only",
+                "--max-num-seqs", "8", "--chunk", "2",
+            ),
+        ),
+    ),
+    "e37-official-sky-olmo": Experiment(
+        account="RSD",
+        purpose="E37 conditional AIMO transfer for Skywork and Olmo-3-7B-Think, one model per T4. "
+                "The score, budgets and rank decision remain frozen.",
+        steps=(
+            VLLM_INSTALL,
+            per_gpu(
+                budget_path(SKYWORK, "e37-budget-skywork", "--tensor-parallel", "1", "--chunk", "1"),
+                budget_path(OLMO_THINK, "e37-budget-olmo-think", "--tensor-parallel", "1", "--chunk", "1"),
+            ),
+        ),
+    ),
+    "e37-official-deepseek": Experiment(
+        account="Eshad",
+        purpose="E37 conditional AIMO transfer for the 10 labelled DeepSeek-R1-Qwen3-8B "
+                "configurations with tensor parallelism across two T4s; no excluded-account GPU use.",
+        steps=(
+            VLLM_INSTALL,
+            budget_path(DEEPSEEK, "e37-budget-deepseek", "--tensor-parallel", "2", "--chunk", "2"),
+        ),
     ),
     "e24b-qwen35": Experiment(
         account="TASHIN",
