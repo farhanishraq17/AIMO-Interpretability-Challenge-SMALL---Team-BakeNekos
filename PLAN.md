@@ -610,7 +610,9 @@ official rows** against 0.706 for always-robust, so G2's official-row leg would 
 leaderboard winner - a freeze decision (§11.10 in spirit, resolved at 27 Oct), not a modelling
 one. `dist/solution-e27k-tilted-small.zip` (Skywork and Olmo call one fewer problem robust) was
 submitted on 26 Sep and scored **12/14 = 0.86**, the best result so far and one case above the
-previous leaderboard best. Both tilts gained, so the familiarity ranking holds for every model
+previous leaderboard best. Searching one step past it costs a case in both directions tried
+(`e27m` Qwen and `e27n` DeepSeek, 11/14 each), so the counts the probes imply are optimal
+wherever they have been tested (Finding 61). Both tilts gained, so the familiarity ranking holds for every model
 and only the counts were wrong (Finding 60). The count search stops there: the counts are
 calibration to this validation set, and `e27e` is the prior-free fallback.
 

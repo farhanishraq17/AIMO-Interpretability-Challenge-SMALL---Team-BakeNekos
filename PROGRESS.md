@@ -1780,6 +1780,28 @@ instead of `ceil(n/2)`.)
   cases with no independent evidence behind it, for at most the two cases still wrong, and the
   official rows already disagree with this whole direction (Finding 58). Two candidates now go
   to the freeze: `e27k` (val-calibrated, 0.86) and `e27e` (prior-free, 0.71).
+
+**61. The counts the probes imply are optimal in every direction tested: moving off them costs a
+case each time.** (Codabench submissions 946252-946253, 26 Sep, both 0.79.)
+
+| Policy | Robust count per batch | Score |
+| --- | --- | --- |
+| `e27e` median split | `ceil(n/2)` everywhere | 10/14 |
+| **`e27k`** | `ceil(n/2)`, minus one for Skywork and Olmo | **12/14** |
+| `e27m` | `e27k` with one fewer for Qwen | 11/14 |
+| `e27n` | `e27k` with one fewer for DeepSeek | 11/14 |
+
+- **Four moves tested, four agree with the probes.** Finding 45 measured each model's
+  robust-minus-spurious balance on the hidden set: +1 for Qwen and DeepSeek, -1 for Skywork and
+  Olmo-3-Think. Moving Skywork and Olmo *to* their implied count gained a case each
+  (Finding 60); moving Qwen and DeepSeek *off* theirs costs a case each. The balances predict
+  the optimal count every time.
+- **So `e27k` is not a lucky draw from a search.** Its counts were fixed in advance by measured
+  per-model balances, and the search around it only confirms them. That is a better claim than
+  "we stopped searching", though it is still calibration to this validation set, and
+  Finding 60's transfer caveat stands unchanged.
+- **Untested:** one *more* robust for Qwen or DeepSeek (`e27o`, `e27p`). If those also lose, the
+  count vector is pinned as a unique optimum; if one gains, the balance reading is incomplete.
 ---
 
 ## 10. Open questions and blockers
