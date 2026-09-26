@@ -109,6 +109,22 @@ official answers), 76.8% of original samples match. No gate is decided on this: 
 correctness against true answers for the 10 reference problems, which nothing in the repo has.
 G-L1b needs the `medium`/`high` runs, since `low` has only 7 labelled gpt-oss-120b rows.
 
+**LF-10. Every L1 kernel has finished; the panel is complete and eight outputs are still on
+Kaggle.** (`klarge.py status`, 26 Sep.)
+
+- All 12 panel kernels report COMPLETE: the three `gpt-oss:20b` efforts, `deepseek-r1:8b`, the
+  four Qwen3 rungs, and the four `-b` helpers. So do the four L0 probes and the two smokes. **No
+  continuation is needed**, which is what the 26 Sep schedule row had assumed.
+- **Downloaded so far:** `l1-gptoss20b-low`, `l1-gptoss20b-high-b`, `l1-qwen3-32b`,
+  `l1-qwen3-4b`. **Still on Kaggle:** `l1-gptoss20b-medium`, `l1-gptoss20b-high`, `l1-dsr1-8b`,
+  `l1-qwen3-14b`, `l1-qwen3-30b-a3b`, `l1-dsr1-8b-b`, `l1-qwen3-32b-b`,
+  `l1-gptoss20b-medium-b`. Kaggle keeps kernel output indefinitely, so nothing is at risk, but
+  G-L1b needs the `medium` and `high` runs and they are in that list.
+- **Nothing is running on either track** as of 26 Sep, on the Large-track fleet or the
+  small-track one.
+- The next steps are unchanged and unblocked: download, `write_results.py`, then L1-a with
+  whatever reference answers exist (LF-9).
+
 ## 3. Fleet state (25 Sep, ~15:10 UTC; quota resets 26 Sep 00:00 UTC)
 
 GPU hours used of 30, from `klarge.py accounts`:

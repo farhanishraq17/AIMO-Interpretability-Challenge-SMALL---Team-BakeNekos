@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 25 September 2026.
+Last updated: 26 September 2026. **Nothing is running on either track.**
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.
@@ -46,7 +46,8 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E22 | Problem-level acceptance harness on `train-main-v2`, template-grouped | local | Done | Nothing clears chance; problem length best at 0.635, CI [0.42, 0.84] (Finding 46) |
 | E23 | Do familiarity/contamination scores predict robustness? | Kaggle | Done | **G-M fails**; on olympiad problems familiar problems lean spurious, not significant (Finding 47) |
 | E24 | Do `answer_modulus` self-labels agree with official labels on *olympiad* problems? | Kaggle | Done | **G-V2 fails**, but the sign flips from E20: kappa +0.29 on 15 pairs vs 0.72 chance agreement (Finding 48) |
-| E27 | Per-problem predictions, to beat the 0.64 constant ceiling | local + Codabench | Done | Official-label models 8/14; the familiarity split runs the other way up (10/14), and with per-model robust counts **12/14 = 0.86**, the best score so far (Findings 49, 58, 60) |
+| E27 | Per-problem predictions, to beat the 0.64 constant ceiling | local + Codabench | Done | Official-label models 8/14; the familiarity split runs the other way up (10/14), and with per-model robust counts **12/14 = 0.86**, the best score so far (Findings 49, 58, 60, 61) |
+| L0-L1 | Main Track: does Kaggle give an H100, and can a proxy panel stand in for gpt-oss-120b? | Kaggle | L1 complete, ungraded | See `AIMO - Interpretability - Large Models track/` (Findings LF-1 to LF-10) |
 | E28 | Rank-based familiarity successors: suffix NLL and Min-K tail shape | local + Kaggle + Codabench | Done | E28a ties the best at **0.71**; the exact E28d retry scores **4/14 = 0.29**, rejecting Min-K gap despite its offline stability |
 | E29 | Apply the stable Min-K gap only where E27 found hidden-set gain | local + Codabench | Done | DeepSeek-only tail gap, constants elsewhere; submission 942281 scored **8/14 = 0.57**, so the transfer is rejected |
 | E30 | Architecture-invariant activation geometry | local | Done | Family-wise test fails and the selected signal reverses on independent MATH data |
@@ -60,64 +61,29 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 
 ## 2. Running now
 
-**E35 completed and failed its pre-registered external gate.** The frozen MATH-Perturb to
-Putnam-AXIOM transfer produced AUC 0.609 with CI [0.442, 0.769]. No official labels were scored
-and no submission was made.
+**Nothing, on either track** (checked 26 September: `kaggle_launch.py status` and
+`klarge.py status` both report zero RUNNING or QUEUED kernels).
 
-**E34a completed and failed its pre-registered gate.** Both base shards processed all 52
-problems, but only one original was correct in all four samples (1.92%). It yielded one robust
-`latex_to_plaintext` label, no `premise_reorder` label and no spurious label. This misses every
-yield/class-balance requirement in `E34_PROTOCOL.md`; E34b is closed and no submission follows.
+**The submission that stands is `e27k`, 12/14 = 0.86** on the small-track leaderboard: within
+each model's batch, the more familiar problems are called robust, and how many are called robust
+comes from that model's class balance as the probes measured it. `e27e` (0.71) is the prior-free
+version of the same ranking, and E11 v2 (0.64) is the zero-GPU fallback. Every ZIP rebuilds with
+`python submission/make_e27.py`.
 
-**E27's decomposition is complete (26 Sep).** The rebuilt per-model ZIPs scored constants 9/14,
-Qwen-only 9/14, DeepSeek-only 10/14, Skywork-only 9/14 and **Olmo-only 9/14**, the cell Finding 50
-left queued; all four splits together score 10/14. The deltas sum to +1 as they must, and since
-per-model contributions are additive, **10/14 is the ceiling of the familiarity family**. The same
-split scores 0.353 on the official rows, where always-robust reaches 0.706 (Finding 58).
+**The leaderboard series, in full** (Small Model Track, 14 cases, so one case is 0.07):
 
-**E28-E29 complete.** E28a (`suffix_nll`, submission 942047) scored 0.71, tying rather than
-improving E27e. E28d's first run (942257) failed at ingestion, but an exact retry (942361)
-finished and scored **4/14 = 0.29**; the official local path still reports coverage 1.0 and
-zero invalid predictions. A stability check over
-only the pre-registered statistics leaves out each scoring model in turn: `min_k_gap` retains
-problem AUC 0.731-0.835, while mean and suffix NLL remain below 0.37. Its official DeepSeek AUC
-is 0.762, and E27's hidden decomposition says the DeepSeek split supplies the entire one-case
-gain. E29a therefore used Min-K gap for DeepSeek only and constants elsewhere. Submission
-942281 scored **8/14 = 0.57**, two cases below E27's 10/14 best. Since both the all-model and
-DeepSeek-only tests fail, the tail-gap branch is closed. No cutoff or ensemble tuning follows
-on this 14-case validation set.
-
-All E28 real-checkpoint checks ran on TASHIN and RSD; no `farhanishraqq` GPU was used.
-
-E24b finished on 23 Sep (15.8 GPU-hours over four accounts) and gate G-V2 failed, so the
-self-labelling lane stays closed and E25 is dropped (Finding 48).
-
-**E24a.** `train-main-v2` ships no answers, so Skywork sampled all 20 labelled problems
-8 times (`e24a-answer-key-skywork`, ISHRAQ; its first push went to Eshad, which ran without a
-GPU and needs phone verification). A reference answer is kept only when all 8 samples agree:
-that happened on 3 of the 6 problems whose answers were already known, matching all 3, and on 8
-of the 14 unknown ones. **14 problems answered, 28 compliant variants, 27 (model, problem)
-pairs to test**: Qwen 9, Olmo 8, DeepSeek 7, Skywork 3.
-
-**Why it stopped.** E20 compared self-generated `answer_modulus` labels with official ones on
-66 DeepSeek problems: agreement 0.29, Cohen's kappa -0.135, and our measured drops correlate
-with the official drops at -0.25 (Finding 31). The category the then-current rule let us label
-does not measure the robustness the competition scores.
-
-**What replaced it.** `aimo-interp/train-main-v2` (published 17 Sep, ingested 20 Sep) carries
-official labels for every evaluated configuration, including the first for Qwen3.5-4B,
-Skywork-OR1-Math-7B and Olmo-3-7B-Think (Finding 30).
-
-| Source | DeepSeek | Qwen3.5-4B | Olmo-3-7B-Think | Skywork | Llama-3.1-8B |
-| --- | --- | --- | --- | --- | --- |
-| Train-ready instances | 153 (46 robust) | 12 (8) | 9 (7) | 3 (2) | 49 (0) |
-
-**Kept for the report:** the E15-E19 and gapfill base and variant records, as a documented
-negative result, and the Qwen and Skywork self-labels (`Self-generated olympiad labels` in
-`RESULTS.md`), which are not used for training.
-
-**What the official labels then bought us: nothing yet.** E21 spent them on the two questions
-they made answerable, and both came back negative (Finding 32, below).
+| Submission | Score | What it was |
+| --- | --- | --- |
+| all-False probe | 0.50 | 7 of 14 cases are spurious |
+| E11 v2 | 0.64 | text + hidden-state fusion for DeepSeek, constants elsewhere |
+| `e27a`/`e27b`/`e27c` | 0.57 | models fitted on the official labels: they carry nothing |
+| `e27d` | 0.29 | familiarity split, *unfamiliar* half robust - far below chance, so inverted |
+| `e27e` | 0.71 | the same split the other way up |
+| `e27f` | 0.64 | best constants alone, confirming the constants ceiling |
+| `e27g`/`e27i`/`e27j` | 0.64 | split for Qwen / Skywork / Olmo alone |
+| `e27h` | 0.71 | split for DeepSeek alone: the whole gain of `e27e` |
+| **`e27k`** | **0.86** | `e27e` with Skywork and Olmo calling one fewer problem robust |
+| `e27m`/`e27n`/`e27o`/`e27p` | 0.79 | every single-step neighbour of `e27k`'s counts |
 
 ---
 

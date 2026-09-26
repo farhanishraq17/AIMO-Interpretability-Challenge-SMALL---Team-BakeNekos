@@ -6,6 +6,10 @@ Team workspace for the **AIMO Interpretability Challenge (NeurIPS 2026)**, enter
 - **Task:** implement `are_robust(model_id: str, problems: list[str]) -> list[bool]`. For
   each (model, problem) pair, predict whether the model's answer is **robust** (survives
   answer-preserving perturbations) or **spurious**.
+- **What ships today:** `e27k`, **0.86** on the small-track leaderboard (`submission/make_e27.py`
+  rebuilds every candidate ZIP into `dist/`). Read `PLAN.md` §12 first: it is the handover note.
+- **The Main Track lives in `AIMO - Interpretability - Large Models track/`**, with its own plan,
+  progress log and launcher; it shares this repo, the fleet and `Secrets.env`.
 - **Scoring:** Codabench competition 16180, not Kaggle. Kaggle is only free GPU capacity.
 - **Deadlines:** submissions close **1 Nov 2026**; technical report and open-source code
   are due **15 Nov 2026**.
@@ -258,8 +262,20 @@ Six accounts, each with about 30 GPU-hours a week and 12-hour sessions. Roles ar
 | DIDHITI | `didhitinahid` | DeepSeek generation |
 | TASHIN | `tashintahir` | Olmo generation |
 | SALAM | `salam2026` | Olmo generation |
-| ISHMAM1 | `ishmamahmid` | activation dumps |
-| DESIKALAKAR | `fatkhato` | training sweeps, repeatability |
+| ISHMAM1 | `ishmamahmid` | **token removed from `Secrets.env`** (stopped authenticating 17 Sep) |
+| DESIKALAKAR | `fatkhato` | **token removed from `Secrets.env`** (same) |
+
+`Secrets.env` currently holds eleven aliases: ISHRAQ, DIDHITI, TASHIN, SALAM, MUBAMAN, RSD,
+Labib, Eshad, Mashrafi, Samin and Nasif. Three caveats a new owner will hit:
+
+- **Eshad has no GPU.** Its first kernel ran on a CPU machine (`nvidia-smi` missing); the account
+  needs phone verification on Kaggle before `machine_shape` is honoured. MUBAMAN had the same
+  symptom for the Large track (LF-5).
+- **SALAM and DIDHITI are shared with another project.** On 22 Sep both had their two GPU slots
+  filled by that project's kernels, and a push is refused when either the session or the weekly
+  limit is reached. Same for any account running five `kagri-*` kernels.
+- **RSD and Labib are the same accounts as MEDIUM and CHOTON** on a teammate's machine, so their
+  quota is shared rather than additional (Finding 42).
 
 `kaggle_launch.ACCOUNTS` also registers RSD, Labib, NAKIB, CHOTON, MEDIUM and MR.
 **`Secrets.env` is per-machine and holds only the aliases whose owner set them up.** This

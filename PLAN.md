@@ -6,7 +6,7 @@
 
 | Date | Event |
 | --- | --- |
-| 22 Sep 2026 | Plan last updated: **§11 is the current plan** (E22–E26, gates G-V2 and G-M) |
+| 26 Sep 2026 | Plan last updated. **Start at §12: the handover note.** §11 is the live plan |
 | 1 Nov 2026, 12:55 UTC | Codabench submissions close (about 6.5 weeks away) |
 | 15 Nov 2026 | Technical report and open-source code due |
 | 11/12 Dec 2026 | NeurIPS workshop |
@@ -61,20 +61,24 @@ actionable interpretability, negative results, and efficiency. Report material a
 
 ---
 
-## 1. Where we stand (21 Sep)
+## 1. Where we stand (26 Sep)
 
 | Area | State |
 | --- | --- |
 | Rules, contract, leaderboard mechanics | Done: `COMPETITION.md` |
 | Training set | 226 instances: **153 DeepSeek-8B (46/107)**, 49 Llama, and the first official rows for the other three models via `train-main-v2` (Qwen 12, Skywork 3, Olmo-Think 9) — enough to check a constant, not to fit a model (Findings 30, 44) |
 | Text floor; E1b; E2f; E4; E10 | Done (Findings 9–18). Text + stagea is the DeepSeek model |
-| E11 submission | **v2 scores 0.64 on the leaderboard** (v1: 0.47) |
+| Submission | **`e27k` scores 0.86** (12/14), above the 0.79 that led on 21 Sep. `e27e` 0.71 prior-free, E11 v2 0.64 zero-GPU fallback (Findings 49, 60, 61) |
 | Leaderboard probes | Done (Finding 21) |
 | E12 label-free signals; E13 plumbing for the three new models | Done (Finding 22) |
 | E14 | Done: answer agreement is at chance (Finding 24). Lane D closed |
 | E15–E19 self-labelling | **Closed** by E20: `answer_modulus` does not measure official robustness (Finding 31) |
 | E21 | Done: the model does not transfer to olympiad problems and there is no cross-model signal (Finding 32) |
 | `nakib_v2` port | Findings 33–43 merged by hand; models agree 20/20 on official rows (Finding 38) |
+| E27 series | **Done.** Familiarity ranking + per-model robust counts; every count neighbour is worse (Findings 49, 58, 60, 61) |
+| E28–E37 | Done by the parallel session: rank successors, activation geometry, counterfactuals, external holdout (Findings 50–57) |
+| Main Track | Its own workspace, `AIMO - Interpretability - Large Models track/`; L1 panel complete and ungraded (LF-1 to LF-10) |
+| Organizers | Answered 26 Sep: `problems-public` is private, labels are final, generating data from `train-main-v2` is allowed (Finding 59) |
 | Kaggle accounts | **ISHMAM1 and DESIKALAKAR tokens stopped authenticating on 17 Sep**; four accounts usable |
 | Organizer questions | Drafted 17 Sep, **not sent** |
 
@@ -548,18 +552,16 @@ These are also added to the §5 table.
 
 ### 11.4 Needs you (supersedes §9)
 
-1. **Send this through the challenge Discord or registration support** (new GitHub issues are
-   restricted): *The current website permits extra labeled data, but
-   `aimo-interp/problems-public` returns 401 and is absent from the public organization list.
-   Could you grant registered participants access or explain the access procedure? May labels
-   generated from its symbolic programs and official perturbation families be used for model
-   training? Are more labeled rows for the four Small Models Track checkpoints planned?*
-2. Also ask whether a solution may load a cached small-track model other than the `model_id`
-   it was called with; E26 depends on the answer.
-3. **Best submission is now `e27k` at 0.86** (12/14, Finding 60), with `e27e` at 0.71 as the
+1. **Sent, and answered on 26 Sep** (Finding 59): `aimo-interp/problems-public` is a private
+   dataset that will not be shared, the official labels are final bar a couple of Skywork rows,
+   and generating additional training data from `train-main-v2` is explicitly allowed.
+   **E33 is dead** - it needed those symbolic programs.
+2. **Still unasked:** may a solution load a cached small-track model other than the `model_id`
+   it was called with? E26 depends on the answer, and nothing else does.
+3. **Best submission is `e27k` at 0.86** (12/14, Findings 60-61), with `e27e` at 0.71 as the
    prior-free version and E11 v2 at 0.64 as the zero-GPU fallback.
-4. **No E33 GPU spend until access arrives and the generator, candidate, holdout and gate are
-   frozen in the repository.**
+4. **Accept the AIMO3 competition rules on one fleet account** if the Main Track's L4 is ever to
+   run: every H100 push is refused until an account owner accepts them (Large track, LF-3).
 
 ### 11.5 Housekeeping, bundled with E22
 
@@ -653,3 +655,86 @@ zero invalid predictions), but submission 942281 scores **8/14 = 0.57**, below E
 10/14 = 0.71. Together with all-model E28d's 4/14, **both controlled transfer tests fail:**
 retain E27 and close the tail-gap branch. Do not tune the fraction or add weighted ensembles
 on the 14 cases.
+
+---
+
+## 12. Handover note (26 September 2026)
+
+Read this first, then §11 for the live plan and `PROGRESS.md` for why each decision was taken.
+**Nothing is running on either track**, and both fleets are idle.
+
+### 12.1 What to submit, and how to rebuild it
+
+| ZIP | Leaderboard | What it is |
+| --- | --- | --- |
+| **`dist/solution-e27k-tilted-small.zip`** | **0.86 (12/14)** | The policy that stands |
+| `dist/solution-e27e-familiar-robust-small.zip` | 0.71 | The same ranking without per-model counts |
+| `dist/solution-e11-v2-qwen-true-small.zip` | 0.64 | Zero-GPU fallback |
+
+`python submission/make_e27.py` rebuilds every E27 ZIP deterministically. **The policy in one
+sentence:** load the model being scored, take one forward pass over each bare problem, and call
+the more familiar problems (lower mean token NLL) robust - `ceil(n/2)` of each batch, minus one
+for Skywork and Olmo-3-Think, which is the count their class balance implies.
+
+Everything else about the submission contract is in `COMPETITION.md`: native `bool`s,
+`small.txt` at the root for the small track and **never** for the Main Track, offline loading,
+3600 s for the whole run.
+
+### 12.2 What is settled, so nobody re-runs it
+
+| Question | Answer | Where |
+| --- | --- | --- |
+| Do per-model constants suffice? | No; they cap at 9/14 | Finding 45 |
+| Does the shipped probe baseline work? | No, it is at chance; its headline is a selection artifact | Findings 2, 11 |
+| Do MATH-trained models transfer to olympiad problems? | No: AUC 0.429 to 0.617, CIs spanning 0.5 | Findings 32, 39, 40 |
+| Can we self-label with `answer_modulus`? | No - and on olympiad problems the yield is ~1 label per GPU-hour | Findings 31, 48 |
+| Does test-time answer agreement predict robustness? | No, chance once length is controlled | Finding 24 |
+| Do familiarity/contamination scores pass an offline gate? | No (G-M), though the leaderboard likes the MATH direction | Findings 47, 49 |
+| Is there a cross-model feature signal? | No | Finding 32 |
+| More official labels? | No: the split is final bar a couple of Skywork rows | Finding 59 |
+| `problems-public`? | Private, will never be shared. E33 is dead | Finding 59 |
+
+### 12.3 The one unresolved contradiction
+
+The shipped policy's direction - **familiar problems are robust** - holds on DeepSeek's 142 MATH
+instances and on the hidden validation set twice over. It **reverses** on the 34 official
+`train-main-v2` rows, where the same split scores 0.353 against 0.706 for always-robust
+(Finding 58). So **gate G2's official-row leg would block the policy that wins the leaderboard**,
+and no more official labels are coming to break the tie.
+
+The hypothesis worth testing, and worth writing up either way: `train-main-v2` holds *published*
+problems (2025 AIME I appears verbatim), where familiarity means memorisation and predicts
+spurious; the validation cases are mostly *not* those problems (Finding 49), where familiarity is
+ordinary fluency and predicts robust. The organizers' own report splits results by published
+versus unpublished, so the distinction is theirs, not ours.
+
+**Whoever freezes the submission on 27 Oct decides this**, with two defensible choices: `e27k`
+(0.86, trusts the validation set) or `e27e` (0.71, prior-free, same ranking). There is no
+experiment left that settles it.
+
+### 12.4 What is worth doing next
+
+1. **Build L3, the first Main-Track ZIP** - the current policy for the four small models plus
+   `True` for `gpt-oss-120b` (the best constant at every effort). No GPU, nothing blocks it, and
+   the Main Track has no score from us yet. **Without `small.txt`.**
+2. **Download the 8 finished Large-track panel jobs** (`klarge.py output <job>`), then
+   `write_results.py` and L1-a grading (LF-10). G-L1b needs the `medium` and `high` runs.
+3. **The report** (due 15 Nov) is the largest remaining prize and the material is unusually
+   strong: eight measured negative results, the `AutoTokenizer` whitespace bug that affects the
+   organizers' own baseline (Finding 14), the probe-selection artifact (Finding 11), the
+   label-rule archaeology (Findings 30, 44), and the published-versus-unpublished contradiction
+   above. `scripts/regenerate_results.py` rebuilds every number in `RESULTS.md` in one command.
+4. **Do not** spend more submissions tuning on the 14-case validation set. Every single-step
+   neighbour of the current policy has been tested and is worse (Finding 61).
+
+### 12.5 Traps that cost us time
+
+- **`AutoTokenizer` silently strips whitespace** for DeepSeek under transformers 5.13. Always
+  load through `datagen/tokenizer_check.py`, which refuses a tokenizer that fails a round trip.
+- **A Main-Track ZIP containing `small.txt` scores 0.00** - it cost four uploads (Finding 21).
+- **Kaggle accounts are shared.** Eshad and MUBAMAN get no GPU until phone-verified; SALAM and
+  DIDHITI often have both slots taken by another project; RSD/Labib are the same accounts as
+  MEDIUM/CHOTON elsewhere (Finding 42, `CLAUDE.md`).
+- **Never mix the two label rules** for one pair: the older `absolute_accuracy_decay` rule and
+  `train-main-v2`'s three-valued `max_drop` rule. Mixing them corrupted two labels (Finding 44).
+- **Group by template, not by text**, whenever `train-main-v2` is used (Finding 34).

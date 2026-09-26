@@ -7,6 +7,7 @@ separate ZIP **without** `small.txt` and ranked separately.
 | Date | Event |
 | --- | --- |
 | 25 Sep 2026 | Plan written; L0 done, L1 relaunching after a pipeline fix |
+| 26 Sep 2026 | **Every L1 kernel finished** (LF-10). Nothing is running on either track |
 | 26 Sep 2026, 00:00 UTC | Weekly Kaggle GPU quota reset |
 | 1 Nov 2026, 12:55 UTC | Codabench submissions close |
 | 15 Nov 2026 | Technical report and open-source code due |
@@ -25,8 +26,10 @@ plus `openai/gpt-oss-120b`, the only one whose `reasoning_effort` varies (`low`,
 `high` in `train-main-v2`).
 
 The four small models are the same checkpoints in both tracks, so **the small-track solution
-covers them unchanged** (E27e/E27h, 0.71 on the small-track leaderboard; E11 v2 at 0.64 as
-fallback). **The only new modelling problem is `gpt-oss-120b` x effort.**
+covers them unchanged**. Use the current one: **`e27k`, 12/14 = 0.86** on the small-track
+leaderboard (familiarity ranking with per-model robust counts; small-track Findings 60-61), with
+`e27e` (0.71, prior-free) and E11 v2 (0.64, zero-GPU) as fallbacks. **The only new modelling
+problem is `gpt-oss-120b` x effort.**
 
 Floors (Results, "Official labels"): the best constant per (model, effort) is always "robust".
 Over all 71 labelled `train-main-v2` rows it scores **0.732**; for gpt-oss-120b it scores 0.714
@@ -55,10 +58,10 @@ Over all 71 labelled `train-main-v2` rows it scores **0.732**; for gpt-oss-120b 
 | ID | Question | Compute | Status | Gate / outcome |
 | --- | --- | --- | --- | --- |
 | **L0** | What does `NvidiaH100` allocate, and are the gpt-oss-120b weights mountable? | 4 short kernels | **Done** | T4x2 on 4/4; weights mount; internet on (LF-3) |
-| **L1** | Proxy panel: sample every panel item (46 originals x k=4, 453 official variants x k=1) with models that fit T4x2 via Ollama | 8 jobs x 8.3 h, 4 reverse helpers, then 11 h continuations | gpt-oss `low` **done** (637/637, LF-7); 7 running; helpers for gpt-oss medium/high, DeepSeek-8B, qwen3-32b since 19:50 UTC (LF-8) | Feeds G-L1 |
-| **L1-a** | Grade L1: extract `\boxed{}`, score against original answers (perturbations preserve the answer) | CPU | Needs reference answers for the 46 originals | Calibration and signals below |
+| **L1** | Proxy panel: sample every panel item (46 originals x k=4, 453 official variants x k=1) with models that fit T4x2 via Ollama | 8 jobs x 8.3 h, 4 reverse helpers | **Done**: all 12 panel kernels report COMPLETE (26 Sep). 4 outputs downloaded, **8 still on Kaggle** (LF-10) | Feeds G-L1 |
+| **L1-a** | Grade L1: extract `\boxed{}`, score against original answers (perturbations preserve the answer) | CPU | **Next step.** Partially unblocked: the small track's E24a key covers 14 of the 36 `train-main-v2` problems, model-derived (LF-9). The 10 AIMO-2025 reference problems still have no answer in the repo | Calibration and signals below |
 | **L2** | Label-free gpt-oss signal at test time, e.g. answer agreement over k samples | eval GPU | Only if G-L1 passes | Must fit 3600 s with the four small models |
-| **L3** | First Main-Track ZIP: small-track solution for the four + "robust" constant for gpt-oss-120b | CPU | Not started | Load-tested in `Dockerfile.competition`; upload is the user's call |
+| **L3** | First Main-Track ZIP: the current small-track policy for the four + "robust" constant for gpt-oss-120b | CPU | **Not started, and nothing blocks it** | Must ship `e27k`'s policy, **no `small.txt`** (that zeroed four uploads, small-track Finding 21), load-tested in `Dockerfile.competition`; upload is the user's call |
 | **L4** | Direct gpt-oss-120b runs on H100 | H100 | Blocked on AIMO3 rules acceptance | Replaces the 20b proxy if it becomes possible |
 
 L1 panel (`scripts/klarge.py`, `jobs/ollama_panel.py`; Ollama quantised builds, record that next
@@ -93,8 +96,8 @@ All thresholds above are fixed before any L1 output is read.
 | Window | Work |
 | --- | --- |
 | 25 Sep | Smoke-test the fixed panel, relaunch L1 on the new accounts, write these docs |
-| 26 Sep | Download L1 (`klarge.py output <job>`), `write_results.py`; push continuations (`klarge.py push <job> --accounts <alias>`, which skips finished keys) on the reset quota; gather reference answers, run L1-a on what has landed |
-| 27–30 Sep | Decide G-L1a/b; build L3 in any case (it is the floor we submit first) |
+| 26 Sep | Every panel kernel finished, so no continuations are needed. **Remaining: `klarge.py output` for the 8 undownloaded jobs, then `write_results.py`** |
+| Next | Gather reference answers for the 10 AIMO-2025 problems, run L1-a, decide G-L1a/b. **Build L3 regardless** - it is the floor, it needs no GPU, and it is the only Main-Track score we can put on the board today |
 | Oct | L2 only if G-L1b passes; L4 only if an account accepts the AIMO3 rules and a probe shows H100 |
 | 1 Nov | Final Main-Track ZIP |
 | by 15 Nov | Report section: proxy fidelity and the gpt-oss effort result, positive or negative |

@@ -1,5 +1,6 @@
+import math
+
 import pandas as pd
-import pytest
 
 from eval_e36_budget_path import build_examples, normalize_answer, repeated_line_fraction
 
@@ -22,7 +23,9 @@ def test_normalize_answer():
 
 
 def test_repeated_line_fraction():
-    assert repeated_line_fraction("a\na\nb") == pytest.approx(1 / 3)
+    # `math.isclose` rather than `pytest.approx`: the pinned venv has no pytest, and the repo
+    # runs its tests with `unittest discover`.
+    assert math.isclose(repeated_line_fraction("a\na\nb"), 1 / 3, rel_tol=1e-9)
 
 
 def test_build_math_examples_keeps_only_eligible_original():
