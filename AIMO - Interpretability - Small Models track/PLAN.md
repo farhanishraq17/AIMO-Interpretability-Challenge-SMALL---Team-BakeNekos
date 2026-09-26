@@ -77,7 +77,7 @@ actionable interpretability, negative results, and efficiency. Report material a
 | `nakib_v2` port | Findings 33–43 merged by hand; models agree 20/20 on official rows (Finding 38) |
 | E27 series | **Done.** Familiarity ranking + per-model robust counts; every count neighbour is worse (Findings 49, 58, 60, 61) |
 | E28–E37 | Done by the parallel session: rank successors, activation geometry, counterfactuals, external holdout (Findings 50–57) |
-| Main Track | Its own workspace, `AIMO - Interpretability - Large Models track/`; L1 panel complete and ungraded (LF-1 to LF-10) |
+| Main Track | Its own workspace, `../AIMO - Interpretability - Large Models track/`; L1 panel complete and ungraded (LF-1 to LF-10) |
 | Organizers | Answered 26 Sep: `problems-public` is private, labels are final, generating data from `train-main-v2` is allowed (Finding 59) |
 | Kaggle accounts | **ISHMAM1 and DESIKALAKAR tokens stopped authenticating on 17 Sep**; four accounts usable |
 | Organizer questions | Drafted 17 Sep, **not sent** |

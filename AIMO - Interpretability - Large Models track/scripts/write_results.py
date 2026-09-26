@@ -23,11 +23,12 @@ HF = ROOT / "data" / "hf"
 RUNS = ROOT / "runs"
 OUT = ROOT / "Results_Large_Track.md"
 # The small track's E24a key: an answer only where all 8 Skywork samples agreed (model-derived).
-E24A_KEY = ROOT.parent / "data" / "official_check" / "pool_keyed.parquet"
+SMALL_TRACK = ROOT.parent / "AIMO - Interpretability - Small Models track"
+E24A_KEY = SMALL_TRACK / "data" / "official_check" / "pool_keyed.parquet"
 # Official reference rows for the checkpoint each proxy stands in for (aliases in the public table).
 OFFICIAL_ALIAS = {"gpt-oss:20b": "gpt-oss-120b:low", "deepseek-r1:8b": "qwen3-8b:low"}
 
-sys.path.insert(0, str(ROOT.parent / "datagen" / "perturb"))
+sys.path.insert(0, str(SMALL_TRACK / "datagen" / "perturb"))
 from answers import extract_answer  # noqa: E402  (the small track's grader: last \boxed{} -> int)
 
 

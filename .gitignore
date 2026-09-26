@@ -18,7 +18,7 @@ dist/
 features/
 runs/
 # ...except the per-run manifests `scripts/export_kernels.py` copies next to each kernel.
-!kernels/runs/
+!**/kernels/runs/
 kaggle_runs/
 .pytest_cache/
 
