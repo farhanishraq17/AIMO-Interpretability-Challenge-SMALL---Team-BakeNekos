@@ -68,3 +68,24 @@ Means over (problem, perturbation family) rows.
 | l1-gptoss20b-low | gpt-oss:20b | low | 637 | 7 | 0.000 | 0.980 | 1876.029 |
 | l1-smoke-gptoss20b | gpt-oss:20b | low | 37 | 0 | 0.027 | 0.973 | 1758.946 |
 | l1-smoke-qwen3-4b | qwen3:4b | think | 24 | 0 | 1.000 | 0.000 | 3072.000 |
+
+## L1: answer stability (label-free)
+
+No official answers exist for the panel problems, so nothing here is accuracy against ground truth. `self_consistency`: share of a problem's original samples giving its most common answer. `variant_stability`: share of variants whose answer equals the problem's answer, over problems whose original samples all agree. `e24a_accuracy`: original samples matching the small track's E24a key (unanimous Skywork samples; model-derived, not official).
+
+| model | effort | problems | self_consistency | unanimous | variant_problems | variants_scored | variant_stability | e24a_keyed | e24a_accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| gpt-oss:20b | low | 46 | 0.641 | 12 | 3 | 122 | 0.754 | 14 | 0.768 |
+
+Per perturbation family, next to the official rows for the checkpoint the proxy stands in for (official means over its (problem, family) rows; a different quantity from stability, shown for orientation only):
+
+| model | effort | family | variants | stability | official | official_base_acc | official_permuted_acc |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| gpt-oss:20b | low | distract | 23 | 0.609 | gpt-oss-120b:low | 0.450 | 0.260 |
+| gpt-oss:20b | low | domain | 29 | 0.793 | gpt-oss-120b:low | 0.450 | 0.290 |
+| gpt-oss:20b | low | expert_no_solution | 2 | 0.000 | gpt-oss-120b:low | 0.600 | 0.629 |
+| gpt-oss:20b | low | expert_perturbations | 1 | 1.000 | gpt-oss-120b:low | 0.600 | 0.543 |
+| gpt-oss:20b | low | paraphrase | 2 | 0.500 | gpt-oss-120b:low | nan | nan |
+| gpt-oss:20b | low | rename | 12 | 0.667 | gpt-oss-120b:low | 0.450 | 0.290 |
+| gpt-oss:20b | low | rephrase | 27 | 0.926 | gpt-oss-120b:low | 0.450 | 0.230 |
+| gpt-oss:20b | low | typos | 26 | 0.769 | gpt-oss-120b:low | 0.450 | 0.260 |

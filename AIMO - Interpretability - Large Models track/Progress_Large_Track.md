@@ -99,6 +99,16 @@ first and still got no GPU (LF-5). Eshad refused with "Maximum batch CPU session
 reached": another project's five `kagri-mk2-*` kernels fill that account's session limit, and the
 same holds for every account running five of them.
 
+**LF-9. First label-free read of gpt-oss:20b `low`: answers are unstable even on the originals,
+so the planned calibration needs real reference answers.** Results, "L1: answer stability". Over
+the 46 originals (k=4), 64.1% of samples give their problem's most common answer, and only 12
+problems are unanimous. Only 3 of the 10 reference problems are unanimous, so variant stability
+(75.4% of 122 variants keep the problem's answer) rests on 3 problems and says little per family.
+Against the small track's E24a key (14 `train-main-v2` problems; unanimous Skywork samples, not
+official answers), 76.8% of original samples match. No gate is decided on this: G-L1a needs
+correctness against true answers for the 10 reference problems, which nothing in the repo has.
+G-L1b needs the `medium`/`high` runs, since `low` has only 7 labelled gpt-oss-120b rows.
+
 ## 3. Fleet state (25 Sep, ~15:10 UTC; quota resets 26 Sep 00:00 UTC)
 
 GPU hours used of 30, from `klarge.py accounts`:
@@ -124,7 +134,8 @@ GPU hours used of 30, from `klarge.py accounts`:
 - Helpers (LF-8) run until ~07:00-07:45 UTC on 26 Sep; download them with `klarge.py output <job>-b`.
 - Two Ollama servers per kernel, one per GPU, would roughly double throughput for models that fit
   one T4 (qwen3-4b, DeepSeek-8B). Not built; add if continuation time runs short.
-- Reference answers for the 46 originals, needed to grade L1 (L1-a).
+- Reference answers, needed to grade L1 (L1-a): the 10 AIMO-2025 reference problems have none in
+  the repo; the E24a key covers only 14 of the 36 `train-main-v2` problems, and it is model-derived (LF-9).
 - Confirm Ollama's `deepseek-r1:8b` digest is DeepSeek-R1-0528-Qwen3-8B before comparing it with
   the official `qwen3-8b:low` rows.
 - AIMO3 rules acceptance on one account, if the team wants to test L4.
