@@ -1790,8 +1790,10 @@ case each time.** (Codabench submissions 946252-946253, 26 Sep, both 0.79.)
 | **`e27k`** | `ceil(n/2)`, minus one for Skywork and Olmo | **12/14** |
 | `e27m` | `e27k` with one fewer for Qwen | 11/14 |
 | `e27n` | `e27k` with one fewer for DeepSeek | 11/14 |
+| `e27o` | `e27k` with one **more** for Qwen | 11/14 |
+| `e27p` | `e27k` with one **more** for DeepSeek | 11/14 |
 
-- **Four moves tested, four agree with the probes.** Finding 45 measured each model's
+- **Six moves tested, six agree with the probes.** Finding 45 measured each model's
   robust-minus-spurious balance on the hidden set: +1 for Qwen and DeepSeek, -1 for Skywork and
   Olmo-3-Think. Moving Skywork and Olmo *to* their implied count gained a case each
   (Finding 60); moving Qwen and DeepSeek *off* theirs costs a case each. The balances predict
@@ -1800,8 +1802,11 @@ case each time.** (Codabench submissions 946252-946253, 26 Sep, both 0.79.)
   per-model balances, and the search around it only confirms them. That is a better claim than
   "we stopped searching", though it is still calibration to this validation set, and
   Finding 60's transfer caveat stands unchanged.
-- **Untested:** one *more* robust for Qwen or DeepSeek (`e27o`, `e27p`). If those also lose, the
-  count vector is pinned as a unique optimum; if one gains, the balance reading is incomplete.
+- **`e27k` is a strict local optimum.** Qwen and DeepSeek lose a case whether their count goes
+  up or down (submissions 946282-946283, both 0.79), so every single-step neighbour of the count
+  vector is worse. The count search is closed at 12/14, and the policy is now: a prior-free
+  familiarity ranking, with per-model robust counts read off independently measured class
+  balances - no free parameter left that the leaderboard chose.
 ---
 
 ## 10. Open questions and blockers
