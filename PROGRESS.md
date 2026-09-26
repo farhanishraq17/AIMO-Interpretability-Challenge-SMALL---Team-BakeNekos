@@ -1631,7 +1631,7 @@ deterministically.
 ---
 
 **55. E34 creates a genuinely new validation population before another feature search.**
-(`E34_PROTOCOL.md`, `e34a-qwen-aime-surface`, launched 25 Sep on TASHIN.)
+(`protocols/E34_PROTOCOL.md`, `e34a-qwen-aime-surface`, launched 25 Sep on TASHIN.)
 
 - The 0.79 Small Models score is 11/14; beating it requires 12/14, two more correct cases
   than E27e/E27h's 10/14. Prior submission vectors are not combined to infer hidden labels.
@@ -1643,13 +1643,13 @@ deterministically.
   fits no classifier. Passing authorizes E34b; failure closes the lane without a submission.
 - E34b is already frozen: train on new OlympiadBench+AIME-2024 labels, evaluate once on
   untouched AMC+AIME-2026 labels, then permit one fixed official-transfer measurement only
-  if the independent holdout clears every gate in `E34_PROTOCOL.md`.
+  if the independent holdout clears every gate in `protocols/E34_PROTOCOL.md`.
 - Kernel version 1 is running at
   `https://www.kaggle.com/code/tashintahir/aimo-small-e34a-qwen-aime-surface`. The excluded
   `farhanishraqq` GPU account is not used.
 
 **56. E34a fails before modelling: Qwen solves only 1/52 new AIME originals four times.**
-(`e34a-qwen-aime-surface`, TASHIN, completed 25 Sep; frozen gate in `E34_PROTOCOL.md`.)
+(`e34a-qwen-aime-surface`, TASHIN, completed 25 Sep; frozen gate in `protocols/E34_PROTOCOL.md`.)
 
 - Both base shards completed all 26 assigned problems, all 52 records resolved, and the
   checked tokenizer round-tripped correctly. This is not an interrupted-run artifact.
@@ -1664,7 +1664,7 @@ deterministically.
 - No Codabench submission was made. E27e/E27h at 0.71 and E11 v2 at 0.64 remain unchanged.
 
 **57. E35 finds real external robustness labels, but problem-text ranking does not transfer.**
-(`E35_PROTOCOL.md`, completed locally 25 Sep.)
+(`protocols/E35_PROTOCOL.md`, completed locally 25 Sep.)
 
 - `ssubhnil/Qwen3-Math-Eval@f64c82f` supplies strict per-problem correctness for four Qwen3
   sizes on paired MATH-Perturb and Putnam-AXIOM variants. E35 was committed before downloading

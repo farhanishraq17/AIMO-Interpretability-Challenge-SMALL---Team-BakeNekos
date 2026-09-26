@@ -680,7 +680,7 @@ E31 selected all-layer mean cosine distance only after its five-way official-dat
 
 ## E34a — independent AIME label-yield gate
 
-Pre-registered in `E34_PROTOCOL.md` before GPU output. Qwen3.5-4B sampled 30 AIME 2024
+Pre-registered in `protocols/E34_PROTOCOL.md` before GPU output. Qwen3.5-4B sampled 30 AIME 2024
 problems and 22 AIME 2026 problems after excluding all eight overlaps with `train-main-v2`.
 
 | Measurement | Result | Frozen requirement |
@@ -696,7 +696,7 @@ coverage miss every substantive gate. E34b is not launched and no Codabench subm
 
 ## E35 — external robustness labels, source-disjoint holdout
 
-Pre-registered in `E35_PROTOCOL.md` before downloading row-level outcomes. Clear-cut labels
+Pre-registered in `protocols/E35_PROTOCOL.md` before downloading row-level outcomes. Clear-cut labels
 pool the four Qwen3 sizes at a fixed 16,384-token budget. MATH-Perturb is the sole training
 source; Putnam-AXIOM is scored once as the untouched holdout.
 
