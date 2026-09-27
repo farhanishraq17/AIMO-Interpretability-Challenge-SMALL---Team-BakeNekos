@@ -230,6 +230,36 @@ and on which nothing transferred (small-track Findings 32, 39, 40). Adding `Math
 would also give the `train-main-v2` calibration problems real answers, since 2025 AIME problems
 appear there verbatim (small-track Finding 49). This is the foundation of `PLAN.md` Lane A.
 
+**LF-16. M11a is built and passes the contract check; nothing about it needs a GPU.**
+`submission/make_m11a.py` writes `dist/solution-m11a-constant-gptoss-main.zip`: 3.2 KB,
+`solution.py` and `tokenizer_check.py` at the root, deterministic timestamps, **no `small.txt`**.
+It ships no fitted estimator - the policy is source only - so building and testing it are CPU work.
+
+The four small models run the small track's `e27k` policy unchanged (one forward pass per problem,
+the familiar half robust, Skywork and Olmo one fewer). `openai/gpt-oss-120b` is deliberately left
+out of `SPLIT_MODELS` and added to `FALLBACK_ROBUST`, so it returns `True` for every problem
+**without the 62 GiB checkpoint being loaded at all**. That is both the best constant in the
+official data at every effort (LF-1) and the fastest answer, and runtime breaks ties.
+
+Checked, on CPU: `run_local.py` on the ZIP in Main-Track mode reports **coverage 1.0 and 0 invalid
+predictions** through the same ingestion and scoring programs Codabench runs; `submission/
+test_m11a.py` exercises every branch - the gpt-oss constant at all four effort values, the split's
+robust counts with and without a tilt, an even batch, an empty batch, an unlisted `model_id`, and
+the fallback each model takes when its weights are absent. Its accuracy there, 0.625, is **not** a
+score estimate: it is the 24-case public `val-sample`, scored by the fallback path, because no
+small-track weights are cached on this machine.
+
+What is untested locally is the forward-pass path, which needs a GPU and cached weights. It is the
+same source that scores 0.86 on the small-track leaderboard, so the new surface in M11a is the
+gpt-oss branch and the absent marker file - both of them constants.
+
+**One judgement call to revisit before the freeze.** The fallback constants inside `e27k` call
+Skywork and Olmo spurious, from small-track leaderboard probes on 14 cases. The official labels
+lean the other way for both (Skywork 2/3 robust, Olmo 7/9), and we have no Main-Track leaderboard
+reading at all. The fallback only fires on an exception, so this changes nothing unless a model
+fails to load - but if a Main-Track submission ever ships constants as its primary path, the
+official labels are the better evidence for this track.
+
 ## 3. Fleet state (25 Sep, ~15:10 UTC; quota resets 26 Sep 00:00 UTC)
 
 GPU hours used of 30, from `klarge.py accounts`:

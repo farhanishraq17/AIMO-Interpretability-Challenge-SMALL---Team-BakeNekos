@@ -373,11 +373,18 @@ run scores zero, and the small track has already paid for one packaging mistake 
 
 ### 4.12 M11 — the submission ladder
 
-**M11a, now, no GPU.** The small track's `e27k` policy for the four small models, plus the best
-constant (`True`) for `gpt-oss-120b` at every effort. Build with the small track's
-`submission/make_e27.py` as the template. **No `small.txt`** — that file zeroed four small-track
-uploads (Finding 21). This also measures something we do not know: the Main-Track case count, from
-the accuracy denominator, exactly as the small track learned it had 14 cases.
+**M11a — built on 27 Sep, not yet uploaded.** `submission/make_m11a.py` writes
+`dist/solution-m11a-constant-gptoss-main.zip` (3.2 KB: `solution.py` + `tokenizer_check.py`, no
+GPU, no fitted estimator). The four small models take the small track's `e27k` policy unchanged;
+`gpt-oss-120b` is listed outside `SPLIT_MODELS`, so it returns the constant `True` **without the
+62 GiB checkpoint ever being loaded** — the best constant at every effort, and the fastest answer,
+which matters because ties break on runtime. **No `small.txt`** — that file zeroed four small-track
+uploads (Finding 21), and the builder asserts its absence. Contract-checked at coverage 1.0 and
+0 invalid predictions through the Codabench programs (LF-16); `submission/test_m11a.py` covers
+every branch on CPU.
+
+Uploading it also measures something we do not know: the Main-Track case count, from the accuracy
+denominator, exactly as the small track learned it had 14 cases.
 
 **M11b, after G-M4.** The problem-level model from Lane C, with M11a as the fallback path inside
 the same `solution.py`: any exception, any unknown `model_id`, any timeout guard → constants. The
@@ -482,7 +489,7 @@ Each of these has already cost time in one track or the other.
       the contract.
 - [ ] `python scripts/klarge.py status` — confirm nothing is running.
 - [ ] Regenerate the numbers: `write_results.py`, and check `RESULTS.md` matches what §2 claims.
-- [ ] Build and upload **M11a**. It is the fastest path to a Main-Track score.
+- [x] Build **M11a** (done 27 Sep). **Upload it** — still the fastest path to a Main-Track score.
 - [ ] Write `protocols/M3_PROTOCOL.md`'s hardware and model-revision fields once the GPUs exist,
       then freeze it.
 - [ ] Start M0.

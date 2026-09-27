@@ -45,7 +45,7 @@ RUNNING or QUEUED kernels).
 | M8 | Sparse (SAE) features on the prompt representation | GPU | Planned | G-M8 |
 | M9 | Does a signal fitted on 4B predict for 120B? | GPU | Planned | G-M9 |
 | M10 | Test-time budget audit on one 96 GB card | GPU | Planned | G-M10 |
-| M11a | Constants ZIP: small-track policy + `True` for gpt-oss-120b | CPU | **Ready to build** | G-L3 |
+| M11a | Constants ZIP: small-track policy + `True` for gpt-oss-120b | CPU | **Built 27 Sep, awaiting upload** | G-L3 passed (LF-16) |
 | M11b | The problem-level model as a ZIP | CPU | After G-M4 | G-L3, G-M10 |
 | M12 | Technical report | — | 15 Nov | — |
 
@@ -58,6 +58,12 @@ RUNNING or QUEUED kernels).
 
 **No Main-Track submission exists yet**, so there is no leaderboard reading for this track. The
 small track's board, for reference, tops out at `e27k` = 12/14 = 0.86.
+
+**M11a is built and waiting to be uploaded**:
+`dist/solution-m11a-constant-gptoss-main.zip`, rebuildable with
+`python submission/make_m11a.py` (no GPU). It passed the contract check through the Codabench
+ingestion and scoring programs at coverage 1.0 and 0 invalid predictions (LF-16). The upload is
+the user's to make, and its accuracy will also tell us how many cases the Main-Track task has.
 
 ---
 
