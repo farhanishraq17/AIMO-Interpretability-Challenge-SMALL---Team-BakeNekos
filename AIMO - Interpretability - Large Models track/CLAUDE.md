@@ -36,7 +36,7 @@ so the November report can regenerate it.
 - **OS/shell:** Windows 11. PowerShell 5.1 is primary (no `&&`; use `;` or `if ($?)`). Git Bash
   is also available.
 - **Git:** branch `main`, one repository holding both tracks, remote
-  `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Small-Model-Track`.
+  `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Team-BakeNekos`.
   `.gitignore` excludes `Secrets.env`, `data/`, `runs/`, `kaggle_runs/`, `dist/`.
   **Before every commit, `git grep --cached -n "KGAT_"` must print nothing.**
 - **Python:** system Python 3.13 carries the Kaggle CLI (2.2.2). The project venv is the small

@@ -43,7 +43,7 @@ removed on 26 Sep.)
   `if ($?)`). Git Bash is also available.
 - **Git:**
   - Branch `main`, remote
-    `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Small-Model-Track`.
+    `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Team-BakeNekos`.
   - `getting-started/` is a **submodule** pinned to upstream `aimo-interp/getting-started` at
     `995f992` (12 Sep README update: competition-phase model list); clone with `--recurse-submodules`.
     **Upstream has since moved to `de79405`** (PR #9, `reasoning_effort` support, 2 commits
@@ -142,8 +142,8 @@ python -m uv run scripts/run_local.py dist/solution-always-true-small.zip --smal
 
 COMPETITION.md PLAN.md PROGRESS.md RESULTS.md CLAUDE.md experiments.md
 protocols/                   E34-E37 pre-registrations (gates fixed before the run)
-Secrets.env                  this track's Kaggle tokens; the Main Track keeps its own copy
-Secrets.env                  Kaggle tokens (KGAT_…) per alias. NEVER print, commit, or bundle.
+Secrets.env                  Kaggle tokens (KGAT_…) per alias; the Main Track keeps its own copy.
+                             NEVER print, commit, or bundle.
 getting-started/             Upstream starter kit: git submodule at 995f992 (+ local pinned venv). Don't edit.
   solutions/trained-probe/          last-prompt-token linear probe baseline (+ probe_artifact.pkl)
   solutions/uncertainty-profiling/  14 trace-uncertainty features -> RF regressor baseline

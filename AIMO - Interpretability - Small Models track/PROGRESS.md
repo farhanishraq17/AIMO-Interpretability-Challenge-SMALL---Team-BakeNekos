@@ -1837,7 +1837,8 @@ new GitHub issues are restricted):
 **Housekeeping:**
 
 - **Version control (15 Sep).** The workspace is now a git repository with remote
-  `farhanishraq17/AIMO-Interpretability-Challenge---Small-Model-Track`.
+  `farhanishraq17/AIMO-Interpretability-Challenge---Small-Model-Track` (renamed upstream to
+  `…---Team-BakeNekos` on 27 Sep, once the repo held both tracks; GitHub redirects the old URL).
   - `getting-started/` is a submodule at upstream `e98c489`.
   - `Secrets.env` and every generated directory are ignored.
   - Before the first commit, the index was checked for token strings; none were found.
