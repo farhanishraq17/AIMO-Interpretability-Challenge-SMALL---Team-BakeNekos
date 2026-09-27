@@ -7,7 +7,11 @@ plan, progress log, results, launcher and `Secrets.env`.
 | Folder | Track | Start here |
 | --- | --- | --- |
 | `AIMO - Interpretability - Small Models track/` | Small Models Track (open weights, <10B) | its `CLAUDE.md`, then `PLAN.md` §12, the handover note |
-| `AIMO - Interpretability - Large Models track/` | Main Track (adds `gpt-oss-120b`) | `Plan_Large_Track.md` |
+| `AIMO - Interpretability - Large Models track/` | Main Track (adds `gpt-oss-120b`) | its `CLAUDE.md`, then `PLAN.md` §0, the state in ten lines |
+
+Both folders now carry the same document set — `CLAUDE.md`, `COMPETITION.md`, `PLAN.md`,
+`PROGRESS.md`, `RESULTS.md`, `experiments.md`, `protocols/` — with the same role for each file.
+Findings are numbered separately: `1..61` in the small track, `LF-1..LF-15` in the Main Track.
 
 **Work inside one track's folder.** Every script resolves its paths from its own location, so
 run them from anywhere, but read that track's `CLAUDE.md` before changing anything: the

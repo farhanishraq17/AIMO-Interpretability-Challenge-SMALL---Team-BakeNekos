@@ -2,9 +2,9 @@
 
 Narrative log of what was built and measured. Findings are numbered **LF-n**, separately from
 the small track's `PROGRESS.md`. Every number comes from a script in this folder; the tables
-behind them are in `Results_Large_Track.md` (regenerate with `scripts/write_results.py`).
+behind them are in `RESULTS.md` (regenerate with `scripts/write_results.py`).
 
-## 1. What exists (25 Sep 2026)
+## 1. What exists (27 Sep 2026)
 
 | Piece | What it does |
 | --- | --- |
@@ -13,7 +13,7 @@ behind them are in `Results_Large_Track.md` (regenerate with `scripts/write_resu
 | `scripts/klarge.py` | Main-Track Kaggle launcher: H100/T4 shapes, model and kernel mounts, payload embedding, per-account tokens, quota check (works around the CLI 2.2.2 `kaggle quota` crash), `runs/launches.json` log |
 | `jobs/probe.py` | L0 hardware probe |
 | `jobs/ollama_panel.py` | L1 panel: Ollama on T4x2, append-per-completion `records-<payload sha>.jsonl`, sample-major order so a timeout leaves full coverage at lower k, resumes from keys earlier sessions finished |
-| `scripts/write_results.py` | Regenerates `Results_Large_Track.md` |
+| `scripts/write_results.py` | Regenerates `RESULTS.md`, including the coverage table LF-11 needed |
 
 The small-track launcher (`datagen/kaggle_launch.py`) was not reused: it hard-codes T4x2, the
 transformers pins and the small-track bundle, and has no model or competition mounts.
@@ -109,8 +109,9 @@ official answers), 76.8% of original samples match. No gate is decided on this: 
 correctness against true answers for the 10 reference problems, which nothing in the repo has.
 G-L1b needs the `medium`/`high` runs, since `low` has only 7 labelled gpt-oss-120b rows.
 
-**LF-10. Every L1 kernel has finished; the panel is complete and eight outputs are still on
-Kaggle.** (`klarge.py status`, 26 Sep.)
+**LF-10. Every L1 kernel has finished, and eight outputs are still on Kaggle.**
+(`klarge.py status`, 26 Sep.) **Corrected by LF-11: "finished" is kernel status, not coverage.**
+Of the eight (model, effort) cells, one is complete.
 
 - All 12 panel kernels report COMPLETE: the three `gpt-oss:20b` efforts, `deepseek-r1:8b`, the
   four Qwen3 rungs, and the four `-b` helpers. So do the four L0 probes and the two smokes. **No
@@ -124,6 +125,110 @@ Kaggle.** (`klarge.py status`, 26 Sep.)
   small-track one.
 - The next steps are unchanged and unblocked: download, `write_results.py`, then L1-a with
   whatever reference answers exist (LF-9).
+
+**LF-11. The panel is not complete: one cell of eight is, and the binding constraint was the token
+budget, not GPU hours.** All 12 panel outputs are now downloaded (`RESULTS.md`, "L1: panel
+coverage" and "L1: panel run health").
+
+| cell | completions of 637 | originals with k=4 of 46 | truncated | mean generated tokens |
+| --- | --- | --- | --- | --- |
+| `gpt-oss:20b` low | **637 (100%)** | 46 | 0.000 | 1,876 |
+| `gpt-oss:20b` medium | 407 (64%) | 46 | 0.105-0.529 | 10,257-17,172 |
+| `deepseek-r1:8b` | 211 (33%) | 29 | 0.950-0.967 | 15,166-15,274 |
+| `gpt-oss:20b` high | 173 (27%) | 9 | 0.426-0.653 | 22,318-26,093 |
+| `qwen3:4b` | 144 (23%) | 0 | 0.896 | 14,966 |
+| `qwen3:30b-a3b` | 105 (17%) | 0 | 0.810 | 14,498 |
+| `qwen3:14b` | 82 (13%) | 0 | 0.610 | 13,100 |
+| `qwen3:32b` | 73 (11%) | 0 | 0.303-0.350 | 10,530-10,820 |
+
+Three things this says, in order of how much they change the plan:
+
+- **A 16k context truncates thinking models.** Between 43% and 97% of replies hit `num_predict`
+  before producing an answer, so the completions exist and the answers do not. Only `low` effort
+  is cheap enough to finish on this hardware, at about a seventh of `high`'s token count.
+- **`summary.json` overstated every run.** Its `completions_this_session` field is `len(todo)`, the
+  work list length, computed before sampling starts - not what was written. LF-10 read it as
+  completion. Coverage now comes from counting records, which `write_results.py` does as of today.
+- **Throughput per cell varied 9-fold**: 89.6 tok/s (`gpt-oss:20b` low), 69.2 (`qwen3:4b`), 65.1
+  (medium), 57.9 (high), 49.5 (`qwen3:30b-a3b`), 44.5 (`deepseek-r1:8b`), 33.7 (`qwen3:14b`), 10.3
+  (`qwen3:32b` at parallel 3). A 12-hour T4x2 session buys between 0.4M and 3.9M tokens, and a
+  full cell at `high` needs about 16M.
+
+**LF-12. Robustness is a property of the problem, not of the (model, problem) pair.** Of the 33
+labelled problems in `train-main-v2`, 11 carry labels for two or more models, and **all 11 agree**.
+Every pairwise comparison is exactly 1.000:
+
+| pair | shared labelled problems | agreement |
+| --- | --- | --- |
+| Qwen3.5-4B vs gpt-oss-120b | 8 | 1.000 |
+| Qwen3.5-4B vs DeepSeek-R1-0528-Qwen3-8B | 6 | 1.000 |
+| Qwen3.5-4B vs Olmo-3-7B-Think | 5 | 1.000 |
+| Olmo-3-7B-Think vs DeepSeek-R1-0528-Qwen3-8B | 5 | 1.000 |
+| DeepSeek-R1-0528-Qwen3-8B vs gpt-oss-120b | 5 | 1.000 |
+| Olmo-3-7B-Think vs gpt-oss-120b | 4 | 1.000 |
+
+A **per-problem oracle** - the majority label of each problem, applied to every labelled row of
+every model - scores **0.986** over all 71 rows, against **0.732** for always-robust. Per cell it is
+1.000 everywhere except gpt-oss-120b at `low` (0.857, one row).
+
+Read this as an architecture decision, not as an achievable accuracy: the oracle uses the labels it
+is scored against. What it establishes is that **one score per problem, broadcast to every (model,
+effort), loses almost nothing** - so the Main Track's fifth model needs no model-specific machinery,
+and the small track's `e27k`, which can give one problem two different labels for two models, is
+structurally at odds with this while still winning that leaderboard (small-track Finding 60). Two
+caveats the report must state: n = 11 problems, and the three-valued rule discards the 11 rows whose
+`max_drop` lands in 0.11-0.21, which is exactly where a disagreement would be most likely to sit.
+
+**LF-13. `reasoning_effort` almost never changes the label.** gpt-oss-120b carries 37 labelled rows
+over 21 problems (7 low, 15 medium, 15 high). On problems labelled at two efforts:
+
+| comparison | shared problems | agreement | flips |
+| --- | --- | --- | --- |
+| high vs medium | 10 | **1.000** | 0 |
+| high vs low | 6 | 0.833 | 1 |
+| low vs medium | 6 | 0.833 | 1 |
+
+Six problems are labelled at all three efforts and five are unanimous. The single dissenter is the
+angle-bisector problem (`AB = 200, AC = 225`), spurious at `low` and robust at `medium` and `high` -
+which is the sensible direction, and both flips in the table involve `low`. So a shared,
+effort-blind prediction costs at most one row in 22 here, and a method that conditions on effort has
+to earn that back. `PLAN.md` M5 tests it at n approximately 500.
+
+**LF-14. The L1 panel could not answer the question it was built for, because no answer key
+exists.** Grading needs each problem's true answer, since the official perturbations preserve it.
+The 36 `train-main-v2` problems ship no answers; neither do the 10 AIMO-2025 reference problems.
+The only key in reach is the small track's E24a key - 14 problems, from unanimous Skywork samples,
+which is a model's opinion rather than ground truth. Agreement with it, over original samples:
+
+| model | effort | agreement with the E24a key | truncated |
+| --- | --- | --- | --- |
+| `qwen3:32b` | think | 0.960 | 0.303 |
+| `gpt-oss:20b` | medium | 0.946 | 0.105 |
+| `qwen3:14b` | think | 0.929 | 0.610 |
+| `gpt-oss:20b` | high | 0.884 | 0.426 |
+| `qwen3:30b-a3b` | think | 0.786 | 0.810 |
+| `gpt-oss:20b` | low | 0.768 | 0.000 |
+| `qwen3:4b` | think | 0.571 | 0.896 |
+| `deepseek-r1:8b` | think | **0.173** | 0.967 |
+
+DeepSeek's 0.173 measures truncation, not ability: 97% of its replies never reached an answer. The
+same artifact inflates its `self_consistency` to 0.976, because two missing answers count as
+agreeing - a trap in any stability statistic computed over possibly-empty answers. Note also that
+`expert_no_solution` variants report stability 0.000 by design: there the correct behaviour is to
+*not* reproduce the original answer.
+
+**Gates G-L1a and G-L1b are retired undecided.** Proxy fidelity was never measurable, and no
+conclusion about gpt-oss-120b should be drawn from these eight cells.
+
+**LF-15. The answer-key problem is solved by changing the population, not by building a key.** The
+small track already has `data/olympiad_pool/pool.parquet`: **505 olympiad problems with a single
+integer answer**, from pinned revisions of four Hugging Face datasets - OlympiadBench (362), AMC
+validation (83), AIME-2024 (30) and AIME-2026 (30). Ground truth ships with the problems. Labelling
+those under the official rule needs no key of our own, and it is the population the private test
+set is drawn from - unlike the Hendrycks MATH problems that every earlier lane had to fall back on,
+and on which nothing transferred (small-track Findings 32, 39, 40). Adding `MathArena/aime_2025`
+would also give the `train-main-v2` calibration problems real answers, since 2025 AIME problems
+appear there verbatim (small-track Finding 49). This is the foundation of `PLAN.md` Lane A.
 
 ## 3. Fleet state (25 Sep, ~15:10 UTC; quota resets 26 Sep 00:00 UTC)
 
@@ -141,7 +246,7 @@ GPU hours used of 30, from `klarge.py accounts`:
 | Samin | 19.8 | |
 | DIDHITI, TASHIN, SALAM | 30+ | exhausted until the reset |
 
-## 4. Open items
+## 4. Open items (superseded by `PLAN.md` §4; kept for the record)
 
 - After the first-launch jobs end (~23:45 UTC), download them and push continuation sessions
   (11 h each) for every job that did not finish (LF-6). Scheduled task

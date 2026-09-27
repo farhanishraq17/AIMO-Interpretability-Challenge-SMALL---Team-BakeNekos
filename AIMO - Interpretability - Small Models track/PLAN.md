@@ -714,11 +714,13 @@ experiment left that settles it.
 
 ### 12.4 What is worth doing next
 
-1. **Build L3, the first Main-Track ZIP** - the current policy for the four small models plus
-   `True` for `gpt-oss-120b` (the best constant at every effort). No GPU, nothing blocks it, and
-   the Main Track has no score from us yet. **Without `small.txt`.**
-2. **Download the 8 finished Large-track panel jobs** (`klarge.py output <job>`), then
-   `write_results.py` and L1-a grading (LF-10). G-L1b needs the `medium` and `high` runs.
+1. **Build the first Main-Track ZIP** (now `M11a` in that track's plan) - the current policy for
+   the four small models plus `True` for `gpt-oss-120b` (the best constant at every effort). No
+   GPU, nothing blocks it, and the Main Track has no score from us yet. **Without `small.txt`.**
+2. **Done on 27 Sep:** all 12 Large-track panel outputs are downloaded and read. The panel turned
+   out to be one complete cell of eight, and its grading gate is retired undecided for want of an
+   answer key (Large track, LF-11 and LF-14). That track's plan was rewritten as a large-scale
+   programme on the same day; read its `PLAN.md` §0.
 3. **The report** (due 15 Nov) is the largest remaining prize and the material is unusually
    strong: eight measured negative results, the `AutoTokenizer` whitespace bug that affects the
    organizers' own baseline (Finding 14), the probe-selection artifact (Finding 11), the
