@@ -1,0 +1,9 @@
+{
+  "olmo": "ERROR: rope_theta config compatibility; no feature rows",
+  "checked_at": "2026-09-27T22:41:58.2982105Z",
+  "qwen": "RUNNING",
+  "confirmation": "COMPLETE: passed",
+  "transfer_scores_available": false,
+  "skywork": "RUNNING",
+  "deepseek": "RUNNING"
+}

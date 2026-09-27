@@ -5,7 +5,47 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 26 September 2026. **Nothing is running on either track.**
+Last updated: 28 September 2026. **E37 official transfer is in progress on the Small track.**
+
+### Current execution
+
+- Olmo retry: MUBAMAN (`mksadman`), `aimo-small-e37-official-olmo` v1 is running with
+  Transformers 5.5.3 and vLLM 0.20.0. `scripts/check_olmo_config.py` verified the exact
+  published RoPE theta/scaling, sliding-window setting and attention layer count. This
+  repairs the flat-versus-nested config mismatch; it does not change E37 features or budgets.
+- E38a is frozen in `protocols/E38_PROTOCOL.md`, with a tested CPU audit implementation.
+  Tamim3 is assigned the audit; a GPU equivalence experiment is conditional on zero
+  cross-budget prefix mismatches. No accuracy labels are read by this audit.
+- Tamim3 authenticates as `abrarrafi1552`. Its first check received no GPU or internet,
+  but the requested version 2 retry now confirms two T4 GPUs and internet. No model
+  experiment is assigned to it yet. Results are in `kernels/runs/capability-check-Tamim3/`.
+- E37 confirmation completed on Arifin and passed all frozen gates. The exact result and
+  launched source are preserved in `kernels/runs/e37-confirmation-Arifin/`; regenerate the
+  metric table using `python train/report_e37.py`.
+- Arifin (`joblesssamurai`) and Nipun (`nowshintabassumnipun`) each passed a two-T4 and
+  internet check. MUBAMAN's original account received neither GPU nor internet. After the
+  user replaced its token, the alias resolved to `mksadman`; a fresh capability check
+  confirmed two T4 GPUs and internet. The local username entry now matches the new token.
+- `e37-official-qwen` (Arifin) and `e37-official-deepseek` (Nipun), version 2, are now running.
+  Skywork on Tamim2 is also running. No completed transfer features are available for download.
+  Version 1 failed before inference because Kaggle's Python lacks working `ensurepip`;
+  version 2 uses the system pip to populate an isolated environment. Predictor inputs,
+  features, budgets, labels and gates are unchanged.
+- Skywork/Olmo launch attempts were rejected at Kaggle's concurrent GPU session limit;
+  those rejected attempts are marked explicitly in their manifests and produced no data.
+- New accounts Tamim1 (`fehazulislamsawmiq`) and Tamim2 (`duneak47`) authenticated by
+  successfully pushing private capability checks. Tamim2 returned two T4s and internet;
+  Tamim1 initially returned neither GPU nor internet. An intermediate replacement token
+  resolved to `duneak47`; the latest token has now been verified as `fehazulislamsawmiq`.
+  Tamim1 and Tamim2 are currently distinct accounts. Tamim1's fresh version 3 capability
+  check completed and again returned neither GPU nor internet.
+  The Olmo job was submitted on Tamim2 and subsequently failed at model initialization
+  with `KeyError: 'rope_theta'`, before generating any feature rows.
+  Skywork was subsequently accepted on Tamim2 as version 1, using its second available slot.
+  All four official transfer jobs are now submitted; no official-transfer scores are available yet.
+- All transfer inputs use the pinned official revision and validated coverage; the lean
+  allowlist includes the previously missing prompt/answer helpers. No credentials enter
+  any kernel payload. No Codabench submission has been made from E37.
 
 **Reading the status column:** Done means the run finished and was analysed. Superseded means
 the result exists but a later run replaced it. Failed means it produced nothing usable.

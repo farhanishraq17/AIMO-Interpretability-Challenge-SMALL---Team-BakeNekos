@@ -1,0 +1,8 @@
+{
+  "gpu_available": true,
+  "gpus": [
+    "Tesla T4, 15360 MiB",
+    "Tesla T4, 15360 MiB"
+  ],
+  "internet_available": true
+}

@@ -712,3 +712,26 @@ source; Putnam-AXIOM is scored once as the untouched holdout.
 **Decision: fail.** The holdout is balanced enough and the fixed decision exceeds the 0.60
 balanced-accuracy gate, but ranking misses AUC 0.65 and its interval crosses 0.5. The official
 transfer stage is not run and no submission follows.
+
+## E37: frozen GSM-Plus confirmation
+
+Frozen GSM-Plus confirmation; source: `kernels/runs/e37-confirmation-Arifin/result.json`.
+
+| Measurement | Value |
+| --- | --- |
+| Held-out configurations | 793 |
+| Canonical problems | 254 |
+| Robust / spurious | 648 / 145 |
+| ROC-AUC | 0.6726 |
+| Problem-bootstrap 95% interval | [0.5994, 0.7439] |
+| Half-rank balanced accuracy | 0.6249 |
+| All preregistered gates passed | True |
+
+| Model | ROC-AUC |
+| --- | --- |
+| qwen3-1.7b | 0.7080 |
+| qwen3-14b | 0.6912 |
+| qwen3-4b | 0.6924 |
+| qwen3-8b | 0.6302 |
+
+This opens the unchanged official AIMO transfer; it does not yet authorize a submission.

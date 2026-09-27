@@ -1012,7 +1012,7 @@ def kaggle(alias: str, *args: str) -> tuple[int, str]:
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
     result = subprocess.run(
-        ["kaggle", *args], capture_output=True, text=True, env=env, check=False, encoding="utf-8"
+        [sys.executable, "-m", "kaggle", *args], capture_output=True, text=True, env=env, check=False, encoding="utf-8"
     )
     text = (result.stdout or "") + (result.stderr or "")
     return result.returncode, re.sub(r"KGAT_[0-9A-Za-z]+", "KGAT_***", text).strip()
@@ -1113,7 +1113,7 @@ def main() -> None:
     for command, nargs in (("build", "+"), ("push", "+"), ("output", "+"), ("status", "*"), ("logs", "*")):
         command_parser = sub.add_parser(command)
         command_parser.add_argument("experiments", nargs=nargs, choices=sorted(EXPERIMENTS))
-        command_parser.add_argument("--account", choices=ACCOUNTS, help="override the registered account")
+        command_parser.add_argument("--account", choices=sorted(load_accounts()), help="override with an account available in Secrets.env")
     args = parser.parse_args()
 
     if args.command == "list":

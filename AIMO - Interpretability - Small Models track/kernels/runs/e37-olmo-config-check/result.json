@@ -1,0 +1,18 @@
+{
+  "transformers": "5.5.3",
+  "model": "allenai/Olmo-3-7B-Think",
+  "source_config_sha256": "c395e580e9e181b271048bbef57d0316ea7f2aea17761340c7cc6ccec6241119",
+  "rope_parameters": {
+    "attention_factor": 1.2079441541679836,
+    "beta_fast": 32.0,
+    "beta_slow": 1.0,
+    "factor": 8.0,
+    "original_max_position_embeddings": 8192,
+    "rope_type": "yarn",
+    "rope_theta": 500000
+  },
+  "sliding_window": 4096,
+  "layer_count": 32,
+  "full_attention_layers": 8,
+  "passed": true
+}

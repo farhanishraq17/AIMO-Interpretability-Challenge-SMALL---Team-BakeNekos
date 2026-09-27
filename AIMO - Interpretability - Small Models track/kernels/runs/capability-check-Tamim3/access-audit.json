@@ -1,0 +1,14 @@
+{
+  "note": "Retry succeeded: two T4 GPUs and internet verified.",
+  "observed_gpu_available": true,
+  "gpus": [
+    "Tesla T4, 15360 MiB",
+    "Tesla T4, 15360 MiB"
+  ],
+  "authentication_succeeded": true,
+  "checked_at": "2026-09-27T22:41:58.2722595Z",
+  "observed_internet_available": true,
+  "username": "abrarrafi1552",
+  "test_version": 2,
+  "account": "Tamim3"
+}

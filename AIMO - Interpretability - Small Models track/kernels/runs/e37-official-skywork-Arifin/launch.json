@@ -1,0 +1,32 @@
+{
+  "job": "e37-official-skywork",
+  "account": "Arifin",
+  "ref": "joblesssamurai/aimo-small-e37-official-skywork",
+  "source_sha256": {
+    "datagen/extract_budget_path.py": "6c6aef36d2657ebc2ec9448fe5cb1659c968eb27761be7522d42d5d1135efc44",
+    "datagen/tokenizer_check.py": "bd2b243e06fb8be64fd00947c71cb98776050eda346c5043b2752adc0110d57b",
+    "datagen/perturb/answers.py": "c61794fe86e278c6ca76a86917533d9ebde7e2e8b289c1ad1823942106939773",
+    "datagen/perturb/sample.py": "24db4563abf0c5d0e58d33781434e0ec3a8993a47c3f41ec3523a05ffb992277",
+    "datagen/extract_features.py": "3accc1050b6772b3d30ab40d99fa2fb2583847fb3eb30f942140aca8e6fb71a9",
+    "train/eval_e36_budget_path.py": "86b94b9b06115bc3adc430ee0be1c1203aa22e09b91706660412019a8d7ce990",
+    "protocols/E37_PROTOCOL.md": "f8c22cd1604a0270a8f6b1bb5b9b00d46ace69ca666221f4581d698409499561",
+    "data/train_main/rows.parquet": "07c4195dfc38a62c0a4953c7b990972e14cc4bfb92a466afb426f8e7c45832ef",
+    "data/train_main/provenance.json": "d0aefc47cb51835e3c30483b1256ab02a21b6f781f2c72cd97e8d14fb2e68ed2"
+  },
+  "kernel_sha256": "5aae56a603fc0b12de2b54bda3d0d71653692b2fb9f207e0fc36999ef537fdd5",
+  "submitted_at": "2026-09-27T23:09:05.678612+06:00",
+  "metadata": {
+    "id": "joblesssamurai/aimo-small-e37-official-skywork",
+    "title": "aimo-small-e37-official-skywork",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  },
+  "status": "REJECTED: maximum batch GPU session count reached"
+}

@@ -1,0 +1,6 @@
+{
+  "gpu_available": false,
+  "gpus": [],
+  "internet_available": false,
+  "network_error": "URLError"
+}

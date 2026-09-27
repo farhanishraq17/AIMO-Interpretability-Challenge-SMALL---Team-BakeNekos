@@ -263,6 +263,12 @@ Recovered or measured facts that the pipeline depends on (evidence in `PROGRESS.
 
 ## Kaggle fleet
 
+**Current checkout, 28 Sep:** use `Secrets.env` aliases dynamically. Verified GPU accounts:
+MUBAMAN=`mksadman`, Arifin=`joblesssamurai`, Nipun=`nowshintabassumnipun`,
+Tamim2=`duneak47`, Tamim3=`abrarrafi1552`. Tamim1=`fehazulislamsawmiq` authenticates but
+its latest test received no GPU/internet. The tables below describe historical runs.
+Current follow-ups use `scripts/kaggle_followup.py` and the `.venv` in this track's root.
+
 Six accounts, each with about 30 GPU-hours a week and 12-hour sessions. Roles are in `PLAN.md`.
 
 | Alias | Username | Standing role |

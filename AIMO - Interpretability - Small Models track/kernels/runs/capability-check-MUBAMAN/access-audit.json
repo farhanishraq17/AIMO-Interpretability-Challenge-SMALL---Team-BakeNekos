@@ -1,0 +1,14 @@
+{
+  "gpus": [
+    "Tesla T4, 15360 MiB",
+    "Tesla T4, 15360 MiB"
+  ],
+  "observed_gpu_available": true,
+  "note": "Updated token belongs to a different account; new account capability check passed.",
+  "checked_at": "2026-09-27T17:30:10.1562865Z",
+  "previous_username": "sadmanmubasshirkhan",
+  "observed_internet_available": true,
+  "account": "MUBAMAN",
+  "username": "mksadman",
+  "test_version": 1
+}

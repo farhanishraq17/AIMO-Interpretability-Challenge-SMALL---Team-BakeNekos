@@ -658,10 +658,24 @@ on the 14 cases.
 
 ---
 
-## 12. Handover note (26 September 2026)
+## 12. Handover note (28 September 2026)
 
 Read this first, then §11 for the live plan and `PROGRESS.md` for why each decision was taken.
-**Nothing is running on either track**, and both fleets are idle.
+**Small-track update, 28 Sep:** E37's frozen GSM-Plus confirmation passed every gate.
+Qwen and DeepSeek are running on Arifin and Nipun; Skywork is running on Tamim2.
+Olmo's first attempt failed at configuration loading. The compatible Transformers 5.5.3
+retry is running on MUBAMAN; its published rotary/attention settings were checked locally.
+Tamim1's latest token is verified as `fehazulislamsawmiq`,
+distinct from Tamim2 (`duneak47`); its latest completed check returned no GPU or internet.
+Tamim3 (`abrarrafi1552`) passed its version 2 capability retry with two T4 GPUs and internet.
+MUBAMAN's replacement token maps to `mksadman`, now verified
+with two T4 GPUs and internet. See `experiments.md` for execution status.
+This update makes no claim about the Large-track fleet.
+
+The next action is to complete the unchanged E37 official transfer and evaluate its locked
+gates before considering any submission. E27k remains the current leaderboard candidate.
+Reproduce the confirmation table with `python train/report_e37.py`; launch and download these
+jobs with `python scripts/kaggle_followup.py`.
 
 ### 12.1 What to submit, and how to rebuild it
 
@@ -712,29 +726,34 @@ versus unpublished, so the distinction is theirs, not ours.
 (0.86, trusts the validation set) or `e27e` (0.71, prior-free, same ranking). There is no
 experiment left that settles it.
 
-### 12.4 What is worth doing next
+### 12.4 Experiments to improve the Small-track submission
 
-1. **Build the first Main-Track ZIP** (now `M11a` in that track's plan) - the current policy for
-   the four small models plus `True` for `gpt-oss-120b` (the best constant at every effort). No
-   GPU, nothing blocks it, and the Main Track has no score from us yet. **Without `small.txt`.**
-2. **Done on 27 Sep:** all 12 Large-track panel outputs are downloaded and read. The panel turned
-   out to be one complete cell of eight, and its grading gate is retired undecided for want of an
-   answer key (Large track, LF-11 and LF-14). That track's plan was rewritten as a large-scale
-   programme on the same day; read its `PLAN.md` §0.
-3. **The report** (due 15 Nov) is the largest remaining prize and the material is unusually
-   strong: eight measured negative results, the `AutoTokenizer` whitespace bug that affects the
-   organizers' own baseline (Finding 14), the probe-selection artifact (Finding 11), the
-   label-rule archaeology (Findings 30, 44), and the published-versus-unpublished contradiction
-   above. `scripts/regenerate_results.py` rebuilds every number in `RESULTS.md` in one command.
-4. **Do not** spend more submissions tuning on the 14-case validation set. Every single-step
-   neighbour of the current policy has been tested and is worse (Finding 61).
+| Priority | Experiment | Action and acceptance decision |
+| --- | --- | --- |
+| 1 | E37 official transfer | Finish all four models; require complete coverage and the unchanged E37 accuracy, template-bootstrap, and runtime gates. Preserve failed attempts as execution failures. |
+| 2 | E38a exact-prefix audit | Run the frozen CPU audit on Tamim3; zero mismatches required before any GPU optimization work. See `protocols/E38_PROTOCOL.md`. |
+| 3 | E38b target-engine equivalence | Conditional draft only: compare independent budget runs with reused prefixes on all four target models; require exact outputs and >=20% warm-runtime improvement. Never relax E37's existing gate. |
+| 4 | Candidate packaging | If E37 passes, build one frozen Small-track ZIP, verify offline imports, native bools and total runtime, then submit and record its Codabench result. |
+
+E27k remains the incumbent. No count/threshold search on the 14-case leaderboard. If E37
+fails, close it under its protocol and record the negative result before proposing another
+prediction method. E38 is an execution experiment, not a way to reinterpret a failed E37.
+
+Current capacity is sufficient for this batch: Arifin, Nipun, Tamim2, MUBAMAN and Tamim3
+have verified GPUs. Tamim1 has no verified GPU access. Check live quotas and account identity
+before extra launches; stop and report if available sessions cannot complete the frozen work.
+No extra paid compute is authorized or needed at this point.
+
+Reproducibility: E37's table is rebuilt by `train/report_e37.py`. The older omnibus
+`scripts/regenerate_results.py` does not yet rebuild every later section; do not claim it does.
 
 ### 12.5 Traps that cost us time
 
 - **`AutoTokenizer` silently strips whitespace** for DeepSeek under transformers 5.13. Always
   load through `datagen/tokenizer_check.py`, which refuses a tokenizer that fails a round trip.
 - **A Main-Track ZIP containing `small.txt` scores 0.00** - it cost four uploads (Finding 21).
-- **Kaggle accounts are shared.** Eshad and MUBAMAN get no GPU until phone-verified; SALAM and
+- **Kaggle accounts are shared.** Historical Eshad and MUBAMAN tokens lacked GPU access;
+  the current MUBAMAN token is `mksadman` and passed its capability test. SALAM and
   DIDHITI often have both slots taken by another project; RSD/Labib are the same accounts as
   MEDIUM/CHOTON elsewhere (Finding 42, `CLAUDE.md`).
 - **Never mix the two label rules** for one pair: the older `absolute_accuracy_decay` rule and

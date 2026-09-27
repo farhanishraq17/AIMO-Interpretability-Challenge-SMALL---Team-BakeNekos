@@ -1,0 +1,10 @@
+{
+  "note": "Current token verified as fehazulislamsawmiq; Tamim2 separately verified as duneak47. Current fresh test returned no GPU or internet.",
+  "independent_of_tamim2": true,
+  "account": "Tamim1",
+  "checked_at": "2026-09-27T17:46:16.7192390Z",
+  "username": "fehazulislamsawmiq",
+  "observed_gpu_available": false,
+  "test_version": 3,
+  "observed_internet_available": false
+}

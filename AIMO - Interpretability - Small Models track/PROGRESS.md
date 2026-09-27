@@ -1448,6 +1448,19 @@ still inaccessible.** (Official website, GitHub and Hugging Face audit, 25 Sep.)
 
 ---
 
+### Finding 62: E37 independent confirmation passed (27 Sep)
+
+The preregistered GSM-Plus confirmation was executed on Arifin from the pinned archive.
+All gates passed; `RESULTS.md` contains the generated measurements. The exact result,
+source hashes, archive hashes and environment are preserved under
+`kernels/runs/e37-confirmation-Arifin/`. Regenerate its table with `train/report_e37.py`.
+
+This authorizes the unchanged official transfer specified in `protocols/E37_PROTOCOL.md`.
+The GPU jobs are now being executed using available accounts. Runtime bootstrap failures
+are recorded separately from scientific outcomes; no confirmation-derived feature or
+threshold adjustment has been made. An E37 submission still requires the official transfer
+to pass its accuracy, template-bootstrap and runtime gates.
+
 ## 7. Results so far
 
 ### Text-only floor

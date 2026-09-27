@@ -1,0 +1,28 @@
+{
+  "job": "e37-confirmation",
+  "account": "Arifin",
+  "ref": "joblesssamurai/aimo-small-e37-confirmation",
+  "source_sha256": {
+    "train/eval_e36_budget_path.py": "ed75a10f854b19d3e447cb8f1570185dcc8b0991be4016e86be270ddfb00c51e",
+    "train/eval_e37_gsm_confirmation.py": "d1dfc76dffc5fd76e4fce36f8220f7f06361a050cca752bf64eec90fa0cee938",
+    "train/run_e37_confirmation.py": "6e6eb8e9ab8b070c6ec7fcfdd164e1d07f59aacb38fe585baf3d31ecaa7ab346",
+    "train/test_eval_e36_budget_path.py": "00f4fba1ebb5a75b39c537c14df9b6018203a6324dcde0cc54942c1bbf04496a",
+    "train/test_eval_e37_gsm_confirmation.py": "86eb591d10a1d7a94e31ec38362f5cf0e753dbcb86f8f89b198086ac2173e245",
+    "protocols/E37_PROTOCOL.md": "3b06f015210342ebac8e01af9bb5cca93f2d47d94e9b7a56709ef44466e17dba"
+  },
+  "kernel_sha256": "59940361c760303af79c206ce36b9093c1900d0d44a5030e905f0d2c9fd8b437",
+  "submitted_at": "2026-09-27T11:50:43.877903+00:00",
+  "metadata": {
+    "id": "joblesssamurai/aimo-small-e37-confirmation",
+    "title": "aimo-small-e37-confirmation",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": false,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}
