@@ -49,9 +49,12 @@ print(json.dumps(result), flush=True)
 def render(job: str) -> tuple[str, dict]:
     if job == "capability-check":
         return CAPABILITY, {}
-    if job.startswith("e37-official-"):
+    if job == "cuda-link-check":
+        source = (ROOT / "scripts/kaggle_cuda_setup.py").read_text(encoding="utf-8")
+        return source, {"scripts/kaggle_cuda_setup.py": hashlib.sha256(source.encode()).hexdigest()}
+    if job.startswith(("e37-official-", "e37-retry-")):
         from e37_gpu_bundle import render as render_gpu
-        return render_gpu(job.removeprefix("e37-official-"))
+        return render_gpu(job.removeprefix("e37-official-").removeprefix("e37-retry-"))
     files = FILES if job == "e37-confirmation" else (
         "train/audit_e38_prefix.py", "train/test_audit_e38_prefix.py", "protocols/E38_PROTOCOL.md")
     tests = (["train/test_eval_e36_budget_path.py", "train/test_eval_e37_gsm_confirmation.py"]
@@ -94,8 +97,9 @@ def call(alias: str, *args: str) -> tuple[int, str]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["build", "push", "status", "output"])
-    parser.add_argument("job", choices=["capability-check", "e37-confirmation", "e37-official-qwen",
-                                       "e37-official-skywork", "e37-official-olmo", "e37-official-deepseek", "e38-prefix-audit"])
+    parser.add_argument("job", choices=["capability-check", "cuda-link-check", "e37-confirmation", "e37-official-qwen",
+                                       "e37-official-skywork", "e37-official-olmo", "e37-official-deepseek", "e38-prefix-audit",
+                                       "e37-retry-qwen", "e37-retry-skywork", "e37-retry-olmo", "e37-retry-deepseek"])
     parser.add_argument("--account", required=True, choices=sorted(load_accounts()))
     args = parser.parse_args()
     username, _ = load_accounts()[args.account]

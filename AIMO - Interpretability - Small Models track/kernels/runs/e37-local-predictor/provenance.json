@@ -1,0 +1,64 @@
+{
+  "dataset": "ssubhnil/Qwen3-Math-Eval",
+  "revision": "f64c82f5ce9249155ad7c70991a9711d92963cce",
+  "training_rows": 1001,
+  "training_problems": 264,
+  "feature_columns": [
+    "natural_2048",
+    "log_words_2048",
+    "natural_4096",
+    "log_words_4096",
+    "natural_8192",
+    "log_words_8192",
+    "natural_16384",
+    "log_words_16384",
+    "natural_fraction",
+    "first_natural_log2",
+    "answer_nonempty_fraction",
+    "answer_modal_fraction",
+    "answer_unique_fraction",
+    "answer_adjacent_agreement",
+    "answer_final_agreement",
+    "trace_growth_8k_16k",
+    "correction_markers_per_1k",
+    "repeated_line_fraction_16k"
+  ],
+  "artifact_sha256": "992736a5203632dd587a1684ec40ed74add0913460f444c1f13012e9c20e9f6c",
+  "files": [
+    {
+      "path": "data/math_perturb/qwen3-1.7b.parquet",
+      "bytes": 16806339,
+      "sha256": "5847dce191c2bbc1c5c318fa68cbfb92390c2ca4bf8f60acffe17e89dfb20b71",
+      "source_rows": 3348,
+      "retained_rows": 1674
+    },
+    {
+      "path": "data/math_perturb/qwen3-14b.parquet",
+      "bytes": 17905470,
+      "sha256": "e858245ef020a6373fc0d0d141927cd9c2da5755aae0a196b9a145aac3d5d6d7",
+      "source_rows": 3348,
+      "retained_rows": 1674
+    },
+    {
+      "path": "data/math_perturb/qwen3-4b.parquet",
+      "bytes": 17327331,
+      "sha256": "a7314378c59059883ee8e93ab175212fe34aa3048cb0ce6ad55382cdd60f2b5a",
+      "source_rows": 3348,
+      "retained_rows": 1674
+    },
+    {
+      "path": "data/math_perturb/qwen3-8b.parquet",
+      "bytes": 18520384,
+      "sha256": "7c30e327359fe0da5040a19aa9f860016ce8a3d168b21102d572e3d7d376fddd",
+      "source_rows": 3348,
+      "retained_rows": 1674
+    }
+  ],
+  "packages": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.3",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.8.0",
+    "joblib": "1.5.3"
+  }
+}

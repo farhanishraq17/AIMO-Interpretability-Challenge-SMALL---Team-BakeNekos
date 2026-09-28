@@ -6,7 +6,7 @@
 
 | Date | Event |
 | --- | --- |
-| 26 Sep 2026 | Plan last updated. **Start at §12: the handover note.** §11 is the live plan |
+| 29 Sep 2026 | Plan last updated. **Start at §12: the handover note and current decisions.** |
 | 1 Nov 2026, 12:55 UTC | Codabench submissions close (about 6.5 weeks away) |
 | 15 Nov 2026 | Technical report and open-source code due |
 | 11/12 Dec 2026 | NeurIPS workshop |
@@ -658,13 +658,17 @@ on the 14 cases.
 
 ---
 
-## 12. Handover note (28 September 2026)
+## 12. Handover note (29 September 2026)
 
-Read this first, then §11 for the live plan and `PROGRESS.md` for why each decision was taken.
-**Small-track update, 28 Sep:** E37's frozen GSM-Plus confirmation passed every gate.
-Qwen and DeepSeek are running on Arifin and Nipun; Skywork is running on Tamim2.
-Olmo's first attempt failed at configuration loading. The compatible Transformers 5.5.3
-retry is running on MUBAMAN; its published rotary/attention settings were checked locally.
+Read this first, then `PROGRESS.md` for why each decision was taken. Earlier sections retain
+historical plans; this section records the current decision.
+**Small-track update, 29 Sep:** E37's GSM-Plus confirmation passed, but the official transfer
+fails its frozen runtime gate. The repaired Qwen run on MUBAMAN and Skywork run on Arifin
+completed; their combined runtime already exceeds the whole-run limit. DeepSeek on Nipun
+hit its process time limit with partial output. Olmo on Tamim3 is currently inaccessible
+through the API despite a verified account identity. No incomplete-data accuracy is reported.
+All four old jobs with CUDA linker failures are confirmed cancelled. The driver-linker repair
+and process guard are preserved along with the exact launch sources and runtime evidence.
 Tamim1's latest token is verified as `fehazulislamsawmiq`,
 distinct from Tamim2 (`duneak47`); its latest completed check returned no GPU or internet.
 Tamim3 (`abrarrafi1552`) passed its version 2 capability retry with two T4 GPUs and internet.
@@ -672,10 +676,11 @@ MUBAMAN's replacement token maps to `mksadman`, now verified
 with two T4 GPUs and internet. See `experiments.md` for execution status.
 This update makes no claim about the Large-track fleet.
 
-The next action is to complete the unchanged E37 official transfer and evaluate its locked
-gates before considering any submission. E27k remains the current leaderboard candidate.
-Reproduce the confirmation table with `python train/report_e37.py`; launch and download these
-jobs with `python scripts/kaggle_followup.py`.
+E37 is closed under its protocol; no further GPU retry or submission follows. E38's CPU
+gate also failed. E27k remains the current leaderboard candidate. Reproduce the tables with
+`python train/report_e37.py`, `python train/report_e37_runtime.py` and `python train/report_e38.py`.
+The current task is to preserve and push the results; another prediction method requires a
+new preregistered plan before execution.
 
 ### 12.1 What to submit, and how to rebuild it
 
@@ -730,19 +735,19 @@ experiment left that settles it.
 
 | Priority | Experiment | Action and acceptance decision |
 | --- | --- | --- |
-| 1 | E37 official transfer | Finish all four models; require complete coverage and the unchanged E37 accuracy, template-bootstrap, and runtime gates. Preserve failed attempts as execution failures. |
-| 2 | E38a exact-prefix audit | Run the frozen CPU audit on Tamim3; zero mismatches required before any GPU optimization work. See `protocols/E38_PROTOCOL.md`. |
-| 3 | E38b target-engine equivalence | Conditional draft only: compare independent budget runs with reused prefixes on all four target models; require exact outputs and >=20% warm-runtime improvement. Never relax E37's existing gate. |
-| 4 | Candidate packaging | If E37 passes, build one frozen Small-track ZIP, verify offline imports, native bools and total runtime, then submit and record its Codabench result. |
+| 1 | E37 official transfer | Closed: completed models already exceed the frozen whole-run runtime gate. Preserve partial outputs and runtime evidence; do not evaluate accuracy on incomplete coverage. |
+| 2 | E38a exact-prefix audit | Completed on Tamim3 and failed: every stored shorter trace differed from the longest trace's prefix. See the generated RESULTS section. |
+| 3 | E38b target-engine equivalence | Closed by the failed CPU gate; no GPU pilot. |
+| 4 | Candidate packaging | No eligible new candidate. Keep E27k and preserve the negative results. |
 
-E27k remains the incumbent. No count/threshold search on the 14-case leaderboard. If E37
-fails, close it under its protocol and record the negative result before proposing another
-prediction method. E38 is an execution experiment, not a way to reinterpret a failed E37.
+E27k remains the incumbent. No count/threshold search on the 14-case leaderboard. E37 and E38
+are closed under their protocols. Record their negative results before proposing another
+prediction method; do not reinterpret either failed gate.
 
-Current capacity is sufficient for this batch: Arifin, Nipun, Tamim2, MUBAMAN and Tamim3
-have verified GPUs. Tamim1 has no verified GPU access. Check live quotas and account identity
-before extra launches; stop and report if available sessions cannot complete the frozen work.
-No extra paid compute is authorized or needed at this point.
+No more compute is needed for these closed experiments. Arifin, Nipun, Tamim2, MUBAMAN and
+Tamim3 previously passed GPU checks; Tamim3's current notebook access must be resolved before
+future use. Tamim1 has no verified GPU access. Check quotas and identity before any new plan.
+No extra paid compute is authorized.
 
 Reproducibility: E37's table is rebuilt by `train/report_e37.py`. The older omnibus
 `scripts/regenerate_results.py` does not yet rebuild every later section; do not claim it does.
@@ -751,6 +756,9 @@ Reproducibility: E37's table is rebuilt by `train/report_e37.py`. The older omni
 
 - **`AutoTokenizer` silently strips whitespace** for DeepSeek under transformers 5.13. Always
   load through `datagen/tokenizer_check.py`, which refuses a tokenizer that fails a round trip.
+- **Kaggle `RUNNING` does not prove a healthy model process.** Inspect bounded live logs with
+  `scripts/kaggle_live_logs.py`; worker failures can leave the parent alive. The retry bundle
+  checks CUDA linking and uses `scripts/kaggle_process_guard.py` to stop failed or overlong jobs.
 - **A Main-Track ZIP containing `small.txt` scores 0.00** - it cost four uploads (Finding 21).
 - **Kaggle accounts are shared.** Historical Eshad and MUBAMAN tokens lacked GPU access;
   the current MUBAMAN token is `mksadman` and passed its capability test. SALAM and

@@ -1,0 +1,20 @@
+{
+  "exit_code": 124,
+  "termination_reason": "wall_time_limit",
+  "process_seconds": 7200.373193362,
+  "end_to_end_seconds": 7431.14762544632,
+  "command": [
+    "/tmp/e37-env/bin/python",
+    "datagen/extract_budget_path.py",
+    "--model-id",
+    "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    "--out-dir",
+    "/kaggle/working/e37-deepseek",
+    "--tensor-parallel",
+    "2",
+    "--max-num-seqs",
+    "2",
+    "--chunk",
+    "2"
+  ]
+}

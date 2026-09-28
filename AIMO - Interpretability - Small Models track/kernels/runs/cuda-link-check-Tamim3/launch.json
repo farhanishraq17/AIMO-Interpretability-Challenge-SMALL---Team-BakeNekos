@@ -1,0 +1,23 @@
+{
+  "job": "cuda-link-check",
+  "account": "Tamim3",
+  "ref": "abrarrafi1552/aimo-small-cuda-link-check",
+  "source_sha256": {
+    "scripts/kaggle_cuda_setup.py": "4f087deb4746b2236b60ab4b7f2ad30af8d0b461cbd6aaf63fcd3d57773b7850"
+  },
+  "kernel_sha256": "4f087deb4746b2236b60ab4b7f2ad30af8d0b461cbd6aaf63fcd3d57773b7850",
+  "submitted_at": "2026-09-27T23:06:23.499956+00:00",
+  "metadata": {
+    "id": "abrarrafi1552/aimo-small-cuda-link-check",
+    "title": "aimo-small-cuda-link-check",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "stage": "E37 official budget-path extraction",
+  "model_id": "Skywork/Skywork-OR1-Math-7B",
+  "budgets": [
+    2048,
+    4096,
+    8192,
+    16384
+  ],
+  "seed": 42,
+  "temperature": 0.0,
+  "prompt_suffix": "\n\nPlease reason step by step, and put your final answer within \\boxed{}.",
+  "force_request": "Stop reasoning and return only your final answer within \\boxed{}.",
+  "vllm_version": "0.20.0",
+  "tokenizer": {
+    "tokenizer_class": "TokenizersBackend",
+    "tokenizer_round_trip": true
+  },
+  "stop_token_ids": [
+    151643
+  ],
+  "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+  "load_seconds": 320.7,
+  "rows_done_this_session": 3,
+  "generated_tokens": 64500,
+  "seconds": 2232.6
+}

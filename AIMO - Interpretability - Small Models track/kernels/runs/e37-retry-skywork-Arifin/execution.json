@@ -1,0 +1,20 @@
+{
+  "exit_code": 0,
+  "termination_reason": null,
+  "process_seconds": 2252.91446569,
+  "end_to_end_seconds": 2502.0057878494263,
+  "command": [
+    "/tmp/e37-env/bin/python",
+    "datagen/extract_budget_path.py",
+    "--model-id",
+    "Skywork/Skywork-OR1-Math-7B",
+    "--out-dir",
+    "/kaggle/working/e37-skywork",
+    "--tensor-parallel",
+    "2",
+    "--max-num-seqs",
+    "2",
+    "--chunk",
+    "2"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "driver": "/usr/local/nvidia/lib64/libcuda.so.580.159.04",
+  "linker_name": "/tmp/aimo-cuda-link/libcuda.so",
+  "compile_and_cuInit_passed": true
+}

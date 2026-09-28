@@ -1,0 +1,27 @@
+{
+  "stage": "E37 official budget-path extraction",
+  "model_id": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+  "budgets": [
+    2048,
+    4096,
+    8192,
+    16384
+  ],
+  "seed": 42,
+  "temperature": 0.0,
+  "prompt_suffix": "\n\nPlease reason step by step, and put your final answer within \\boxed{}.",
+  "force_request": "Stop reasoning and return only your final answer within \\boxed{}.",
+  "vllm_version": "0.20.0",
+  "tokenizer": {
+    "tokenizer_class": "TokenizersBackend",
+    "tokenizer_round_trip": true
+  },
+  "stop_token_ids": [
+    151645
+  ],
+  "platform": "Linux-6.12.90+-x86_64-with-glibc2.35",
+  "load_seconds": 343.5,
+  "rows_done_this_session": 8,
+  "generated_tokens": 240767,
+  "seconds": 5901.7
+}

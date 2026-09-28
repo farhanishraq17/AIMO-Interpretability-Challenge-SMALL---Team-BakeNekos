@@ -9,7 +9,8 @@ Companion documents:
 - `RESULTS.md`: generated metrics.
 - `CLAUDE.md`: working conventions and commands.
 
-Last updated: 25 September 2026.
+Last updated: 29 September 2026. Current decisions: Findings 62–64 and `PLAN.md` §12;
+the early status tables below describe earlier stages.
 
 ---
 
@@ -1460,6 +1461,36 @@ The GPU jobs are now being executed using available accounts. Runtime bootstrap 
 are recorded separately from scientific outcomes; no confirmation-derived feature or
 threshold adjustment has been made. An E37 submission still requires the official transfer
 to pass its accuracy, template-bootstrap and runtime gates.
+
+### Finding 63: exact-prefix reuse is not supported by the archive (28 Sep)
+
+E38a tested the frozen hypothesis that one longest trace could provide all shorter-budget
+primary traces exactly. The CPU audit on Tamim3 failed in every comparison; the generated
+`RESULTS.md` section contains the model/source counts. No correctness labels were read.
+The conditional GPU equivalence experiment is closed under `protocols/E38_PROTOCOL.md`.
+This is an execution-cost result, not an accuracy result and not a reason to change E37's
+features, budgets or gates. Preserve independent-budget generation for the official transfer.
+
+### Finding 64: E37 exceeds its runtime gate after the execution repair (29 Sep)
+
+The old official-transfer jobs reported `RUNNING` after a fatal CUDA linker failure.
+Live logs exposed the missing `libcuda.so` linker name; a local symlink to the installed
+driver, compiler smoke check and `cuInit` check repaired initialization. A process guard
+now bounds failed or overlong jobs. Olmo also needs the compatible Transformers 5.5.3 pin
+to preserve its published rotary configuration. All four old stuck jobs are now confirmed
+cancelled by Kaggle; the user handled their session cancellation.
+
+The repaired Qwen and Skywork runs completed, but their measured runtime alone exceeds
+E37's frozen whole-run limit. DeepSeek's guard stopped its process after two hours with
+partial features saved. Olmo's Tamim3 notebook now returns `kernels.get` access denied,
+although its configured and authenticated usernames match. The reason for that denial is
+unknown. Exact coverage, timings and output hashes are recorded in
+`kernels/runs/e37-runtime-result.json`; `train/report_e37_runtime.py` generates the table.
+
+**E37 is closed by its runtime gate.** Official-set accuracy remains unmeasured because
+coverage is incomplete. No remaining run, faster-hardware assumption or post-hoc budget
+change can make this measured result pass the frozen gate. No new Codabench submission
+or further GPU retry follows; E27k remains the incumbent. E38 is also closed (Finding 63).
 
 ## 7. Results so far
 

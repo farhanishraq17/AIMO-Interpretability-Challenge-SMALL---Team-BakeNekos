@@ -735,3 +735,43 @@ Frozen GSM-Plus confirmation; source: `kernels/runs/e37-confirmation-Arifin/resu
 | qwen3-8b | 0.6302 |
 
 This opens the unchanged official AIMO transfer; it does not yet authorize a submission.
+
+## E38a: exact-prefix runtime audit
+
+Exact-prefix screening only; no correctness labels or robustness scores were read.
+
+| Source / model | Problems | Comparisons | Mismatches |
+| --- | --- | --- | --- |
+| math_perturb/qwen3-1.7b | 279 | 837 | 837 |
+| math_perturb/qwen3-4b | 279 | 837 | 837 |
+| math_perturb/qwen3-8b | 279 | 837 | 837 |
+| math_perturb/qwen3-14b | 279 | 837 | 837 |
+| gsm_plus/qwen3-1.7b | 300 | 900 | 900 |
+| gsm_plus/qwen3-4b | 300 | 900 | 900 |
+| gsm_plus/qwen3-8b | 300 | 900 | 900 |
+| gsm_plus/qwen3-14b | 300 | 900 | 900 |
+
+Total: 6,948 mismatches in 6,948 comparisons.
+All frozen gates passed: **False**.
+
+The CPU gate failed. E38b is not launched; E37 retains independent budget generations.
+Reproduce with `train/audit_e38_prefix.py`; rebuild this table with `train/report_e38.py`.
+
+## E37: official transfer runtime gate
+
+Source: `kernels/runs/e37-runtime-result.json`; exact execution metadata and output hashes are preserved beside each launch.
+
+| Model | Account | Recovered rows | Extraction seconds | Outcome |
+| --- | --- | ---: | ---: | --- |
+| qwen | MUBAMAN | 12/12 | 5,293.5 | complete |
+| skywork | Arifin | 3/3 | 2,232.6 | complete |
+| deepseek | Nipun | 8/10 | 5,901.7 | wall_time_limit |
+| olmo | Tamim3 | unknown | unknown | API access denied; token identity verified |
+
+Recovered coverage: **23/34**. No incomplete-data accuracy or AUC is reported.
+
+Completed models alone took **7,526.1 seconds**, already above the frozen **3,000-second** whole-run limit. These extraction times include model loading and generation; environment installation is additional. DeepSeek's guard stopped the process at two hours, with partial rows preserved.
+
+**Decision: E37 fails the runtime gate and is closed without a Codabench submission.** This does not establish an accuracy outcome on the official set. E27k remains the incumbent.
+
+Rebuild this table with `python train/report_e37_runtime.py`. After downloading the listed outputs, add `--collect` to validate coverage and rebuild the evidence JSON.

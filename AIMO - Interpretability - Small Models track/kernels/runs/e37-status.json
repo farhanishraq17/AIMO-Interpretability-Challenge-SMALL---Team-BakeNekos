@@ -1,9 +1,68 @@
 {
-  "olmo": "ERROR: rope_theta config compatibility; no feature rows",
-  "checked_at": "2026-09-27T22:41:58.2982105Z",
-  "qwen": "RUNNING",
+  "recorded_at": "2026-09-28T22:03:07.306053+00:00",
   "confirmation": "COMPLETE: passed",
+  "retry_jobs": {
+    "qwen": {
+      "account": "MUBAMAN",
+      "status": "COMPLETE"
+    },
+    "skywork": {
+      "account": "Arifin",
+      "status": "COMPLETE"
+    },
+    "deepseek": {
+      "account": "Nipun",
+      "status": "ERROR",
+      "reason": "wall_time_limit"
+    },
+    "olmo": {
+      "account": "Tamim3",
+      "status": "ACCESS_DENIED",
+      "identity_verified": "abrarrafi1552"
+    }
+  },
+  "old_jobs": [
+    {
+      "model": "qwen",
+      "account": "Arifin",
+      "status": "CANCEL_ACKNOWLEDGED",
+      "log_sha256": "d7a525dad186abda34fde9b61b2067183a0f9791101a60e8ced74315f5f4cf04",
+      "cuda_linker_errors": [
+        "(Worker_TP0 pid=239) ERROR 09-27 18:54:59 [multiproc_executor.py:962] /usr/bin/ld: cannot find -lcuda: No such file or directory",
+        "(Worker_TP0 pid=239) ERROR 09-27 18:54:59 [multiproc_executor.py:962] /usr/bin/ld: cannot find -lcuda: No such file or directory"
+      ]
+    },
+    {
+      "model": "deepseek",
+      "account": "Nipun",
+      "status": "CANCEL_ACKNOWLEDGED",
+      "log_sha256": "ee939d6a0e8cc18de0228b0c37017d5718ddb998fdd1270fa3cb6d79239e5d75",
+      "cuda_linker_errors": [
+        "(Worker_TP0 pid=229) ERROR 09-27 18:50:07 [multiproc_executor.py:962] /usr/bin/ld: cannot find -lcuda: No such file or directory",
+        "(Worker_TP0 pid=229) ERROR 09-27 18:50:07 [multiproc_executor.py:962] /usr/bin/ld: cannot find -lcuda: No such file or directory"
+      ]
+    },
+    {
+      "model": "skywork",
+      "account": "Tamim2",
+      "status": "CANCEL_ACKNOWLEDGED",
+      "log_sha256": "cd4956ab8cf553d2676db5fc1f8fe49719f267b8d9156dfd63fd01b556975ac9",
+      "cuda_linker_errors": [
+        "(Worker_TP1 pid=232) ERROR 09-27 17:28:52 [multiproc_executor.py:962] /usr/bin/ld: cannot find -lcuda: No such file or directory",
+        "(Worker_TP1 pid=232) ERROR 09-27 17:28:52 [multiproc_executor.py:962] /usr/bin/ld: cannot find -lcuda: No such file or directory"
+      ]
+    },
+    {
+      "model": "olmo",
+      "account": "MUBAMAN",
+      "status": "CANCEL_ACKNOWLEDGED",
+      "log_sha256": "08714a598797562a44145b628cee4c5d6029573b9228cf58a928662e3fde174b",
+      "cuda_linker_errors": [
+        "(Worker_TP0 pid=227) ERROR 09-27 23:00:25 [multiproc_executor.py:962] /usr/bin/ld: cannot find -lcuda: No such file or directory",
+        "(Worker_TP0 pid=227) ERROR 09-27 23:00:25 [multiproc_executor.py:962] /usr/bin/ld: cannot find -lcuda: No such file or directory"
+      ]
+    }
+  ],
   "transfer_scores_available": false,
-  "skywork": "RUNNING",
-  "deepseek": "RUNNING"
+  "decision": "E37 closed by runtime gate; E38a failed; no new Codabench submission"
 }

@@ -1,0 +1,25 @@
+{
+  "job": "e38-prefix-audit",
+  "account": "Tamim3",
+  "ref": "abrarrafi1552/aimo-small-e38-prefix-audit",
+  "source_sha256": {
+    "train/audit_e38_prefix.py": "9124fe11d30dc5cf4842f0d23e79438bf4092e8a67cd448b6c34ce4d43846ccf",
+    "train/test_audit_e38_prefix.py": "7e17b881d87c8b7559e6fc841471b7e4a3e2d605f8d24ed68ada2de52b6940d4",
+    "protocols/E38_PROTOCOL.md": "91babb76ff896cc314406e44385c7a4ceb0f915458d73624ac63f301ccfbfa5e"
+  },
+  "kernel_sha256": "470a4e8b80061930b31fdcec67d199993368477fcdd9b39f12cbea73bfa66d69",
+  "submitted_at": "2026-09-27T22:58:05.122653+00:00",
+  "metadata": {
+    "id": "abrarrafi1552/aimo-small-e38-prefix-audit",
+    "title": "aimo-small-e38-prefix-audit",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": false,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

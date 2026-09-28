@@ -1,0 +1,135 @@
+{
+  "stage": "E37 official transfer runtime rejection",
+  "official_rows_sha256": "07c4195dfc38a62c0a4953c7b990972e14cc4bfb92a466afb426f8e7c45832ef",
+  "runs": [
+    {
+      "model": "qwen",
+      "account": "MUBAMAN",
+      "ref": "mksadman/aimo-small-e37-retry-qwen",
+      "rows": 12,
+      "expected_rows": 12,
+      "complete": true,
+      "extraction_seconds": 5293.5,
+      "process_seconds": 5312.507441760999,
+      "end_to_end_seconds": 5548.708556652069,
+      "termination_reason": null,
+      "files": {
+        "metadata.json": {
+          "sha256": "b8b52ab3ea838fc29e09de1b6d6735a3b136580279aa20868dd5460906d85cc4",
+          "bytes": 695
+        },
+        "execution.json": {
+          "sha256": "2996e2a7c0c5423d36e94cf175d8ad79c244582e0c4a28d6caf4ab45c66b32e9",
+          "bytes": 419
+        },
+        "cuda-link-check.json": {
+          "sha256": "7ac494c0f5edcfd22bd31c8acdfb9ec84db579a9ce49c8bd2d4dd8fe4e0fda9c",
+          "bytes": 151
+        },
+        "environment.txt": {
+          "sha256": "c136745014bbcb97aebd5fc16f3dd7f797a5c9e10d8bf16a41371956bba54f33",
+          "bytes": 4005
+        },
+        "features.jsonl": {
+          "sha256": "18bdd943d1e8ef5b2e1ccbbc2cc4404b92be633c48dd1f58f62b2592f4a05d62",
+          "bytes": 39133
+        },
+        "runner.log": {
+          "sha256": "adad96e3dd8c82f3661fd7bf9a453d2b057f795aa1193c4ebefe37445342aa7b",
+          "bytes": 19146
+        }
+      }
+    },
+    {
+      "model": "skywork",
+      "account": "Arifin",
+      "ref": "joblesssamurai/aimo-small-e37-retry-skywork",
+      "rows": 3,
+      "expected_rows": 3,
+      "complete": true,
+      "extraction_seconds": 2232.6,
+      "process_seconds": 2252.91446569,
+      "end_to_end_seconds": 2502.0057878494263,
+      "termination_reason": null,
+      "files": {
+        "metadata.json": {
+          "sha256": "71090bfc67f6146ebf2a2c166bffff16646ee8b62eb0c16271b878769350c2f0",
+          "bytes": 705
+        },
+        "execution.json": {
+          "sha256": "9bd91fcf6e828a252390eaf1fdb635483d8aae8f79536d0c533020eee77b2f64",
+          "bytes": 412
+        },
+        "cuda-link-check.json": {
+          "sha256": "7ac494c0f5edcfd22bd31c8acdfb9ec84db579a9ce49c8bd2d4dd8fe4e0fda9c",
+          "bytes": 151
+        },
+        "environment.txt": {
+          "sha256": "c136745014bbcb97aebd5fc16f3dd7f797a5c9e10d8bf16a41371956bba54f33",
+          "bytes": 4005
+        },
+        "features.jsonl": {
+          "sha256": "247e3bdb82de38b3ffcc1b04f0691a17df3b314d458cbd098b5bafcab0bf83a4",
+          "bytes": 9883
+        },
+        "runner.log": {
+          "sha256": "43388f344cf2671a21600c6d7023e43b685adee31a918816a24956bbb41dbfe2",
+          "bytes": 15273
+        }
+      }
+    },
+    {
+      "model": "deepseek",
+      "account": "Nipun",
+      "ref": "nowshintabassumnipun/aimo-small-e37-retry-deepseek",
+      "rows": 8,
+      "expected_rows": 10,
+      "complete": false,
+      "extraction_seconds": 5901.7,
+      "process_seconds": 7200.373193362,
+      "end_to_end_seconds": 7431.14762544632,
+      "termination_reason": "wall_time_limit",
+      "files": {
+        "metadata.json": {
+          "sha256": "d81d00ee3903cafb07d30d1c530b8a5392c4b8ce10f1a755dada2a84a0f8f163",
+          "bytes": 716
+        },
+        "execution.json": {
+          "sha256": "506aac8c6072d3e12f02e578cdd82e49a69ce5f8ef9f0ab28468a5b66265cbdc",
+          "bytes": 437
+        },
+        "cuda-link-check.json": {
+          "sha256": "7ac494c0f5edcfd22bd31c8acdfb9ec84db579a9ce49c8bd2d4dd8fe4e0fda9c",
+          "bytes": 151
+        },
+        "environment.txt": {
+          "sha256": "c136745014bbcb97aebd5fc16f3dd7f797a5c9e10d8bf16a41371956bba54f33",
+          "bytes": 4005
+        },
+        "features.jsonl": {
+          "sha256": "50fa947bd54554e7741944f39dfd029c5f32aa058bbbc5ea53887a79ce5758ab",
+          "bytes": 26257
+        },
+        "runner.log": {
+          "sha256": "60f12d1f1f497cf0ef55bef43088e42f2d59b810a78ad800b886a3dec69dafab",
+          "bytes": 15096
+        }
+      }
+    }
+  ],
+  "recovered_rows": 23,
+  "expected_rows": 34,
+  "unavailable_run": {
+    "model": "olmo",
+    "account": "Tamim3",
+    "ref": "abrarrafi1552/aimo-small-e37-retry-olmo",
+    "status": "access_denied",
+    "rows": null
+  },
+  "completed_models_runtime_lower_bound_seconds": 7526.1,
+  "runtime_limit_seconds": 3000,
+  "runtime_gate_passed": false,
+  "accuracy_evaluated": false,
+  "submission_eligible": false,
+  "decision": "Close E37 under its frozen runtime gate; no further GPU retry or Codabench submission."
+}

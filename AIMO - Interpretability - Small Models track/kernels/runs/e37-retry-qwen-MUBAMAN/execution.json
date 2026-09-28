@@ -1,0 +1,21 @@
+{
+  "exit_code": 0,
+  "termination_reason": null,
+  "process_seconds": 5312.507441760999,
+  "end_to_end_seconds": 5548.708556652069,
+  "command": [
+    "/tmp/e37-env/bin/python",
+    "datagen/extract_budget_path.py",
+    "--model-id",
+    "Qwen/Qwen3.5-4B",
+    "--out-dir",
+    "/kaggle/working/e37-qwen",
+    "--tensor-parallel",
+    "2",
+    "--max-num-seqs",
+    "2",
+    "--chunk",
+    "2",
+    "--text-only"
+  ]
+}

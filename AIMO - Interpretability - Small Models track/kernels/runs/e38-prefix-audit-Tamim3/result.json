@@ -1,0 +1,319 @@
+{
+  "stage": "E38a exact-prefix audit",
+  "dataset": "ssubhnil/Qwen3-Math-Eval",
+  "revision": "f64c82f5ce9249155ad7c70991a9711d92963cce",
+  "columns_read": [
+    "model",
+    "problem_id",
+    "variant",
+    "token_budget",
+    "trace",
+    "temperature",
+    "seed",
+    "answer_forced"
+  ],
+  "cells": {
+    "math_perturb/qwen3-1.7b": {
+      "problems": 279,
+      "budgets": {
+        "2048": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 224,
+          "forced_mismatches": 224,
+          "natural_comparisons": 55,
+          "natural_mismatches": 55
+        },
+        "4096": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 146,
+          "forced_mismatches": 146,
+          "natural_comparisons": 133,
+          "natural_mismatches": 133
+        },
+        "8192": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 57,
+          "forced_mismatches": 57,
+          "natural_comparisons": 222,
+          "natural_mismatches": 222
+        }
+      },
+      "comparisons": 837,
+      "mismatches": 837
+    },
+    "math_perturb/qwen3-4b": {
+      "problems": 279,
+      "budgets": {
+        "2048": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 228,
+          "forced_mismatches": 228,
+          "natural_comparisons": 51,
+          "natural_mismatches": 51
+        },
+        "4096": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 139,
+          "forced_mismatches": 139,
+          "natural_comparisons": 140,
+          "natural_mismatches": 140
+        },
+        "8192": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 48,
+          "forced_mismatches": 48,
+          "natural_comparisons": 231,
+          "natural_mismatches": 231
+        }
+      },
+      "comparisons": 837,
+      "mismatches": 837
+    },
+    "math_perturb/qwen3-8b": {
+      "problems": 279,
+      "budgets": {
+        "2048": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 239,
+          "forced_mismatches": 239,
+          "natural_comparisons": 40,
+          "natural_mismatches": 40
+        },
+        "4096": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 147,
+          "forced_mismatches": 147,
+          "natural_comparisons": 132,
+          "natural_mismatches": 132
+        },
+        "8192": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 50,
+          "forced_mismatches": 50,
+          "natural_comparisons": 229,
+          "natural_mismatches": 229
+        }
+      },
+      "comparisons": 837,
+      "mismatches": 837
+    },
+    "math_perturb/qwen3-14b": {
+      "problems": 279,
+      "budgets": {
+        "2048": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 233,
+          "forced_mismatches": 233,
+          "natural_comparisons": 46,
+          "natural_mismatches": 46
+        },
+        "4096": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 130,
+          "forced_mismatches": 130,
+          "natural_comparisons": 149,
+          "natural_mismatches": 149
+        },
+        "8192": {
+          "comparisons": 279,
+          "mismatches": 279,
+          "forced_comparisons": 45,
+          "forced_mismatches": 45,
+          "natural_comparisons": 234,
+          "natural_mismatches": 234
+        }
+      },
+      "comparisons": 837,
+      "mismatches": 837
+    },
+    "gsm_plus/qwen3-1.7b": {
+      "problems": 300,
+      "budgets": {
+        "2048": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 56,
+          "forced_mismatches": 56,
+          "natural_comparisons": 244,
+          "natural_mismatches": 244
+        },
+        "4096": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 17,
+          "forced_mismatches": 17,
+          "natural_comparisons": 283,
+          "natural_mismatches": 283
+        },
+        "8192": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 3,
+          "forced_mismatches": 3,
+          "natural_comparisons": 297,
+          "natural_mismatches": 297
+        }
+      },
+      "comparisons": 900,
+      "mismatches": 900
+    },
+    "gsm_plus/qwen3-4b": {
+      "problems": 300,
+      "budgets": {
+        "2048": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 61,
+          "forced_mismatches": 61,
+          "natural_comparisons": 239,
+          "natural_mismatches": 239
+        },
+        "4096": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 18,
+          "forced_mismatches": 18,
+          "natural_comparisons": 282,
+          "natural_mismatches": 282
+        },
+        "8192": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 1,
+          "forced_mismatches": 1,
+          "natural_comparisons": 299,
+          "natural_mismatches": 299
+        }
+      },
+      "comparisons": 900,
+      "mismatches": 900
+    },
+    "gsm_plus/qwen3-8b": {
+      "problems": 300,
+      "budgets": {
+        "2048": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 72,
+          "forced_mismatches": 72,
+          "natural_comparisons": 228,
+          "natural_mismatches": 228
+        },
+        "4096": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 18,
+          "forced_mismatches": 18,
+          "natural_comparisons": 282,
+          "natural_mismatches": 282
+        },
+        "8192": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 1,
+          "forced_mismatches": 1,
+          "natural_comparisons": 299,
+          "natural_mismatches": 299
+        }
+      },
+      "comparisons": 900,
+      "mismatches": 900
+    },
+    "gsm_plus/qwen3-14b": {
+      "problems": 300,
+      "budgets": {
+        "2048": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 38,
+          "forced_mismatches": 38,
+          "natural_comparisons": 262,
+          "natural_mismatches": 262
+        },
+        "4096": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 11,
+          "forced_mismatches": 11,
+          "natural_comparisons": 289,
+          "natural_mismatches": 289
+        },
+        "8192": {
+          "comparisons": 300,
+          "mismatches": 300,
+          "forced_comparisons": 1,
+          "forced_mismatches": 1,
+          "natural_comparisons": 299,
+          "natural_mismatches": 299
+        }
+      },
+      "comparisons": 900,
+      "mismatches": 900
+    }
+  },
+  "files": [
+    {
+      "path": "data/math_perturb/qwen3-1.7b.parquet",
+      "sha256": "5847dce191c2bbc1c5c318fa68cbfb92390c2ca4bf8f60acffe17e89dfb20b71",
+      "bytes": 16806339
+    },
+    {
+      "path": "data/math_perturb/qwen3-4b.parquet",
+      "sha256": "a7314378c59059883ee8e93ab175212fe34aa3048cb0ce6ad55382cdd60f2b5a",
+      "bytes": 17327331
+    },
+    {
+      "path": "data/math_perturb/qwen3-8b.parquet",
+      "sha256": "7c30e327359fe0da5040a19aa9f860016ce8a3d168b21102d572e3d7d376fddd",
+      "bytes": 18520384
+    },
+    {
+      "path": "data/math_perturb/qwen3-14b.parquet",
+      "sha256": "e858245ef020a6373fc0d0d141927cd9c2da5755aae0a196b9a145aac3d5d6d7",
+      "bytes": 17905470
+    },
+    {
+      "path": "data/gsm_plus/qwen3-1.7b.parquet",
+      "sha256": "ba4bc7cd45422339959b52b275ceaa099c193466f586bceb75d62e0f985ee506",
+      "bytes": 24216256
+    },
+    {
+      "path": "data/gsm_plus/qwen3-4b.parquet",
+      "sha256": "fcd07279ea77d778ba34fc7386204870bb6ff229da3cdfbba5c5342d95829cbe",
+      "bytes": 26562762
+    },
+    {
+      "path": "data/gsm_plus/qwen3-8b.parquet",
+      "sha256": "4183d909b4951b0e83246d9c808140199283177913c414b57134db8c3dec8288",
+      "bytes": 29876059
+    },
+    {
+      "path": "data/gsm_plus/qwen3-14b.parquet",
+      "sha256": "ddc1c01190e93c965116301b396f3b3603656d10336e82955d191d48746d4c95",
+      "bytes": 27149975
+    }
+  ],
+  "comparisons": 6948,
+  "mismatches": 6948,
+  "gates": {
+    "at_least_50_problems_per_cell": true,
+    "exact_prefixes_everywhere": false
+  },
+  "passed": false,
+  "packages": {
+    "pandas": "3.0.3",
+    "pyarrow": "24.0.0",
+    "huggingface-hub": "1.22.0"
+  }
+}

@@ -50,7 +50,10 @@ removed on 26 Sep.)
     ahead). The pin is deliberate; our signature already works under both callers.
   - `.gitignore` excludes `Secrets.env` (and `*.env`), `data/`, `features/`, `runs/`,
     `kaggle_runs/`, and `dist/`.
-  - Before every commit, `git grep --cached -n "KGAT_"` must print nothing.
+  - Before every commit, run `python scripts/check_staged_secrets.py`. It rejects complete
+    token patterns, current local credential values, staged environment files and changes
+    outside this track without printing secrets. Literal markers in documentation and
+    redaction code are expected; a marker-only grep cannot distinguish them from credentials.
 - **Python:** system Python 3.13 carries the Kaggle CLI (2.2.2). The project venv is
   `getting-started/.venv`, pinned to the competition runtime: torch 2.12.1 (CPU build
   locally), transformers 5.13.0, scikit-learn 1.8.0, pandas 3.0.3, pyarrow.
@@ -268,6 +271,14 @@ MUBAMAN=`mksadman`, Arifin=`joblesssamurai`, Nipun=`nowshintabassumnipun`,
 Tamim2=`duneak47`, Tamim3=`abrarrafi1552`. Tamim1=`fehazulislamsawmiq` authenticates but
 its latest test received no GPU/internet. The tables below describe historical runs.
 Current follow-ups use `scripts/kaggle_followup.py` and the `.venv` in this track's root.
+
+**29 Sep execution decision:** E37 is closed by its measured runtime gate, and E38a failed.
+Do not relaunch them or submit an incomplete E37 candidate. See `PLAN.md` §12 and
+`kernels/runs/e37-runtime-result.json`. Tamim3's current token resolves to the expected
+username, but access to its Olmo retry notebook is denied. All four old stuck official jobs
+are confirmed cancelled. For future work, inspect `scripts/kaggle_live_logs.py` output as
+well as API status: a worker can fail while Kaggle still reports `RUNNING`. Retry bundles
+include a CUDA-link smoke check and a bounded process guard.
 
 Six accounts, each with about 30 GPU-hours a week and 12-hour sessions. Roles are in `PLAN.md`.
 
