@@ -1124,6 +1124,11 @@ def main() -> None:
     for name in args.experiments or list(EXPERIMENTS):
         experiment = EXPERIMENTS[name]
         account = args.account or experiment.account
+        # `Secrets.env` is per-machine and ISHMAM1/DESIKALAKAR lost their tokens on 17 Sep, so a
+        # whole-registry `status` used to die on the first such entry before reporting anything.
+        if account not in load_accounts():
+            print(f"{name:26s} [{account}] no token in Secrets.env on this machine; skipped")
+            continue
         if args.command == "build":
             build(name, account)
         elif args.command == "push":
