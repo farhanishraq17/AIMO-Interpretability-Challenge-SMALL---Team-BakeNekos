@@ -1853,6 +1853,48 @@ case each time.** (Codabench submissions 946252-946253, 26 Sep, both 0.79.)
   balances - no free parameter left that the leaderboard chose.
 ---
 
+
+**62. The incumbent is fast, exactly repeatable and precision-proof; its bare-text prompt is
+load-bearing, and it stays at odds with the official labels.** (E39, `submission/audit_e27k.py`
+on ISHRAQ, 30 Sep; `runs/e39-audit-e27k-*/e39_audit.json`.) The shipped
+`dist/solution-e27k-tilted-small.zip` was audited on GPU for the first time - `check_e27d.py` had
+audited its inverted sibling, before the tilts existed. Every model scored all 36 official
+problems, so the batch is large enough for a median split to be meaningful.
+
+| model | seconds | per problem | deterministic | fp16 flips | chat-template flips |
+| --- | --- | --- | --- | --- | --- |
+| Qwen/Qwen3.5-4B | 50.0 | 1.39 | yes | **0** / 36 | 6 / 36 |
+| Skywork-OR1-Math-7B | 81.5 | 2.27 | yes | **0** / 36 | 2 / 36 |
+| allenai/Olmo-3-7B-Think | 100.8 | 2.80 | yes | **0** / 36 | 10 / 36 |
+| DeepSeek-R1-0528-Qwen3-8B | 101.9 | 2.83 | yes | **0** / 36 | 2 / 36 |
+
+- **Runtime is not a risk.** 334 s for all four models over 144 problem-scorings including four
+  cold model loads, on T4x2. The budget is 3600 s on a single RTX PRO 6000, which is faster than
+  a T4 pair, and the hidden batch is about 14 cases rather than 144. Ties break on runtime and
+  this leaves an order of magnitude of margin.
+- **Repeatability is exact.** Two identical calls returned identical predictions for all four
+  models, all predictions are native `bool`, and the audit's own loader reproduced the shipped
+  `problem_nll` (Spearman > 0.999), so the arms below are measuring the shipped path.
+- **The ranking is not precision-sensitive.** fp16 against bf16 moved **zero** predictions on any
+  model, at Spearman 0.9928 to 1.0000. Features were extracted where T4 bf16 is emulated
+  (Finding 13) and evaluation runs bf16 on Blackwell; this does not reproduce that card, but it
+  bounds the concern, and nothing suggests 0.86 depends on a dtype.
+- **The bare-text prompt is load-bearing.** Scoring the model's own chat template instead moves
+  2 to 10 of 36 predictions, at Spearman 0.738 (Qwen) to 0.973 (Skywork). This does not threaten
+  the shipped ZIP, which scores bare text and always has - it says the familiarity ranking is
+  partly a property of *how the problem is framed*, not only of the problem and the model.
+  **Do not "improve" the policy to use the chat template before the freeze**: it is a different
+  policy with no leaderboard evidence behind it, and Qwen and Olmo would each move several cases.
+- **The contradiction of PLAN section 12.3 survives contact with the shipped artifact.** Predicted
+  against each model's own labelled rows, e27k agrees 0.333 (Qwen, 4 of 12), 0.400 (DeepSeek),
+  0.333 (Skywork, 1 of 3) and 0.222 (Olmo, 2 of 9), against an always-robust floor of 0.667 to
+  0.778 on those same rows. Part of that gap is mechanical and must not be over-read: a median
+  split calls half of a 36-problem batch robust, while the official rows are 70 to 78 percent
+  robust, so the split cannot reproduce that prior whatever it ranks. But the direction is the
+  same one E23 and Finding 58 found, now measured with the artifact that scores 0.86 rather than
+  with features. **The freeze on 27 Oct is still a judgement call between e27k and e27e**, and
+  E39 does not settle it; what E39 removes is the worry that 0.86 rests on a fragile mechanism.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
