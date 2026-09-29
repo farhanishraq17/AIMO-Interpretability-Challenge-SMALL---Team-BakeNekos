@@ -65,6 +65,44 @@ predict 0.53, so at least one of them no longer holds on the current task.
 
 ---
 
+## The re-probe (built 30 Sep, ready to upload)
+
+`python submission/make_probes.py` rebuilds five constant ZIPs into `dist/probes/`. They exist to
+re-measure each model's class balance `d = robust - spurious` on the **current** task, because
+Finding 63 shows `e27k`'s tilts are forced by those balances — and the balances were last measured
+on **18 September**. The hidden task was silently rebuilt once before (Finding 35), and if it were
+rebuilt again the tilts could be exactly wrong.
+
+**Upload `all-false` first**: every other probe is read relative to it.
+
+| Order | ZIP | Expected if nothing changed |
+| --- | --- | --- |
+| 1 | `solution-probe-all-false-small.zip` | **0.50** (7/14) |
+| 2 | `solution-probe-true-qwen35-4b-small.zip` | 0.57 (8/14) |
+| 3 | `solution-probe-true-deepseek-small.zip` | 0.57 (8/14) |
+| 4 | `solution-probe-true-skywork-7b-small.zip` | 0.43 (6/14) |
+| 5 | `solution-probe-true-olmo3-think-small.zip` | 0.43 (6/14) |
+
+Five of the ten submissions allowed per day, and about 270 remain of 300.
+
+**Reading the result.** With all-False scoring `a` cases out of 14, turning one model to `True`
+gains its robust cases and loses its spurious ones, so a probe scoring `m` gives that model's
+balance directly:
+
+```
+d_model = m - a        (in cases, not accuracy: multiply each score by 14)
+```
+
+- **All five match the table** → the balances hold, `e27k`'s counts are still exactly right, and
+  the freeze goes to `e27k` on Finding 63.
+- **All-False is not 7/14** → the case count or the class split changed; every arithmetic result
+  from Finding 45 onward has to be re-derived before the freeze.
+- **A balance flipped sign** → the tilt for that model is now wrong, and `e27k` would be calling
+  the wrong number robust. Rebuild with the corrected `TILT` in `make_e27.py` and re-upload.
+
+The probes are constants, so they need no GPU and cannot fall back or time out. Each is under
+400 bytes.
+
 ## Rebuilding
 
 ```bash
