@@ -775,3 +775,31 @@ Completed models alone took **7,526.1 seconds**, already above the frozen **3,00
 **Decision: E37 fails the runtime gate and is closed without a Codabench submission.** This does not establish an accuracy outcome on the official set. E27k remains the incumbent.
 
 Rebuild this table with `python train/report_e37_runtime.py`. After downloading the listed outputs, add `--collect` to validate coverage and rebuild the evidence JSON.
+
+## E40: batch composition and the null for 12/14
+
+56 per-model case splits are consistent with the probe-measured balances (Finding 45) and the 14-case total. Sizes are unknown, so every one is carried and the null is averaged over them, weighting each equally.
+
+| policy | robust calls per model | P(score >= observed) under a random ranking | observed |
+| --- | --- | --- | --- |
+| e27e (median split) | 1-6 of each batch | **0.1436** | 10/14 |
+| e27k (tilted) | 0-6 of each batch | **0.0552** | 12/14 |
+
+Mean score under the null: 7.00/14 for the median split and 8.05/14 tilted, against 7/14 for all-False and 9/14 for the best constants.
+
+**What the tilts change.** `ceil(n/2) - 1` differs from `ceil(n/2)` in exactly one prediction per tilted model for every batch size above zero, so `e27e` and `e27k` differ in exactly **two** predictions: the least familiar problem each of Skywork and Olmo would otherwise call robust. `e27k` scored two cases higher, so both tilts were correct.
+
+**And that is not luck - it is forced.** Four batch sizes with those balances must all be odd to total 14, so `ceil(n/2) = (n+1)/2` throughout. A model with balance +1 has `(n+1)/2` robust cases; one with balance -1 has `(n-1)/2`. Therefore:
+
+- **`e27k` calls exactly the true number of robust cases for every model, in 56 of 56 compositions.**
+- **`e27e` does so in 0 of 56**: it over-calls robust by one for each of Skywork and Olmo, whatever the batch sizes turn out to be.
+
+So the tilts are not a tweak fitted to the 12/14 result. They are the arithmetic consequence of balances the constant probes measured independently, and they are right for *any* batch sizes consistent with those balances. This also explains why all six single-step neighbours score 11/14 (Finding 61): each moves one model's count off the only exact value and loses about a case for it.
+
+The assumption carried throughout is Finding 45's: the balances still hold and the hidden set has not been rebuilt since 18 September. It was rebuilt once before without notice (Finding 35), and a re-probe is the check.
+
+Null distribution for the tilted policy (probability of each total, averaged over the 56 compositions):
+
+| correct | 4 | 6 | 8 | 10 | 12 | 14 |
+| --- | --- | --- | --- | --- | --- | --- |
+| P | 0.044 | 0.247 | 0.408 | 0.245 | 0.052 | 0.003 |

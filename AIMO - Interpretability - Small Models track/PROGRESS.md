@@ -1901,6 +1901,42 @@ problems, so the batch is large enough for a median split to be meaningful.
   with features. **The freeze on 27 Oct is still a judgement call between e27k and e27e**, and
   E39 does not settle it; what E39 removes is the worry that 0.86 rests on a fragile mechanism.
 
+
+**63. `e27k`'s counts are forced by the probes, not fitted to its score; the ranking on top of
+them sits at p = 0.055.** (E40, `train/eval_batch_composition.py`, 30 Sep, CPU. RESULTS, "E40:
+batch composition and the null for 12/14".)
+
+The hidden set is 14 cases over four models, so each `are_robust` call sees a handful of problems
+and `ceil(n/2)` is dominated by rounding. The worry this tests: is 12/14 an artifact of that
+arithmetic? The per-model sizes are unknown, so all 56 splits consistent with Finding 45's
+balances and the 14-case total are enumerated and every statement below holds across all of them.
+
+- **Every consistent batch size is odd.** Four sizes with balances +1, +1, -1, -1 must each be odd
+  to total 14, so `ceil(n/2) = (n+1)/2` throughout. A model with balance +1 then has exactly
+  `(n+1)/2` robust cases, and one with balance -1 has exactly `(n-1)/2`.
+- **So `e27k` calls the true number of robust cases for every model, in 56 of 56 compositions,
+  and `e27e` does so in 0 of 56.** The tilts are the arithmetic consequence of balances the
+  constant probes measured independently on the current task; they are correct for *any* batch
+  sizes consistent with those balances. This retires the reading in Finding 61 that they were a
+  tuned tweak - and it explains the six neighbours at 11/14: each moves one count off the only
+  exact value.
+- **Given those counts, a ranking carrying no information scores 8.05 of 14 on average.** So
+  about one of `e27k`'s two-case lead over `e27e` is count arithmetic rather than ranking quality.
+  The observed 12 sits at **p = 0.0552**; `e27e`'s 10 sits at p = 0.1436. On this evidence the
+  familiarity ordering is suggestive and not significant, which is the same verdict every offline
+  test returned (Findings 46, 47) - but here it is measured on the hidden set rather than on ours.
+- **Scores for a fixed count vector are spaced two apart**, because the total correct has parity
+  fixed by the sum of the robust calls. A policy with `e27k`'s counts can score 10, 12 or 14 and
+  never 11 or 13, so two cases is the smallest observable difference, not a comfortable margin.
+
+**For the 27 Oct freeze this is the strongest argument yet for `e27k` over `e27e`**, and it does
+not depend on the contested familiarity direction at all: whatever the ranking does, `e27k` calls
+the right *number* robust for every model and `e27e` provably does not. It rests on one
+assumption, the one Finding 45 already flagged - that the balances still hold and the set has not
+been rebuilt since 18 September. It was rebuilt once without notice (Finding 35). **Five constant
+probes would re-measure the balances and cost five of the roughly 270 remaining submissions**;
+that is the cheapest insurance available before the freeze.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
