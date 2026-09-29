@@ -2,8 +2,13 @@
 
 ### A record of the AIMO Interpretability Challenge, both tracks
 
+**Farhan Ishraq**¹ · *[co-author names to be filled in — see `README.md`]*
+
+¹ Correspondence: farhanishraq2003@gmail.com · Code:
+<https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Team-BakeNekos>
+
 **Draft — 30 September 2026.** Every number here is regenerable from the repository; the
-commands are in §14. Findings are cited as `F-n` (Small Models Track, `PROGRESS.md`) and `LF-n`
+commands are in §15. Findings are cited as `F-n` (Small Models Track, `PROGRESS.md`) and `LF-n`
 (Main Track). Where this draft and a `RESULTS.md` table disagree, the table is right.
 
 ---
@@ -280,6 +285,11 @@ published figure is a **layer-selection artifact**: choosing the best layer on t
 scores it inflates inner-fold AUC of 0.75–0.85 down to 0.640 held out. Averaging every layer,
 rather than selecting one, is a genuine lead at AUC 0.749 — but see §6.2.
 
+![Per-layer balanced accuracy for three poolings, against the text floor and the honest nested result](figures/fig1_layer_curve.svg)
+
+**Figure 1.** Every individual layer scores well above the honestly nested probe, and several beat the text-only floor. That gap is the artifact: per-layer values are read off the same data that would select the layer. Nested selection — choosing the layer inside each fold — scores 0.552. DeepSeek-R1-0528-Qwen3-8B, 138 instances, 37 layers.
+
+
 **This is the single most useful thing a newcomer to this competition can know**, and it applies to
 anyone who takes the baseline's number at face value.
 
@@ -365,7 +375,12 @@ The most uncomfortable result in the project, and the one we cannot explain.
 
 **On this task, offline validation was anti-correlated with leaderboard behaviour.** The two
 methods with the best offline credentials scored 4/14 and 8/14; the method that failed its offline
-gate scored 12/14. We report this as an observation rather than a theory. It is the strongest
+gate scored 12/14.
+
+![Offline problem-level AUC against leaderboard score, showing an inverse relation](figures/fig4_inversion.svg)
+
+**Figure 4.** Offline problem-level AUC (E28 harness, template-grouped) against cases correct on the hidden set, for every candidate submitted with both measurements. Min-K gap was the best of twelve candidates offline — AUC 0.867, template-bootstrap CI [0.728, 0.973], maxT-adjusted p = 0.0010 — and scored 4/14. Mean NLL was among the worst offline and scored 10, then 12 once its counts were derived. `e27e` and `e27k` share an x-coordinate: the same statistic, different counts.
+ We report this as an observation rather than a theory. It is the strongest
 practical reason we stopped selecting methods offline and started reasoning about the evaluation
 distribution's arithmetic directly (§7).
 
@@ -394,6 +409,11 @@ Twenty-two submissions, each designed to answer one question rather than to clim
 says the ranking carries information and is pointing the wrong way. Shipping its exact opposite
 produced 10/14 the next day.
 
+![The leaderboard series as a ladder, from 12/14 down to 4/14](figures/fig2_leaderboard_ladder.svg)
+
+**Figure 2.** Each upload was designed to answer one question rather than to climb. The two reference lines are the whole strategic picture: nothing below 7 beats answering `False` everywhere, and nothing below 9 beats the best constants, so only the top two rows contain per-problem information.
+
+
 ### 7.2 Why the counts were the real gain
 
 Decomposing `e27k`'s 12: a random ranking with the *same derived counts* scores **8.05/14** in
@@ -405,6 +425,11 @@ which is the same verdict every offline test returned, now measured on the hidde
 A structural detail worth carrying: for a fixed count vector the achievable totals are **spaced two
 apart**, because parity is fixed by the sum of robust calls. `e27k` can score 10, 12 or 14 and never
 11 or 13. Two cases is the minimum observable difference, not a margin.
+
+![Null distribution of the score under a random ranking with e27k's counts](figures/fig3_null_distribution.svg)
+
+**Figure 3.** The exact distribution of the score when the ranking is replaced by chance but the counts are kept, averaged over all 56 batch compositions consistent with the measured balances. Correct counts alone are worth about a case over all-False (8.05 against 7). The observed 12 sits in the 0.052 bar: P(score ≥ 12) = 0.055.
+
 
 ### 7.3 Mechanical audit of the incumbent
 
@@ -565,7 +590,66 @@ ranking's direction — but it remains the most interesting open question in the
 
 ---
 
-## 13. What we would do differently
+## 13. Related work
+
+**Citations below are from memory and have not been verified against the literature — check every
+one before submission.** Titles and authors are given rather than venues where we are less sure.
+
+**Perturbation robustness in mathematical reasoning.** The competition's premise — that final-answer
+accuracy overstates reasoning — is the same one behind *GSM-Symbolic* (Mirzadeh et al., 2024), which
+templates GSM8K problems and shows accuracy falling when only surface constants change, and falling
+further when an irrelevant clause is added. Our `distract` family is that construction, and the
+organizers' `maxdrop` rule is a thresholded version of the same measurement. *MATH-Perturb* and
+*Putnam-AXIOM* supply the external labels used in E35; Hendrycks et al.'s *MATH* (2021) is the
+distribution our labelled data came from and, per §6.2, the reason it did not transfer.
+
+**Contamination and membership inference.** Our shipped statistic is a membership-inference score
+used for a different purpose. Mean token NLL is the oldest such signal; *Min-K%* (Shi et al., 2023)
+averages the lowest-probability tokens, *Min-K%++* (Zhang et al., 2024) normalises it per token, and
+the zlib-compression ratio is from Carlini et al.'s training-data extraction work (2021), with the
+reference-model calibration from *Membership Inference Attacks From First Principles* (Carlini et
+al., 2022). We implemented all of them (E23, E28). The relevant negative result is §6.7: the
+statistic with the strongest contamination-detection credentials offline (Min-K gap) was the worst
+predictor of robustness on the hidden set, and plain mean NLL was the best.
+
+To our knowledge the *direction* we found — familiar problems being **more** robust on the
+evaluation distribution, while familiarity predicts brittleness on published olympiad problems
+(§12) — is not reported in that literature, which studies contamination as a threat to benchmark
+validity rather than as a feature.
+
+**Probing and its selection artifacts.** Linear probing of hidden states follows Alain and Bengio
+(2016); Hewitt and Liang's *Designing and Interpreting Probes with Control Tasks* (2019) is the
+direct antecedent of §6.1 — a probe's accuracy is uninterpretable without a control for what the
+probe itself can fit. Belinkov's probing survey (2022) catalogues the same failure. Our
+contribution here is an instance rather than a method: the competition's own published baseline
+reports 58.37% where honest nested selection gives 0.5005, and the difference is layer selection.
+
+**Sparse autoencoders.** Feature-level interpretability via SAEs (Cunningham et al., 2023; Bricken
+et al., 2023; Templeton et al., 2024) is what the Small Models Track was designed to invite. We did
+not pursue it: with 33 labelled problems, a feature search over thousands of sparse features has no
+statistical power, and our template-cluster bootstrap would reject anything it found. We record
+this as a deliberate omission, not an oversight (§5, lane C).
+
+**Uncertainty and self-consistency.** The organizers' second baseline uses token-level uncertainty
+features; the underlying idea traces to Kadavath et al. (2022) on models knowing what they know,
+and to semantic-entropy approaches (Kuhn et al., 2023; Farquhar et al., 2024). Self-consistency
+(Wang et al., 2023) motivated E14's answer-agreement test. Both were at chance here (§6.4), and
+E14's cost — 28,000 generated tokens per problem — is the concrete reason sampling-based
+uncertainty is a poor fit for a one-hour whole-run budget.
+
+**Multiple comparisons.** The maxT family-wise adjustment used throughout our gates follows
+Westfall and Young's resampling-based procedure. Applying it is what turned several attractive
+signals into null results (§6.5).
+
+**Where this work sits.** We contribute no new interpretability method. The contributions are
+empirical and methodological: a training-free predictor competitive on the task, a closed-form
+result for its only free parameters (§4.2), a way to read the evaluation distribution's class
+balance off constant submissions (§7.2), and a documented inversion between offline validation and
+held-out behaviour that we cannot explain (§6.7).
+
+---
+
+## 14. What we would do differently
 
 1. **Read the labels before sampling anything.** Two zero-GPU analyses of 82 rows (LF-12, LF-13)
    produced more usable structure than 120 GPU-hours of panel sampling that preceded them.
@@ -580,7 +664,7 @@ ranking's direction — but it remains the most interesting open question in the
 
 ---
 
-## 14. Reproducibility
+## 15. Reproducibility
 
 ```bash
 # Every generated table in the Small Models Track (~25 min)
@@ -606,7 +690,7 @@ rebuilt if a Kaggle account disappears.
 
 ---
 
-## 15. Summary of contributions
+## 16. Summary of contributions
 
 1. **A training-free robustness predictor** that scores 12/14 on the hidden validation set, ranking
    a batch by the scoring model's own likelihoods and fixing its counts by a closed-form identity in
