@@ -1885,6 +1885,12 @@ problems, so the batch is large enough for a median split to be meaningful.
   partly a property of *how the problem is framed*, not only of the problem and the model.
   **Do not "improve" the policy to use the chat template before the freeze**: it is a different
   policy with no leaderboard evidence behind it, and Qwen and Olmo would each move several cases.
+- **An independent account reproduced it exactly.** The same Qwen and DeepSeek audit ran on RSD
+  in a separate session on a separate machine, and every prediction matches ISHRAQ's - the
+  baseline split, the fp16 arm and the chat-template arm, all four comparisons identical
+  (`runs/e39-audit-e27k-a-rsd/`). Only wall time moved, 50.0 s to 57.1 s for Qwen and 101.9 s to
+  112.1 s for DeepSeek, which is worth remembering because ties break on runtime: expect about
+  10 percent of machine-to-machine variation in any timing we quote.
 - **The contradiction of PLAN section 12.3 survives contact with the shipped artifact.** Predicted
   against each model's own labelled rows, e27k agrees 0.333 (Qwen, 4 of 12), 0.400 (DeepSeek),
   0.333 (Skywork, 1 of 3) and 0.222 (Olmo, 2 of 9), against an always-robust floor of 0.667 to

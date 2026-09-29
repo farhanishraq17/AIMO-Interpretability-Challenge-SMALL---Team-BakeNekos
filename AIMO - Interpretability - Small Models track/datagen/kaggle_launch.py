@@ -50,6 +50,10 @@ OLMO_THINK = "allenai/Olmo-3-7B-Think"
 # Written into the bundle at build time from the probe artifact, the single source of truth.
 SYSTEM_PROMPT_PATH = "data/probe_system_prompt.txt"
 KAGGLE_FEATURES = "/kaggle/working/features"
+# Accounts that must never receive new work. Reading finished runs from them stays allowed, which
+# is why this guards `push` alone and not the token lookup. RSD is shared with a teammate's
+# project under the alias MEDIUM (Finding 42); the owner made it read-only on 30 Sep 2026.
+READ_ONLY_ACCOUNTS = frozenset({"RSD"})
 
 # Library pins from Dockerfile.competition. torch stays as Kaggle ships it: the
 # competition's CUDA 13.2 build targets Blackwell, and the T4 needs Kaggle's own wheel.
@@ -1155,6 +1159,12 @@ def main() -> None:
         if args.command == "build":
             build(name, account)
         elif args.command == "push":
+            if account in READ_ONLY_ACCOUNTS:
+                raise SystemExit(
+                    f"{account} is read-only: no new work may be pushed to it (owner's instruction, "
+                    f"30 Sep 2026). Its finished runs are still readable with status/logs/output. "
+                    f"Re-run with --account <other alias>."
+                )
             out = build(name, account)
             code, text = kaggle(account, "kernels", "push", "-p", str(out), "--accelerator", experiment.accelerator)
             print(f"[{account}] push exit={code}\n{text}\n")
