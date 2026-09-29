@@ -13,6 +13,9 @@ Both folders now carry the same document set — `CLAUDE.md`, `COMPETITION.md`, 
 `PROGRESS.md`, `RESULTS.md`, `experiments.md`, `protocols/` — with the same role for each file.
 Findings are numbered separately: `1..61` in the small track, `LF-1..LF-15` in the Main Track.
 
+`PAPER_DRAFT/` holds the technical report due 15 November, which covers **both** tracks and is
+the only document that does. Start at its `README.md`.
+
 **Work inside one track's folder.** Every script resolves its paths from its own location, so
 run them from anywhere, but read that track's `CLAUDE.md` before changing anything: the
 conventions, the Kaggle fleet notes and the label invariants live there.
