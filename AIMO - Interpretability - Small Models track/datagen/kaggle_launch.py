@@ -896,8 +896,9 @@ EXPERIMENTS: dict[str, Experiment] = {
     # before the tilts existed. Runtime (ties break on it), determinism, and whether the median
     # split survives a dtype change or the chat template. Split over two accounts because each
     # model is loaded three times, so one kernel for four models would be four loads too many.
+    # Both halves run on ISHRAQ (its two-session limit, exactly): RSD is off limits as of 30 Sep.
     "e39-audit-e27k-a": Experiment(
-        account="RSD",
+        account="ISHRAQ",
         purpose="E39: GPU audit of dist/solution-e27k-tilted-small.zip, the 0.86 incumbent. Times the "
         "shipped are_robust over all 36 official problems, checks two identical calls agree, and "
         "counts how many predictions flip under fp16 and under the chat template. "

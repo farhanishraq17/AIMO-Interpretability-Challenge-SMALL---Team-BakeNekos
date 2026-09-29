@@ -303,6 +303,8 @@ Labib, Eshad, Mashrafi, Samin and Nasif. Three caveats a new owner will hit:
   limit is reached. Same for any account running five `kagri-*` kernels.
 - **RSD and Labib are the same accounts as MEDIUM and CHOTON** on a teammate's machine, so their
   quota is shared rather than additional (Finding 42).
+- **Do not push to RSD** (owner's instruction, 30 Sep 2026). Historical registry entries still
+  name it because that is where those runs happened; new work goes elsewhere.
 
 `kaggle_launch.ACCOUNTS` also registers RSD, Labib, NAKIB, CHOTON, MEDIUM and MR.
 **`Secrets.env` is per-machine and holds only the aliases whose owner set them up.** This
