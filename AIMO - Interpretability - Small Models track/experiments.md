@@ -108,7 +108,7 @@ comes from that model's class balance as the probes measured it. `e27e` (0.71) i
 version of the same ranking, and E11 v2 (0.64) is the zero-GPU fallback. Every ZIP rebuilds with
 `python submission/make_e27.py`.
 
-**The leaderboard series, in full** (Small Model Track, 14 cases, so one case is 0.07):
+**The leaderboard series, in full** (Small Model Track, 14 cases, so one case is 0.07). `submission/README.md` carries the same series **ordered by score**, with each ZIP's name, what it does and how to rebuild it:
 
 | Submission | Score | What it was |
 | --- | --- | --- |
