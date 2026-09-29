@@ -1937,6 +1937,39 @@ been rebuilt since 18 September. It was rebuilt once without notice (Finding 35)
 probes would re-measure the balances and cost five of the roughly 270 remaining submissions**;
 that is the cheapest insurance available before the freeze.
 
+
+**64. The re-probe reproduces all four balances exactly: the hidden set has not changed, and
+`e27k`'s counts are confirmed right.** (Codabench submissions 952264-952269, 30 Sep.)
+
+| probe | score | cases | balance `d` | 18 Sep |
+| --- | --- | --- | --- | --- |
+| all-False | 0.50 | 7 / 14 | - | 7 / 14 |
+| True for Qwen3.5-4B | 0.57 | 8 / 14 | **+1** | +1 |
+| True for DeepSeek-R1-0528-Qwen3-8B | 0.57 | 8 / 14 | **+1** | +1 |
+| True for Skywork-OR1-Math-7B | 0.43 | 6 / 14 | **-1** | -1 |
+| True for Olmo-3-7B-Think | 0.43 | 6 / 14 | **-1** | -1 |
+
+Five for five, twelve days apart. The set is still 14 cases, still 7 robust and 7 spurious, and
+every per-model balance is unchanged. Finding 45's standing caveat - "assumes the hidden set has
+not changed since the 18 Sep probes" - is now discharged, and with it the only assumption
+Finding 63 rested on.
+
+**So the 27 October freeze is decided: `e27k`.** The argument is arithmetic and does not touch the
+contested familiarity direction. Four batch sizes with these balances must all be odd to total 14,
+so a model with balance +1 holds exactly `(n+1)/2` robust cases and one with balance -1 exactly
+`(n-1)/2`; `e27k` calls precisely those numbers in all 56 consistent compositions and `e27e` in
+none of them (Finding 63). Whatever the ranking is doing, `e27k` calls the right *number* robust
+for every model and `e27e` provably does not.
+
+What this does **not** establish: that the familiarity ranking carries real signal. Given correct
+counts, a ranking with no information scores 8.05 of 14, and the observed 12 sits at p = 0.055
+(Finding 63). The contradiction in PLAN section 12.3 is untouched - it simply no longer decides
+which ZIP to ship. Also still true: these five probes cost five submissions and re-measured the
+prior on the *validation* set, which is not the private test set the prizes are scored on.
+
+Also retired: the five pre-rebuild probe readings (0.47, 0.53) that `submission/README.md` flagged
+as needing redoing. They have now been redone on the current task.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

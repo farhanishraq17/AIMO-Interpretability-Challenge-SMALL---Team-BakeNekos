@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 30 September 2026. **E37, E38 and E39 are closed; no new submission is eligible.** E39 audited the incumbent rather than proposing a candidate: it is fast, repeatable and precision-proof, and its bare-text prompt must not be changed (Finding 62).
+Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
 ### Current execution and decision
 
@@ -93,6 +93,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E32 | Independent confirmation of E31 on DeepSeek MATH | Kaggle + local | Done | AUC 0.545, CI [0.428, 0.658]; lane closed |
 | E39 | Is the 0.86 incumbent stable and fast enough to freeze? | Kaggle | Done | **Yes on mechanism.** 334 s for all four models, exactly repeatable, **0 flips under fp16**; but the chat template moves 2-10 of 36, so the bare-text prompt is load-bearing (Finding 62) |
 | E40 | Is 12/14 an artifact of small-batch rounding? | local | Done | **No.** `e27k` calls the true robust count for every model in 56/56 consistent compositions and `e27e` in 0/56, so the tilts are forced by the probes; the ranking on top sits at p = 0.055 (Finding 63) |
+| E41 | Do the probe-measured balances still hold? | Codabench | Done | **Yes, 5 for 5.** All four balances reproduce exactly twelve days on, so the set has not been rebuilt and the freeze is decided: **ship `e27k`** (Finding 64) |
 | **E34a** | Can official-like surface perturbations yield a usable new AIME label set? | Kaggle (`tashintahir`) | **Done — failed gate** | Only 1/52 originals was 4/4 correct; one robust label, no spurious label; E34b closed and no submission |
 | **E35** | Do independently published robustness labels support a source-transferring problem-text model? | local | **Done — failed gate** | Putnam holdout AUC 0.609, CI [0.442, 0.769]; official transfer not opened |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |

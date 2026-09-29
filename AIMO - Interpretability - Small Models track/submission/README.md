@@ -60,8 +60,8 @@ deterministic. Rebuild everything with the three commands in "Rebuilding", below
 | 0.47 | `probe-true-olmo3-think` | |
 | 0.47 | `e11-text-stagea` | E11 v1, before Qwen defaulted to `True` |
 
-**These five probe readings need redoing** if they are ever quoted: E11 v2 scored 0.64 where they
-predict 0.53, so at least one of them no longer holds on the current task.
+**The four probe readings here were redone on 30 Sep** and are superseded by the rows above; only
+E11 v1's 0.47 is still a pre-rebuild reading with no current equivalent.
 
 ---
 
@@ -75,13 +75,15 @@ rebuilt again the tilts could be exactly wrong.
 
 **Upload `all-false` first**: every other probe is read relative to it.
 
-| Order | ZIP | Expected if nothing changed |
-| --- | --- | --- |
-| 1 | `solution-probe-all-false-small.zip` | **0.50** (7/14) |
-| 2 | `solution-probe-true-qwen35-4b-small.zip` | 0.57 (8/14) |
-| 3 | `solution-probe-true-deepseek-small.zip` | 0.57 (8/14) |
-| 4 | `solution-probe-true-skywork-7b-small.zip` | 0.43 (6/14) |
-| 5 | `solution-probe-true-olmo3-think-small.zip` | 0.43 (6/14) |
+**Result, uploaded 30 Sep: all five landed exactly on the expected values** (submissions 952264-952269, Finding 64). The balances are unchanged twelve days on, the set is still 14 cases at 7 robust, and `e27k`'s counts are confirmed correct — the freeze goes to `e27k`.
+
+| Order | ZIP | Expected | **Scored** |
+| --- | --- | --- | --- |
+| 1 | `solution-probe-all-false-small.zip` | **0.50** (7/14) | **0.50** |
+| 2 | `solution-probe-true-qwen35-4b-small.zip` | 0.57 (8/14) | 0.57 |
+| 3 | `solution-probe-true-deepseek-small.zip` | 0.57 (8/14) | 0.57 |
+| 4 | `solution-probe-true-skywork-7b-small.zip` | 0.43 (6/14) | 0.43 |
+| 5 | `solution-probe-true-olmo3-think-small.zip` | 0.43 (6/14) | 0.43 |
 
 Five of the ten submissions allowed per day, and about 270 remain of 300.
 

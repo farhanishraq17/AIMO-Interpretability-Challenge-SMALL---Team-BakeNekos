@@ -727,9 +727,17 @@ spurious; the validation cases are mostly *not* those problems (Finding 49), whe
 ordinary fluency and predicts robust. The organizers' own report splits results by published
 versus unpublished, so the distinction is theirs, not ours.
 
-**Whoever freezes the submission on 27 Oct decides this**, with two defensible choices: `e27k`
-(0.86, trusts the validation set) or `e27e` (0.71, prior-free, same ranking). There is no
-experiment left that settles it.
+**This no longer decides the freeze (30 Sep).** It was the open question while the choice was
+`e27k` against `e27e`, and that choice is now settled on arithmetic instead: with the balances the
+probes measure, `e27k` calls exactly the right *number* of robust cases for every model and `e27e`
+provably does not, in all 56 consistent batch compositions (Finding 63). The re-probe on 30 Sep
+reproduced all four balances exactly, twelve days after the first measurement, so the assumption
+that argument rested on is discharged (Finding 64). **Ship `e27k`.**
+
+The contradiction itself stands and is unresolved: it is about whether the familiarity *ranking*
+means anything, which the null test leaves at p = 0.055. It is report material, not a submission
+decision. The hypothesis worth writing up either way is the published-versus-unpublished one
+above.
 
 ### 12.4 Experiments to improve the Small-track submission
 
