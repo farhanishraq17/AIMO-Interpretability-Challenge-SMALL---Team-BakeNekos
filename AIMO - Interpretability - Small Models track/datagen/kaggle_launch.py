@@ -892,6 +892,28 @@ EXPERIMENTS: dict[str, Experiment] = {
         ),
         bundle_globs=(E2_TRACES,),
     ),
+    # E39: the incumbent has never been GPU-checked - check_e27d.py audited its inverted sibling,
+    # before the tilts existed. Runtime (ties break on it), determinism, and whether the median
+    # split survives a dtype change or the chat template. Split over two accounts because each
+    # model is loaded three times, so one kernel for four models would be four loads too many.
+    "e39-audit-e27k-a": Experiment(
+        account="RSD",
+        purpose="E39: GPU audit of dist/solution-e27k-tilted-small.zip, the 0.86 incumbent. Times the "
+        "shipped are_robust over all 36 official problems, checks two identical calls agree, and "
+        "counts how many predictions flip under fp16 and under the chat template. "
+        "Qwen3.5-4B and DeepSeek.",
+        steps=(("submission/audit_e27k.py", "--models", QWEN35, DEEPSEEK),),
+        bundle_globs=("submission/audit_e27k.py", "dist/solution-e27k-tilted-small.zip",
+                      "data/train_main/rows.parquet", "data/official_check/official_labels.parquet"),
+    ),
+    "e39-audit-e27k-b": Experiment(
+        account="ISHRAQ",
+        purpose="The same audit for Skywork-OR1-Math-7B and Olmo-3-7B-Think, the two models e27k tilts "
+        "(see e39-audit-e27k-a).",
+        steps=(("submission/audit_e27k.py", "--models", SKYWORK, OLMO_THINK),),
+        bundle_globs=("submission/audit_e27k.py", "dist/solution-e27k-tilted-small.zip",
+                      "data/train_main/rows.parquet", "data/official_check/official_labels.parquet"),
+    ),
 }
 
 KERNEL_TEMPLATE = r'''"""AIMO Interpretability, small-model track: __NAME__

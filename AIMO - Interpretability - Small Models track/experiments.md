@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 29 September 2026. **E37 and E38 are closed; no new submission is eligible.**
+Last updated: 30 September 2026. **E37 and E38 are closed; no new submission is eligible.** **E39 is running**: a GPU audit of the incumbent before the 27 Oct freeze, not a new candidate.
 
 ### Current execution and decision
 
@@ -91,6 +91,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E30 | Architecture-invariant activation geometry | local | Done | Family-wise test fails and the selected signal reverses on independent MATH data |
 | E31 | Prompt-state sensitivity to answer-preserving rewrites | Kaggle + local | Done | Best AUC 0.735, but template CI and max-T test fail; Qwen is near chance |
 | E32 | Independent confirmation of E31 on DeepSeek MATH | Kaggle + local | Done | AUC 0.545, CI [0.428, 0.658]; lane closed |
+| E39 | Is the 0.86 incumbent stable and fast enough to freeze? | Kaggle | **Running** (30 Sep) | Times the shipped `e27k` over 36 official problems, checks two identical calls agree, and counts prediction flips under fp16 and under the chat template |
 | **E34a** | Can official-like surface perturbations yield a usable new AIME label set? | Kaggle (`tashintahir`) | **Done — failed gate** | Only 1/52 originals was 4/4 correct; one robust label, no spurious label; E34b closed and no submission |
 | **E35** | Do independently published robustness labels support a source-transferring problem-text model? | local | **Done — failed gate** | Putnam holdout AUC 0.609, CI [0.442, 0.769]; official transfer not opened |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |
