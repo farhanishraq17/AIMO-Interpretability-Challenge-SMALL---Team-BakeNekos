@@ -2011,6 +2011,24 @@ the forward-pass path, which needs cached weights and a GPU; E39 covers that. An
 nothing about the 0.86: Codabench never runs this script, and `e27k` had already demonstrated it
 loads in the real container by scoring there.
 
+**66. The corrected test passes end to end from a rebuilt image, on a second machine.** (E42,
+`submission/docker_load_test.py` at `edb6c8c5`, 30 Sep. Finding 65 recorded the run that *found*
+the two bugs; this is the first run of the fixed script against an image built from nothing.)
+
+`DOCKER LOAD TEST: PASS`, exit code 0. The image was deleted and rebuilt with `--no-cache`, so the
+nine pinned libraries were reinstalled from scratch rather than reused: the build's own check line
+printed `2.12.1+cu132 5.13.0 1.8.0 Qwen3ForCausalLM`. All nine `versions_match` entries are now
+true, `marker_correct` is true, and every prediction, the legacy call and the empty batch are
+unchanged from Finding 65. The full report is `submission/docker_load_test_result.json`, with the
+base-image digest, the submodule commit the Dockerfile came from, and the SHA-256 of both the ZIP
+and the script.
+
+This adds two things to Finding 65 and no more. The `release()` and `marker_correct` fixes are
+confirmed against the image they target, closing the gap that the test *could never pass* there.
+And the pinned base digest still resolves and still installs the exact pins on a different
+machine, which is the reproducibility claim the November technical report needs. It does not
+re-establish anything about the score: `e27k`'s 0.86 stands on the Codabench run, not on this.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

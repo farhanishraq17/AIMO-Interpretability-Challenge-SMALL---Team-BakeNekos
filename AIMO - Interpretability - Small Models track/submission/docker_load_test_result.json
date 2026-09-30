@@ -1,0 +1,110 @@
+{
+  "experiment": "E42",
+  "what": "docker_load_test.py run inside Dockerfile.competition, networking disabled",
+  "date": "2026-09-30",
+  "provenance": {
+    "host": "Windows 11, second machine (independent of the 30 Sep collaborator run in Finding 65)",
+    "docker_server": "28.3.0 linux/amd64",
+    "image_tag": "aimo-competition:local",
+    "image_id": "f96089bb65bd",
+    "image_built": "2026-09-30T16:40:21+06:00",
+    "build": "docker build --no-cache; pinned libraries reinstalled from scratch, base image layers came from the local BuildKit cache",
+    "dockerfile_from_submodule": "995f9923a680a157c9239e08e4ef0fa0fa53bb58",
+    "base_image_digest": "sha256:f48553a21cd5944e8093a74801e403283311b460a5b602ec02d15fe98f04ff5f",
+    "zip_sha256": "b79addefbe5b12c1ee521f9032ef3a6d55a11c763b384774a55c318bc239b142",
+    "script_sha256": "edb6c8c5ca2e2677b94378d0abe6ebc190e9013c151abf20166abd36ccab19c8",
+    "exit_code": 0
+  },
+  "report": {
+    "zip": "solution-e27k-tilted-small.zip",
+    "contents": [
+      "small.txt",
+      "solution.py",
+      "tokenizer_check.py"
+    ],
+    "solution_at_root": true,
+    "has_small_txt": true,
+    "expects_small_txt": true,
+    "marker_correct": true,
+    "versions": {
+      "torch": "2.12.1+cu132",
+      "transformers": "5.13.0",
+      "sklearn": "1.8.0",
+      "pandas": "3.0.3",
+      "joblib": "1.5.3",
+      "huggingface_hub": "1.22.0",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.22.2",
+      "accelerate": "1.13.0"
+    },
+    "versions_match": {
+      "torch": true,
+      "transformers": true,
+      "sklearn": true,
+      "pandas": true,
+      "joblib": true,
+      "huggingface_hub": true,
+      "safetensors": true,
+      "tokenizers": true,
+      "accelerate": true
+    },
+    "imported": true,
+    "are_robust": {
+      "Qwen/Qwen3.5-4B": {
+        "predictions": [
+          true,
+          true,
+          true
+        ],
+        "length_ok": true,
+        "native_bools": true
+      },
+      "Skywork/Skywork-OR1-Math-7B": {
+        "predictions": [
+          false,
+          false,
+          false
+        ],
+        "length_ok": true,
+        "native_bools": true
+      },
+      "allenai/Olmo-3-7B-Think": {
+        "predictions": [
+          false,
+          false,
+          false
+        ],
+        "length_ok": true,
+        "native_bools": true
+      },
+      "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": {
+        "predictions": [
+          true,
+          true,
+          true
+        ],
+        "length_ok": true,
+        "native_bools": true
+      },
+      "some/model-we-never-saw": {
+        "predictions": [
+          false,
+          false,
+          false
+        ],
+        "length_ok": true,
+        "native_bools": true
+      }
+    },
+    "legacy_two_arg_call": {
+      "predictions": [
+        true,
+        true,
+        true
+      ],
+      "native_bools": true
+    },
+    "empty_batch": [],
+    "PASS": true
+  }
+}
