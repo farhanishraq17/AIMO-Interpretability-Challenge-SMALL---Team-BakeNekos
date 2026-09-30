@@ -64,6 +64,16 @@ def versions() -> dict[str, str]:
     return found
 
 
+def release(version: str) -> str:
+    """The release portion of a PEP 440 version, dropping any local segment.
+
+    A CUDA wheel reports `2.12.1+cu132`, so an exact-match comparison against the pinned `2.12.1`
+    can never pass on the image this test targets. Splitting keeps the check correct if the base
+    image's CUDA suffix ever changes, which comparing against the full string would not.
+    """
+    return version.split("+")[0]
+
+
 def main() -> None:
     archive = Path(sys.argv[1])
     report: dict[str, object] = {"zip": archive.name}
@@ -72,10 +82,15 @@ def main() -> None:
     report["contents"] = names
     report["solution_at_root"] = "solution.py" in names
     report["has_small_txt"] = "small.txt" in [n.lower() for n in names]
+    # The marker decides the track, and getting it wrong scores 0.00 either way (Finding 21), so
+    # it is a gate rather than a reported field. Intent comes from our own filename convention:
+    # `-main.zip` must not carry the marker, everything else must.
+    report["expects_small_txt"] = not archive.stem.endswith("-main")
+    report["marker_correct"] = report["has_small_txt"] == report["expects_small_txt"]
 
     found = versions()
     report["versions"] = found
-    report["versions_match"] = {k: (found[k] == v) for k, v in EXPECTED.items()}
+    report["versions_match"] = {k: (release(found[k]) == v) for k, v in EXPECTED.items()}
 
     unpacked = Path("/tmp/zip")
     zipfile.ZipFile(archive).extractall(unpacked)
@@ -99,6 +114,7 @@ def main() -> None:
 
     ok = (
         report["solution_at_root"]
+        and report["marker_correct"]
         and all(report["versions_match"].values())
         and all(r["length_ok"] and r["native_bools"] for r in results.values())
         and report["legacy_two_arg_call"]["native_bools"]

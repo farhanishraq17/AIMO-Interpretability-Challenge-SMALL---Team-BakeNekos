@@ -1970,6 +1970,47 @@ prior on the *validation* set, which is not the private test set the prizes are 
 Also retired: the five pre-rebuild probe readings (0.47, 0.53) that `submission/README.md` flagged
 as needing redoing. They have now been redone on the current task.
 
+
+**65. `e27k` runs correctly inside the competition image; the two failures the test reported were
+both in the test.** (E42, `submission/docker_load_test.py` run by a collaborator in
+`Dockerfile.competition`, 30 Sep. First time any submission in this project has been checked
+against that image, which `COMPETITION.md` section 14 requires.)
+
+Everything the check exists to verify passed:
+
+| Check | Result |
+| --- | --- |
+| `solution.py` at the archive root, `small.txt` present | true |
+| The ZIP's own `solution.py` imports under the competition pins | true |
+| One native `bool` per problem, all five `model_id`s including an unknown one | true |
+| Legacy two-argument call | true |
+| Empty batch | `[]` |
+| Pinned versions, 8 of 9 | true |
+
+The predictions were exactly what the tilts imply - Qwen and DeepSeek all robust, Skywork and Olmo
+all spurious, unknown model spurious - and the seven "falling back to constants" lines on stderr
+are the container having no cached weights, which is the fallback path working as designed.
+
+**Both reported failures were mine, not the submission's.**
+
+- **`torch.__version__` is `2.12.1+cu132`, not `2.12.1`.** The `+cu132` is PyTorch's PEP 440 local
+  version, present on every CUDA wheel. Comparing with `==` against the pin meant *the test could
+  never pass on the image it targets*. It now compares the release portion, which also survives a
+  change of CUDA suffix. The bug was reproducible here all along and was never run: this machine's
+  pinned venv reports `2.12.1+cpu`, and checking `EXPECTED` against any real install would have
+  caught it.
+- **`has_small_txt` was reported but left out of the pass expression**, so a small-track ZIP with
+  the marker missing would still have passed - the one mistake that scores 0.00 outright
+  (Finding 21). It is now a gate, and track-aware in both directions: a `-main` ZIP must *not*
+  carry the marker. Checked against all 28 built ZIPs, the gate agrees with every one.
+
+**What this establishes and what it does not.** It establishes that the shipped artifact imports
+and returns a valid contract under the competition's exact library versions, offline, with no
+model cache - the failure mode that scores 0.00 with no visible traceback. It does not exercise
+the forward-pass path, which needs cached weights and a GPU; E39 covers that. And it changes
+nothing about the 0.86: Codabench never runs this script, and `e27k` had already demonstrated it
+loads in the real container by scoring there.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

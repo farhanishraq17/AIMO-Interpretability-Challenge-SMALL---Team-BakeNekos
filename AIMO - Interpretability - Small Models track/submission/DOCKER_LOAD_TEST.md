@@ -64,7 +64,7 @@ docker build -f Dockerfile.competition -t aimo-competition:local .
 ```
 
 This downloads the PyTorch base image and installs the pinned libraries. It is the slow step.
-It should end with a line like `2.12.1 5.13.0 1.8.0 Qwen3ForCausalLM`.
+It should end with a line like `2.12.1+cu132 5.13.0 1.8.0 Qwen3ForCausalLM`. The `+cu132` is PyTorch's CUDA local-version suffix and is expected — the test compares the release portion.
 
 ## 4. Run the test
 
@@ -97,12 +97,13 @@ Inside the JSON, the things that matter:
 
 | Field | Should be |
 | --- | --- |
-| `versions_match` | every entry `true` — the image has the exact pinned library versions |
+| `versions_match` | every entry `true` — the release portion of each version matches the pin, ignoring any `+cu132`/`+cpu` local suffix |
 | `imported` | `true` — our `solution.py` imports under those versions |
 | `are_robust` → each model → `native_bools` | `true` — real Python `bool`, not NumPy bool or int |
 | `are_robust` → each model → `length_ok` | `true` — one prediction per problem |
 | `legacy_two_arg_call` | present and `native_bools: true` |
 | `empty_batch` | `[]` |
+| `marker_correct` | `true` — a `-small` ZIP carries `small.txt` and a `-main` ZIP does not. Either mistake scores 0.00 |
 
 **Expect to see warnings on stderr about models falling back.** That is correct and is part of the
 test. The container has no model weights cached, so our solution cannot run its normal path and
