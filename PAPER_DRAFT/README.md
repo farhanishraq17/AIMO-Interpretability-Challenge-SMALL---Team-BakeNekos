@@ -9,7 +9,7 @@ consideration, plus a peer review of up to three other reports between 15 and 30
 
 ## How to read it
 
-Fifteen sections, and they answer different questions:
+Sixteen sections and a reference checklist. They answer different questions:
 
 - **New to the project?** §1 (the task and why it is hard), §4 (what we actually ship), §7 (what
   worked), §14 (what we would do differently). That is the manual.
@@ -41,14 +41,20 @@ submission artifacts at the competition's library versions, and matplotlib is no
 Colours come from a palette validated for colour-vision deficiency (adjacent-pair ΔE and
 contrast), and every series carries a direct label rather than relying on hue alone.
 
-## What it is not, yet
+## Before this can be submitted
 
-1. **Citations are from memory and unverified.** §13 says so in its own first line. Every author,
-   year and title needs checking against the literature before this is submitted — that is the
-   single largest remaining risk in the document.
-2. **The author list is incomplete.** Only one name is filled in. Add co-authors, affiliations and
-   a licence.
-3. **No bibliography.** §13 cites inline; a proper reference list is still to be written.
+Two things, and the first is the real one.
+
+1. **Verify every citation.** The **References** section is a checklist — 20 believed citations,
+   each with a confidence rating and a tick box, plus 5 competition sources that are ours to cite
+   exactly. They were written from memory and **not one has been checked**. Work down the list,
+   hardest at the `medium` rows; **cut anything that cannot be confirmed** rather than guessing.
+   An incorrect citation in a submitted report is worse than no citation.
+2. **The author list is incomplete.** One name is filled in. Add co-authors, affiliations, and a
+   licence for the repository.
+
+Optional, in rough order of value: a diagram of the method in §4 (currently prose and pseudocode),
+and per-figure alt text if the submission format wants it.
 
 ## Rules it has to satisfy
 

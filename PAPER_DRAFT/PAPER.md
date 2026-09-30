@@ -31,9 +31,10 @@ than fitted. It scores **12/14 = 0.857** on the hidden validation set, above the
 board when we started, and it runs in **334 seconds for four models** where a rejected alternative
 needed 5,293 seconds for one.
 
-We argue that on a 14-case board where scores are multiples of 1/14, leaderboard position will
-saturate and the competition's own tie-break — average runtime — combined with the writeup
-criteria will decide outcomes. We therefore treat generalization and efficiency as the primary
+We argued in advance that on a 14-case board where scores are multiples of 1/14, leaderboard
+position would saturate; four days later three teams were tied at the top. When a public board
+saturates, the private test set, the competition's runtime tie-break and the writeup criteria
+decide the outcome instead. We therefore treat generalization and efficiency as the primary
 objects of study, and report our method's failure modes as carefully as its successes.
 
 ---
@@ -99,10 +100,29 @@ method may do per problem at test time.
 
 The hidden validation set has 14 cases (F-27, F-45). Every score is therefore a multiple of 1/14,
 and the ladder from chance to ceiling has roughly seven rungs. We reached 12/14; the constants
-ceiling is 9/14; several teams sat at 11/14. **Scores will saturate**, and when they do the
-competition's published tie-break decides: *"ties broken by efficiency: faster average runtime over
-three repeated trials."* The $5,000 writeup pool is awarded on generalization, actionable
-interpretability, negative results and efficient methods — none of which is leaderboard position.
+ceiling is 9/14; several teams sat at 11/14.
+
+**We predicted the board would saturate, and within four days it did.** On 30 September the public
+Small Models Track leaderboard showed **three teams tied at 86%** — 12 of 14 — separated only by
+submission timestamp. The structure makes this close to inevitable: for any fixed per-model count
+vector the achievable totals are spaced two apart (§7.2), so 12/14 is not one rung below a
+continuum of better scores, it is one rung below **14/14, a perfect ranking on every case**. There
+is nowhere to go but perfect.
+
+When a public board saturates, three things decide the outcome, and none of them is leaderboard
+position:
+
+1. the **private test set** — 30 unseen problems, where a method that fitted the validation set
+   will not follow;
+2. the competition's tie-break — *"ties broken by efficiency: faster average runtime over three
+   repeated trials"*;
+3. the **$5,000 writeup pool**, awarded on generalization, actionable interpretability, negative
+   results and efficient methods.
+
+That is the argument for the rest of this report. A method with no fitted parameters cannot fail to
+transfer in the way a fitted one can (§9); a method that never generates a token is hard to beat on
+runtime (§10); and eleven documented negative results are worth more in a writeup than a
+thirteenth rung that does not exist.
 
 We therefore optimised for three things in this order: a method that cannot overfit because it has
 nothing to fit; a method whose per-problem cost is a single forward pass; and a written record
@@ -276,6 +296,28 @@ was *for*, and what it returned.
 
 This section is the point of the report. Each entry states the hypothesis, the strongest result it
 ever produced, and the test that killed it.
+
+A negative result is only worth reading if it is strong enough to have been a positive one. The
+column that matters below is **"best result"** — several of these reached AUC 0.73–0.87 before the
+test that rejected them, which is why they were pursued and why reporting them is not the same as
+reporting things that never worked.
+
+| # | Hypothesis | Best result it reached | What rejected it | § |
+| --- | --- | --- | --- | --- |
+| 1 | Linear probes on hidden states predict robustness | 58.37% as published; AUC 0.75–0.85 inner-fold | Nested selection gives **0.5005**; the gap is layer selection | 6.1 |
+| 2 | A model trained on MATH transfers to olympiad problems | 0.717 balanced acc in-distribution | **AUC 0.429** on olympiad rows | 6.2 |
+| 3 | Training the text block on olympiad labels instead rescues it | — | No; n = 33 is the binding limit | 6.2 |
+| 4 | Self-labelling on MATH reproduces official labels | — | Cohen's **κ = −0.135**, worse than chance | 6.3 |
+| 5 | Self-labelling on *olympiad* problems does | κ = +0.286, sign flipped | CI spans 0; **~1 label per GPU-hour** | 6.3 |
+| 6 | Answer agreement under rewriting predicts robustness | — | Chance (0.507), at **28k tokens/problem** | 6.4 |
+| 7 | Reasoning-trace uncertainty features predict it | — | Near chance; adding them *lowers* fusion 0.717 → 0.693 | 6.4 |
+| 8 | Architecture-invariant activation geometry | Family-wise selected signal | **Reverses sign** on independent MATH data | 6.5 |
+| 9 | Counterfactual prompt-state sensitivity | **AUC 0.735**, the strongest new signal found | Template CI and max-T fail; independent population gives 0.545, CI [0.428, 0.658] | 6.5 |
+| 10 | External robustness labels support a transferring model | Real labels, 233 configurations | Putnam holdout AUC 0.609, CI [0.442, 0.769] | 6.6 |
+| 11 | Budget-path reasoning diagnostics | Ranking gates passed; GSM-Plus confirmation passed | **Runtime gate**: 5,293 s for one model against a 3,600 s whole-run budget | 6.6 |
+| 12 | Min-K tail shape, the best offline candidate of twelve | **AUC 0.867**, CI [0.728, 0.973], maxT p = 0.0010 | **4/14 on the leaderboard** | 6.7 |
+
+Entry 12 is the one we cannot explain, and §6.7 treats it separately.
 
 ### 6.1 The shipped baseline is at chance
 
@@ -685,8 +727,37 @@ python "../AIMO - Interpretability - Large Models track/scripts/write_results.py
 Repository layout: one folder per track, each with `CLAUDE.md` (conventions), `COMPETITION.md`
 (rules), `PLAN.md`, `PROGRESS.md` (numbered findings), `RESULTS.md` (generated — never hand-edited),
 `experiments.md` (registry) and `protocols/` (pre-registrations). Submissions are indexed by score
-in `submission/README.md`. Kernels are exported to `kernels/` exactly as pushed, so any run can be
-rebuilt if a Kaggle account disappears.
+in `submission/README.md`, and the built ZIPs are committed, so the artifact that scored can be
+uploaded from a clone without rebuilding. Kernels are exported to `kernels/` exactly as pushed, so
+any run can be rebuilt if a Kaggle account disappears.
+
+### 15.1 The shipped artifact, verified in the competition image
+
+The organizers must be able to reproduce the result from this report alone, so the shipped ZIP was
+run inside `Dockerfile.competition` itself, with networking disabled (E42, F-65, F-66).
+
+The first run **failed, and both failures were in our test harness rather than the submission** —
+an exact-match comparison against `torch.__version__` that could never succeed on a CUDA wheel
+reporting `2.12.1+cu132`, and a `small.txt` check that was computed and reported but left out of
+the pass expression. Both are fixed. We record this because it is the honest version of a
+reproducibility claim: the first independent execution of our own check found bugs in the check.
+
+The corrected script then passed end to end on a **second machine**, from an image rebuilt with
+`--no-cache`, exit code 0. The result is committed as `submission/docker_load_test_result.json`
+with the provenance that makes it checkable rather than assertable:
+
+| Field | Value |
+| --- | --- |
+| Base image digest | `sha256:f48553a2…` (as pinned in `Dockerfile.competition`) |
+| Dockerfile from submodule | `995f9923…` |
+| SHA-256 of the tested ZIP | `b79addef…` — matches `dist/solution-e27k-tilted-small.zip` |
+| SHA-256 of the test script | `edb6c8c5…` — matches `submission/docker_load_test.py` |
+| Result | `PASS`, all nine pinned versions matched, exit 0 |
+
+The two hashes are the point: they establish that the artifact tested is byte-identical to the one
+in this repository, not a locally patched copy. What this does **not** cover is the forward-pass
+path, which needs cached weights and a GPU — that is E39, on separate hardware, where predictions
+were identical across two machines.
 
 ---
 
@@ -708,6 +779,77 @@ rebuilt if a Kaggle account disappears.
    the organizers' own baseline (§3.2).
 
 ---
+
+---
+
+## References
+
+> **Every entry below is from memory and unverified.** None has been checked against the
+> literature. Treat this as a checklist: confirm authors, year, title and venue for each, then
+> delete this warning. The confidence column says where to look hardest — `low` means check
+> whether the work exists as described before citing it at all. An incorrect citation in a
+> submitted report is worse than no citation, so an entry that cannot be confirmed should be cut
+> rather than guessed at.
+
+### Perturbation robustness in mathematical reasoning
+
+| # | Believed citation | Used in | Confidence | ✓ |
+| --- | --- | --- | --- | --- |
+| R1 | Mirzadeh et al., *GSM-Symbolic: Understanding the Limitations of Mathematical Reasoning in Large Language Models*, 2024 | §13, the premise of the task | high | ☐ |
+| R2 | Hendrycks et al., *Measuring Mathematical Problem Solving With the MATH Dataset*, 2021 | §3.1, §6.2 — our labelled distribution | high | ☐ |
+| R3 | *MATH-Perturb* — perturbation benchmark, 2025 | §6.6, E35 training source | medium — check exact authors and title | ☐ |
+| R4 | *Putnam-AXIOM* — competition benchmark with variations | §6.6, E35 holdout | medium — check authors and year | ☐ |
+| R5 | He et al., *OlympiadBench*, 2024 | §3.1, the pooled problem source | medium | ☐ |
+
+### Contamination and membership inference
+
+| # | Believed citation | Used in | Confidence | ✓ |
+| --- | --- | --- | --- | --- |
+| R6 | Shi et al., *Detecting Pretraining Data from Large Language Models*, 2023 — introduces Min-K% | §6.7, E23, E28 | high | ☐ |
+| R7 | Zhang et al., *Min-K%++*, 2024 | E23 `min_k_pp_20` | medium — confirm authors | ☐ |
+| R8 | Carlini et al., *Extracting Training Data from Large Language Models*, 2021 — the zlib-ratio baseline | E23 `zlib_ratio` | high | ☐ |
+| R9 | Carlini et al., *Membership Inference Attacks From First Principles*, 2022 — reference-model calibration | E23 `relative_nll` | high | ☐ |
+
+### Probing and its selection artifacts
+
+| # | Believed citation | Used in | Confidence | ✓ |
+| --- | --- | --- | --- | --- |
+| R10 | Alain and Bengio, *Understanding Intermediate Layers Using Linear Classifier Probes*, 2016 | §6.1 | high | ☐ |
+| R11 | Hewitt and Liang, *Designing and Interpreting Probes with Control Tasks*, 2019 | §6.1 — the direct antecedent | high | ☐ |
+| R12 | Belinkov, *Probing Classifiers: Promises, Shortcomings, and Advances*, 2022 | §6.1 | high | ☐ |
+
+### Sparse autoencoders
+
+| # | Believed citation | Used in | Confidence | ✓ |
+| --- | --- | --- | --- | --- |
+| R13 | Cunningham et al., *Sparse Autoencoders Find Highly Interpretable Features in Language Models*, 2023 | §13, lane C | high | ☐ |
+| R14 | Bricken et al., *Towards Monosemanticity*, Anthropic, 2023 | §13 | high | ☐ |
+| R15 | Templeton et al., *Scaling Monosemanticity*, Anthropic, 2024 | §13 | high | ☐ |
+
+### Uncertainty, calibration and self-consistency
+
+| # | Believed citation | Used in | Confidence | ✓ |
+| --- | --- | --- | --- | --- |
+| R16 | Kadavath et al., *Language Models (Mostly) Know What They Know*, 2022 | §6.4 | high | ☐ |
+| R17 | Kuhn et al., *Semantic Uncertainty*, 2023 | §6.4 | medium | ☐ |
+| R18 | Farquhar et al., semantic entropy for hallucination detection, *Nature*, 2024 | §6.4 | medium — confirm the venue claim | ☐ |
+| R19 | Wang et al., *Self-Consistency Improves Chain of Thought Reasoning*, 2023 | §6.4, E14 | high | ☐ |
+
+### Statistics
+
+| # | Believed citation | Used in | Confidence | ✓ |
+| --- | --- | --- | --- | --- |
+| R20 | Westfall and Young, *Resampling-Based Multiple Testing*, 1993 — the maxT procedure | §6.5, every family-wise gate | medium — confirm year and title | ☐ |
+
+### Competition sources (these are ours to cite exactly, and are verifiable)
+
+| # | Source | ✓ |
+| --- | --- | --- |
+| C1 | AIMO Interpretability Challenge website — <https://aimo-interp.github.io/> | ☐ |
+| C2 | Starter kit — <https://github.com/aimo-interp/getting-started>, submodule pinned at `995f9923` | ☐ |
+| C3 | Proposal paper — arXiv:2607.13899 | ☐ |
+| C4 | `aimo-interp/train-main-v2`, revision `23791d9b` — the 82 labelled rows | ☐ |
+| C5 | Codabench competition 16180 — the leaderboard and scoring programs | ☐ |
 
 ## Appendix A — Experiment index
 
