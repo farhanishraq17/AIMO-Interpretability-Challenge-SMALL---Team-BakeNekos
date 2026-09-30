@@ -12,8 +12,11 @@ climb. Scores are accuracy only — `coverage` was 1.0 and `invalid_predictions`
 (Finding 35). Readings taken before that scored a *different task* and are not comparable with the
 ones above them; they are kept in their own table at the end.
 
-`dist/` is git-ignored, so the ZIPs are not in the repository — the builders are, and they are
-deterministic. Rebuild everything with the three commands in "Rebuilding", below.
+**The built ZIPs are in the repository**, under `dist/` — clone it and they are ready to upload, no
+rebuild and no Python needed. That is deliberate: three of them embed a fitted artifact that cannot
+be rebuilt from a fresh clone, because the feature dumps and label tables they were fitted from are
+git-ignored and regenerable only with GPU time. The builders are here too and are deterministic, so
+a rebuild reproduces them byte for byte (see "Rebuilding", below).
 
 ---
 
