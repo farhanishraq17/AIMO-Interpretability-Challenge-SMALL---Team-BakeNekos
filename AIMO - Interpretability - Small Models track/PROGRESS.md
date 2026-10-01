@@ -2066,6 +2066,52 @@ compares scores on the validation set where `e27k` is right by construction, but
 whether two models stay spurious-leaning. Whoever freezes on 27 October should decide it knowing
 that, and the report should state it rather than report 0.86 unqualified.
 
+
+**68. The familiarity ranking is a property of the problem, not of the model scoring it; the only
+genuinely model-specific quantity in `e27k` is the count.** (E44,
+`train/eval_familiarity_shared.py`, 1 Oct, CPU, on E23's existing features. RESULTS, "E44: is
+familiarity model-specific?".)
+
+The shipped policy loads the model being scored and ranks the batch by that model's own mean token
+NLL. The implicit claim is that this is model-specific information - otherwise there is no reason
+to pay for four different checkpoints rather than ranking the text once. On the 193 problems all
+four models scored:
+
+| pair | Spearman |
+| --- | --- |
+| DeepSeek vs Olmo-3-Think | 0.880 |
+| Olmo-3-Think vs Qwen3.5-4B | 0.864 |
+| DeepSeek vs Qwen3.5-4B | 0.854 |
+| Olmo-3-Think vs Skywork | 0.822 |
+| DeepSeek vs Skywork | 0.781 |
+| Qwen3.5-4B vs Skywork | 0.727 |
+
+Mean **0.821**, and - the control that matters, since length drives every text statistic here
+(Finding 22) - **0.748 within length deciles**, where the length component cannot contribute.
+Against the consensus rank of all four, each model sits at 0.893 (Skywork) to 0.957 (Olmo).
+
+**So the four models are ranking the same problems in essentially the same order.** This is the
+same shape Finding 38 and LF-12 found for the robustness *label*, now shown for the *signal*: both
+are properties of the problem rather than of the pair.
+
+Two consequences, and they point in opposite directions.
+
+- **For the method.** The per-model forward pass is not buying model-specific information; it is
+  recomputing a near-identical ordering four times. The only genuinely model-specific quantity in
+  `e27k` is the robust **count** - which is exactly where Finding 63 located the gain, and which
+  costs nothing to evaluate. The ranking and the counts are therefore doing different jobs, and
+  only one of them needs the model.
+- **For what remains.** A residual does exist and is not uniform: Skywork's ranking is the least
+  consensual (0.893 against consensus, residual spread 0.448 of its own) and Olmo's the most
+  (0.957, 0.288). Whether that residual carries robustness signal is untested; at these n it
+  probably cannot be tested. It is the only place a model-specific familiarity effect could hide.
+
+**Not acted on.** This suggests a cheaper policy - rank once with any model, or with the consensus,
+and apply per-model counts - which would cut the test-time cost by roughly four and might generalise
+better. It is not being built: it is a different policy with no leaderboard evidence, the freeze is
+on 27 October, and Finding 62 already showed this family is sensitive to changes that look
+harmless. It belongs in the report as an implication and in future work, not in a ZIP.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

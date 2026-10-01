@@ -832,3 +832,31 @@ Null distribution for the tilted policy (probability of each total, averaged ove
 If the private test set's per-model shares matched the official split, the tilts would cost **0.89 cases** rather than gain any, under a null ranking. If they match the validation set, the tilts gain and `e27k` is right. Nobody has measured the private set, and the organizers state only that the validation set covers all model types in the test set.
 
 **What this does and does not change.** It does not touch the measurement: the balances were reproduced exactly twelve days apart (Finding 64), so `e27k` is the correct policy *for the validation distribution*. What it shows is that the two-case gain is a bet on two models' priors holding, that the only other labelled source we have points the other way for both, and that the bet is symmetric - the same magnitude is lost if the prior flips. `e27e` is the prior-free alternative and gives up two known cases to buy that.
+
+## E44: is familiarity model-specific?
+
+193 problems scored by all four models (E23 features, `mean_nll`). Spearman throughout, so only the ordering matters - which is all the shipped policy uses.
+
+### Pairwise agreement of the familiarity ranking
+
+| | DeepSeek-8B | Olmo-3-Think | Qwen3.5-4B | Skywork-7B |
+| --- | --- | --- | --- | --- |
+| **DeepSeek-8B** | — | 0.880 | 0.854 | 0.781 |
+| **Olmo-3-Think** | 0.880 | — | 0.864 | 0.822 |
+| **Qwen3.5-4B** | 0.854 | 0.864 | — | 0.727 |
+| **Skywork-7B** | 0.781 | 0.822 | 0.727 | — |
+
+Mean pairwise agreement **0.821** (range 0.727 to 0.880). Within length deciles, where problem length cannot drive it, the mean is **0.748**.
+
+### How much of each model's ranking is the cross-model consensus?
+
+| model | Spearman vs consensus rank | residual spread, as a share of its own |
+| --- | --- | --- |
+| DeepSeek-8B | 0.943 | 0.330 |
+| Olmo-3-Think | 0.957 | 0.288 |
+| Qwen3.5-4B | 0.924 | 0.379 |
+| Skywork-7B | 0.893 | 0.448 |
+
+Every model's own ranking correlates **0.893 to 0.957** with the consensus of all four. The four models are, to this resolution, ranking the same problems in the same order.
+
+**What follows.** The familiarity ranking is a property of the *problem*, not of the model scoring it - the same shape Finding 38 and LF-12 found for the robustness label itself. So the per-model forward pass the shipped policy pays for is not buying model-specific information; it is recomputing a near-identical ordering four times. The only genuinely model-specific quantity in `e27k` is the robust **count**, which is exactly where Finding 63 located the gain, and which costs nothing to evaluate.
