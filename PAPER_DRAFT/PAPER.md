@@ -562,6 +562,20 @@ Three orders of magnitude separate the top and bottom rows. The shipped method n
 token: it reads the problem once and returns a number. The dominant cost is loading the checkpoint,
 which the harness pays regardless.
 
+Costed consistently — forward passes and generated tokens per problem, converted at rates measured
+on our own hardware, over 120 pairs — **two of the methods this project pursued for weeks could not
+have been submitted at any accuracy** (F-71). E14 needs ~37,600 s and E36/E37 ~41,200 s against a
+3,600 s budget, missing by 10× and 11×; no plausible hardware difference closes that. E2f misses by
+2×, which is within the evaluation card's likely speedup, so it is borderline rather than ruled
+out.
+
+E14 was abandoned for scoring at chance. Had it shown signal, we would have spent the remaining
+weeks on something unshippable. The gate that prevents this is one multiplication — per-pair cost
+must not exceed the budget divided by the pair count, about 30 s or 2,700 generated tokens here —
+and it needs no GPU, no data and no labels. We never applied it. The underlying ratio generalises
+past this competition: any method that generates pays the length of a chain of thought against the
+length of a problem statement, on every pair.
+
 For the Main Track this is sharper still. Listing `gpt-oss-120b` outside the split set means its
 **62 GiB checkpoint is never loaded** — the constant is both the best answer available and the
 fastest, and with five models sharing 3600 s that is a material saving.

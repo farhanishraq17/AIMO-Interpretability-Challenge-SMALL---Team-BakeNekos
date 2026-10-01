@@ -2189,6 +2189,52 @@ That is not a result about familiarity; it is a result about n. Thirty-seven row
 correlation of this size, and no re-analysis of them will. The lane is closed by data availability,
 which is the same wall Findings 46, 47 and 48 hit from other directions.
 
+
+**71. Two lanes the project pursued for weeks could not have shipped at any accuracy, and a
+one-line gate would have caught both before a single GPU-hour was spent.** (E47,
+`train/eval_budget_feasibility.py`, 1 Oct, CPU. RESULTS, "E47: budget feasibility of every method
+tried".)
+
+The competition gives 3600 s for the **whole** prediction run. This project selected methods on
+signal and treated runtime as a late packaging concern; E37 is what that costs, passing its
+confirmation gate and then failing a runtime gate at 5,293 s for one model. E47 asks the question
+in the other order, for every method tried: ignoring accuracy entirely, would it have fit?
+
+Costing each method in forward passes and generated tokens per problem, converting at rates
+measured on our own hardware (90 generated tokens/s, 2.1 s per forward pass), over 120 pairs
+(30 private-test problems x 4 models):
+
+| method | gen tokens/problem | total for 120 pairs | fits 3600 s? |
+| --- | --- | --- | --- |
+| Constants, shipped `e27k`, E11 fused, E28/E29 | 0 | 0-252 s | yes, by 14x or more |
+| E31/E32 counterfactual sensitivity | 0 | 1,260 s | yes |
+| E2f trace uncertainty | 4,096 | 5,713 s | **no, by 2x** |
+| E14 test-time answer agreement | 28,000 | 37,585 s | **no, by 10x** |
+| E36/E37 budget-path diagnostics | 30,720 | 41,212 s | **no, by 11x** |
+
+**E14 and E36/E37 miss by an order of magnitude.** No plausible difference between a T4 pair and
+one RTX PRO 6000 closes a 10x gap, so those two are infeasible rather than borderline, and the
+conclusion survives the throughput assumption being wrong by a factor of several. **E2f misses by
+2x, which is within the evaluation card's plausible speedup**, so it is genuinely borderline and
+this table cannot settle it - calling it infeasible would overstate the measurement.
+
+**The uncomfortable part.** E14 was abandoned because it scored at chance (Finding 24). Had it
+shown signal, we would have spent the remaining weeks developing something that could never have
+been submitted. The same is true of E36/E37, which did show signal and consumed the fleet for days
+before its runtime gate fired. Being saved by a negative result is not a process.
+
+**The gate.** Per-pair cost must not exceed the budget divided by the pair count: here about 30 s,
+or roughly 2,700 generated tokens. It is one multiplication, it needs no GPU and no data, and it
+would have rejected two of the eight methods outright and flagged a third. It is the cheapest gate
+in the project and it was never applied. Any future work on this task should apply it first and
+test for signal second.
+
+The underlying ratio is worth stating plainly, because it generalises past this competition: a
+forward pass over a problem statement costs about 2 s, and generating one reasoning trace costs
+tens of seconds. **Any method that generates pays the ratio of a chain of thought's length to a
+problem statement's, on every pair** - here two to three orders of magnitude. That, not any
+property of robustness, is why the methods that survived are the ones that never generate.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

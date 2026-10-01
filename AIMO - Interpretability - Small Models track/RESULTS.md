@@ -899,3 +899,29 @@ The two halves point the same way: 0.417 on the 8 mirrored problems against 0.29
 Within length sextiles, where problem length cannot drive it, the mean correlation is **+0.225** against +0.247 overall - so the effect is not a length artifact.
 
 **Reading.** The overall correlation is +0.247, CI [-0.103, +0.542]. The interval contains zero, so even with the band rows recovered and the continuous target in play, the reversal is not established at this sample size. That is the sharpest instrument these rows support, and it is still not sharp enough. Per model the correlations run +0.126 to +0.381, so the effect is broadly consistent in sign across models.
+
+## E47: budget feasibility of every method tried
+
+Cost of each method the project tried, ignoring accuracy entirely. The evaluation set is taken as **120 pairs** (the private test set's 30 problems x 4 small-track models) and the budget as **3600 s for the whole run**. Seconds assume 90 generated tokens/s and 2.1 s per forward pass, both measured on the T4x2 hardware these experiments ran on (LF-6, LF-11, F-62). The evaluation card is faster, which is what `speedup needed` absorbs: it is how much quicker than our hardware the method must be to fit, and is the assumption-free way to read the table.
+
+| method | fwd/problem | gen tokens/problem | s/pair | total s for 120 pairs | fits 3600 s? | speedup needed |
+| --- | --- | --- | --- | --- | --- | --- |
+| Constants / probes (`e27f`) | 0 | 0 | 0.0 | 0 | yes | — |
+| **Shipped (`e27k`)** | 1 | 0 | 2.1 | 252 | yes | — |
+| E11 fused: text + prompt states | 1 | 0 | 2.1 | 252 | yes | — |
+| E28/E29 rank successors | 1 | 0 | 2.1 | 252 | yes | — |
+| E2f trace uncertainty features | 1 | 4,096 | 47.6 | 5,713 | **no** | **2x** |
+| E31/E32 counterfactual sensitivity | 5 | 0 | 10.5 | 1,260 | yes | — |
+| E36/E37 budget-path diagnostics | 1 | 30,720 | 343.4 | 41,212 | **no** | **11x** |
+| E14 test-time answer agreement | 1 | 28,000 | 313.2 | 37,585 | **no** | **10x** |
+
+**5 of 8 methods fit**, each by an order of magnitude or more. The three that do not split into two kinds, and the distinction matters:
+
+- **E36/E37 and E14 miss by 10-11x.** No plausible difference between a T4 pair and one RTX PRO 6000 closes that, so these are infeasible rather than borderline, and the verdict does not depend on the throughput assumption being accurate - only on it being within a factor of several.
+- **E2f misses by 2x**, which *is* within the evaluation card's plausible speedup over our hardware. It is genuinely borderline: it might fit there, and this table cannot settle it. Calling it infeasible would overstate what the measurement supports.
+
+**What this means in hindsight.** Two lanes the project pursued for weeks - budget-path diagnostics (E36/E37) and test-time answer agreement (E14) - **could not have shipped at any accuracy**, missing by an order of magnitude. E37 is the only one that found out, and it found out after passing its confirmation gate, by failing a runtime gate at 5,293 s for one model. E14 was rejected for being at chance, which spared us the discovery; had it shown signal we would have spent the remaining weeks on something unshippable.
+
+The cheap methods are not cheap by accident: a forward pass over a few hundred prompt tokens costs about 2 s, while generating a single reasoning trace costs tens of seconds, and the gap is the ratio of a problem statement's length to a chain of thought's. Any method that generates is paying that ratio on every pair.
+
+**The rule this suggests, stated as a gate.** Compute the per-pair token cost *before* running an experiment, and refuse to start one whose cost exceeds the budget divided by the pair count - about 30 s per pair here, or roughly 2,700 generated tokens. Two of the eight rows above would have been rejected outright on the whiteboard and a third flagged as borderline. This is the cheapest gate in the project and it was never applied.
