@@ -2029,6 +2029,43 @@ And the pinned base digest still resolves and still installs the exact pins on a
 machine, which is the reproducibility claim the November technical report needs. It does not
 re-establish anything about the score: `e27k`'s 0.86 stands on the Codabench run, not on this.
 
+
+**67. The two-case gain from the tilts is a bet on two models' class priors, and the only other
+labelled source we have points the other way for both.** (E43,
+`train/eval_prior_sensitivity.py`, 1 Oct, CPU. RESULTS, "E43: prior sensitivity of the tilts".)
+
+PLAN section 12 and the report both carry the caveat that the tilts encode balances measured on the
+*validation* set while the prizes are scored on a private test set. The caveat was never
+quantified. It is short arithmetic.
+
+With `n` cases of which `r` are robust, a policy calling `c` robust with a ranking that carries no
+information scores `E[correct] = c(2r/n - 1) + n - r`, linear in `c` with slope `2r/n - 1`. `e27k`
+lowers `c` by one for Skywork and Olmo, so it gains `1 - 2r/n` cases per tilted model. Therefore:
+
+- **the crossover is a robust share of exactly 0.5**, independent of batch size;
+- below it `e27k` wins, above it `e27e` wins, by the same magnitude either way;
+- **Qwen and DeepSeek contribute nothing** - their tilt is zero whatever their prior does, so the
+  entire difference between the two candidate submissions rides on two models.
+
+The uncomfortable part is which two. The validation probes make Skywork and Olmo spurious-leaning,
+balance -1, share below 0.5 - measured twice, twelve days apart, reproducing exactly (Finding 64).
+The organizers' own labelled split makes both **majority robust**: Skywork 2 of 3 at 0.667, Olmo 7
+of 9 at 0.778. For Qwen and DeepSeek the two sources agree; for the two models that matter they do
+not. Finding 33 noticed this disagreement and set it aside as too few rows to flip on, which was
+right then and is still right - but it is now clear that those few rows sit on exactly the hinge.
+
+If the private test set's per-model shares matched the official split, the tilts would **cost 0.89
+cases** under a null ranking instead of gaining about one. If they match the validation set, `e27k`
+is right and gains two. The organizers say only that the validation set covers all model types in
+the test set, which is a statement about coverage and not about prevalence.
+
+**This does not change the freeze.** `e27k` remains the measured-best policy for the only
+distribution anyone has measured, and `e27e` buys prior-independence by giving up two known cases
+for a hypothetical. But the choice is now stated at its real size: not "0.86 versus 0.71", which
+compares scores on the validation set where `e27k` is right by construction, but a symmetric bet on
+whether two models stay spurious-leaning. Whoever freezes on 27 October should decide it knowing
+that, and the report should state it rather than report 0.86 unqualified.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

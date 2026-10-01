@@ -803,3 +803,32 @@ Null distribution for the tilted policy (probability of each total, averaged ove
 | correct | 4 | 6 | 8 | 10 | 12 | 14 |
 | --- | --- | --- | --- | --- | --- | --- |
 | P | 0.044 | 0.247 | 0.408 | 0.245 | 0.052 | 0.003 |
+
+## E43: prior sensitivity of the tilts
+
+`e27k` is `e27e` with Skywork and Olmo calling one fewer problem robust. Under a ranking carrying no information, `E[correct] = c(2r/n - 1) + n - r` is linear in the robust count `c` with slope `2r/n - 1`, so lowering `c` by one gains `1 - 2r/n` cases. The crossover is at a robust share of **0.5**, independently of batch size, and only the two tilted models contribute: Qwen and DeepSeek have zero tilt whatever their prior does.
+
+| robust share of a tilted model | cases `e27k` gains per tilted model | ship |
+| --- | --- | --- |
+| 0.200 | +0.600 | `e27k` |
+| 0.300 | +0.400 | `e27k` |
+| 0.400 | +0.200 | `e27k` |
+| 0.450 | +0.100 | `e27k` |
+| 0.500 | +0.000 | tie |
+| 0.550 | -0.100 | **`e27e`** |
+| 0.600 | -0.200 | **`e27e`** |
+| 0.667 | -0.334 | **`e27e`** |
+| 0.778 | -0.556 | **`e27e`** |
+
+**The two sources disagree about exactly the two models the bet rides on.**
+
+| model | validation probes (Findings 45, 64) | official split `train-main-v2` | agree? |
+| --- | --- | --- | --- |
+| Skywork-OR1-Math-7B | spurious-leaning (balance -1, share < 0.5) | **2 of 3 robust, share 0.667** | **no** |
+| Olmo-3-7B-Think | spurious-leaning (balance -1, share < 0.5) | **7 of 9 robust, share 0.778** | **no** |
+| Qwen3.5-4B | robust-leaning (balance +1) | 8 of 12 robust, share 0.667 | yes |
+| DeepSeek-R1-0528-Qwen3-8B | robust-leaning (balance +1) | 7 of 10 robust, share 0.700 | yes |
+
+If the private test set's per-model shares matched the official split, the tilts would cost **0.89 cases** rather than gain any, under a null ranking. If they match the validation set, the tilts gain and `e27k` is right. Nobody has measured the private set, and the organizers state only that the validation set covers all model types in the test set.
+
+**What this does and does not change.** It does not touch the measurement: the balances were reproduced exactly twelve days apart (Finding 64), so `e27k` is the correct policy *for the validation distribution*. What it shows is that the two-case gain is a bet on two models' priors holding, that the only other labelled source we have points the other way for both, and that the bet is symmetric - the same magnitude is lost if the prior flips. `e27e` is the prior-free alternative and gives up two known cases to buy that.
