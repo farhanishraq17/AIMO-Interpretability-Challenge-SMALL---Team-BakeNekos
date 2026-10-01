@@ -2149,6 +2149,46 @@ rows is real (Findings 58, 62, and the 0.312 above) and is still unexplained. A 
 per-problem publication dates, which nothing available to us has - so this lane is closed by data
 availability, not by the result.
 
+
+**70. Scored against `max_drop` directly, the official-row reversal is consistent in sign across
+every model and still does not clear zero.** (E46, `train/eval_maxdrop_continuous.py`, 1 Oct, CPU.
+RESULTS, "E46: familiarity against continuous max_drop".)
+
+Every earlier test of the reversal scored familiarity against the binarised `is_robust`, which
+discards how far each row sits from the threshold. `train-main-v2` ships `max_drop` for every row,
+so the continuous target is available and is a sharper instrument on the same data.
+
+| set | rows | Spearman(familiarity, `max_drop`) | 95% CI |
+| --- | --- | --- | --- |
+| all small-track rows | 37 | **+0.247** | [-0.103, +0.542] |
+| labelled rows only | 34 | +0.210 | [-0.138, +0.522] |
+| Qwen3.5-4B | 14 | +0.126 | [-0.409, +0.642] |
+| Olmo-3-7B-Think | 10 | +0.381 | [-0.336, +0.858] |
+| DeepSeek-R1-0528-Qwen3-8B | 10 | +0.268 | [-0.339, +0.810] |
+
+Familiarity here is the negated NLL, so a **positive** correlation means more familiar goes with a
+larger accuracy drop - the memorisation reading. Three things follow.
+
+- **The sign is consistent everywhere.** All three models with enough rows are positive, and so are
+  the labelled-only and all-rows totals. Nothing points the other way.
+- **It is not a length artifact.** Within length sextiles the mean is +0.225 against +0.247
+  overall, so the effect survives removing the component that drives every text statistic here
+  (Finding 22).
+- **It still does not clear zero.** Every interval spans it, including the widest-n one.
+
+**A correction to this experiment's own premise.** It was motivated partly by recovering the 11
+rows the three-valued rule leaves unlabelled. Only **3 of those 11 are small-track** - the rest
+belong to gpt-oss-120b, for which no familiarity features exist because the fleet could never run
+it (LF-3). So the band recovery added three rows, not eleven, and the gain in power came from the
+continuous target rather than from the extra rows.
+
+**Where this leaves the contradiction.** It has now been attacked three ways in one day: binary AUC
+by publication status (Finding 69), and continuous correlation overall and per model here. Every
+version gives the same answer - the reversal is directionally consistent and never significant.
+That is not a result about familiarity; it is a result about n. Thirty-seven rows cannot resolve a
+correlation of this size, and no re-analysis of them will. The lane is closed by data availability,
+which is the same wall Findings 46, 47 and 48 hit from other directions.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

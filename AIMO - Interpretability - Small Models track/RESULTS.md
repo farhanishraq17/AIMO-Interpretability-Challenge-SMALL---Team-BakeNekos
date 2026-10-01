@@ -876,3 +876,26 @@ AUC above 0.5 means **familiar problems are robust** - the direction the shipped
 The two halves point the same way: 0.417 on the 8 mirrored problems against 0.299 on the 25 others. Both intervals are wide and both contain 0.5, so this neither confirms nor refutes the hypothesis; it bounds how large an effect could be hiding at this sample size.
 
 **The indicator is one-sided.** A problem in the pool is certainly published and widely mirrored; a problem absent from it is only *not identified as published*, since the pool covers four sources and not the whole literature. The contrast is therefore weaker than published-against-unpublished and is biased toward finding no difference. A clean test needs publication dates per problem, which nothing available to us has.
+
+## E46: familiarity against continuous max_drop
+
+37 small-track rows carry both `max_drop` and a familiarity score, of which **34 are labelled** - the other 3 sit in the 0.11-0.21 band the three-valued rule discards and are usable here. Spearman throughout; a **positive** correlation means more familiar goes with a larger accuracy drop, i.e. the memorisation reading, which is the direction the official rows have shown throughout (Findings 58, 62, 69). gpt-oss-120b's 37 rows are excluded: no familiarity features exist for a model the fleet could never run (LF-3).
+
+| set | rows | Spearman(familiarity, max_drop) | 95% CI |
+| --- | --- | --- | --- |
+| all small-track rows | 37 | +0.247 | [-0.101, +0.555] |
+| labelled rows only | 34 | +0.210 | [-0.138, +0.522] |
+| band rows only (unlabelled) | 3 | — | too few rows |
+
+### Per model
+
+| model | rows | Spearman | 95% CI |
+| --- | --- | --- | --- |
+| Qwen3.5-4B | 14 | +0.126 | [-0.409, +0.642] |
+| Skywork-OR1-Math-7B | 3 | — | too few rows |
+| Olmo-3-7B-Think | 10 | +0.381 | [-0.336, +0.858] |
+| DeepSeek-R1-0528-Qwen3-8B | 10 | +0.268 | [-0.339, +0.810] |
+
+Within length sextiles, where problem length cannot drive it, the mean correlation is **+0.225** against +0.247 overall - so the effect is not a length artifact.
+
+**Reading.** The overall correlation is +0.247, CI [-0.103, +0.542]. The interval contains zero, so even with the band rows recovered and the continuous target in play, the reversal is not established at this sample size. That is the sharpest instrument these rows support, and it is still not sharp enough. Per model the correlations run +0.126 to +0.381, so the effect is broadly consistent in sign across models.
