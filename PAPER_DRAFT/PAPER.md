@@ -91,6 +91,14 @@ which 71 carry a label. Everything else available is Hendrycks MATH, a different
 **nothing transferred across that gap** (§6.2). Our largest single finding is that the project was
 label-bound from beginning to end, and no amount of compute we had access to could fix it.
 
+That claim is quantified in F-72, because otherwise it is unfalsifiable. For each effect we
+actually observed, the rows needed to detect an effect that size at 80% power are **63, 127 and
+320**; we had 33 to 61, and power at those sizes ran **14% to 53%**. The experiments were therefore
+not capable of returning a positive result even if their hypotheses were true, which means the
+uniform nulls of §6 are substantially measuring the sample size. The converse is equally true and
+we state it in both places: an effect estimated at n = 33 is estimated badly in both directions,
+so the honest reading is *we do not know*, not *we were nearly right*.
+
 **Evaluation is one hour, once.** A single RTX PRO 6000 (96 GB), 3600 s for the *whole* run
 covering every model and every problem, no network, no installs, weights only from a read-only
 cache. This is not a training-time constraint that scale can relax; it is a hard bound on what any

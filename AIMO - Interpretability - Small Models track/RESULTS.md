@@ -925,3 +925,19 @@ Cost of each method the project tried, ignoring accuracy entirely. The evaluatio
 The cheap methods are not cheap by accident: a forward pass over a few hundred prompt tokens costs about 2 s, while generating a single reasoning trace costs tens of seconds, and the gap is the ratio of a problem statement's length to a chain of thought's. Any method that generates is paying that ratio on every pair.
 
 **The rule this suggests, stated as a gate.** Compute the per-pair token cost *before* running an experiment, and refuse to start one whose cost exceeds the budget divided by the pair count - about 30 s per pair here, or roughly 2,700 generated tokens. Two of the eight rows above would have been rejected outright on the whiteboard and a third flagged as borderline. This is the cheapest gate in the project and it was never applied.
+
+## E48: labels required to settle each lane
+
+For each effect the project actually observed, the sample size needed to detect an effect that size at 80% power, two-sided at alpha = 0.05. Correlation by Fisher's z, AUC by the Hanley-McNeil variance. `power at 33` is what the 33 labelled official problems actually bought.
+
+| lane | observed effect | rows it had | power at 33 | rows needed for 80% |
+| --- | --- | --- | --- | --- |
+| E46 familiarity vs `max_drop` | Spearman +0.247 | 37 | 28% | **127** |
+| E45/E46 familiarity ranks robustness | AUC 0.312 | 33 | 53% | **63** |
+| E35 external-label transfer | AUC 0.609 | 61 | 14% | **320** |
+
+**Every lane needed between 63 and 320 rows and had between 33 and 61.** Power at the sample sizes we actually ran was 14% to 53% - so an effect of exactly the size observed would have failed to reach significance most of the time. **The experiments were not capable of returning a positive result even if their hypotheses were true.** That is why the nulls are so uniform across Findings 46, 47, 48, 57, 69 and 70: they are mostly measuring the sample size, not the hypotheses.
+
+**This is the project's central constraint, stated as a quantity**, and it is the justification for the Main Track's Lane A, which was designed to label roughly 500 olympiad problems. A labelling run producing 100 rows would have settled nothing; 500 clears every row in this table at once. The plan was right even though it never ran.
+
+**What it does not excuse.** Low power explains why the nulls are uninformative; it does not make the observed effects real. An effect estimated at n = 33 is estimated badly in both directions, and the honest reading of Findings 46 to 70 is that we do not know - not that we were nearly right.

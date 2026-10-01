@@ -2235,6 +2235,42 @@ tens of seconds. **Any method that generates pays the ratio of a chain of though
 problem statement's, on every pair** - here two to three orders of magnitude. That, not any
 property of robustness, is why the methods that survived are the ones that never generate.
 
+
+**72. The experiments could not have returned a positive result even if their hypotheses were
+true: power at the sample sizes we ran was 14% to 53%.** (E48,
+`train/eval_power_required.py`, 1 Oct, CPU. RESULTS, "E48: labels required to settle each lane".)
+
+"The project was label-bound" is stated throughout this log and in the report. As stated it is
+unfalsifiable - any null can be blamed on sample size. For each effect actually observed, the rows
+needed to detect an effect that size at 80% power, two-sided at alpha = 0.05 (Fisher's z for
+correlations, Hanley-McNeil for AUCs):
+
+| lane | observed effect | rows it had | power at 33 | rows needed |
+| --- | --- | --- | --- | --- |
+| E46 familiarity vs `max_drop` | Spearman +0.247 | 37 | **28%** | 127 |
+| E45/E46 familiarity ranks robustness | AUC 0.312 | 33 | **53%** | 63 |
+| E35 external-label transfer | AUC 0.609 | 61 | **14%** | 320 |
+
+**The shortfall is a factor of two to ten, not a near miss.** At 14-53% power, an effect of exactly
+the size we observed would have failed to reach significance most of the time. So the uniform nulls
+across Findings 46, 47, 48, 57, 69 and 70 are substantially measuring the sample size rather than
+the hypotheses - which is a different statement from "the hypotheses are false", and the report
+should not conflate them.
+
+**This retroactively justifies the Main Track's Lane A.** That programme was designed to label
+roughly 500 olympiad problems, and 500 clears every row of this table at once, while a run
+producing 100 would have settled nothing. The plan was right even though hardware never arrived for
+it. It also sharpens what a future run has to deliver to be worth starting: **about 320 labelled
+rows is the number that makes every closed lane decidable**, and anything under ~130 reopens none
+of them.
+
+**What it does not excuse, and this matters more than the rest.** Low power explains why the nulls
+are uninformative. It does not make the observed effects real. An effect estimated at n = 33 is
+estimated badly in *both* directions - the same arithmetic that says we could not have detected
++0.247 also says we could not have distinguished it from +0.6 or from zero. The honest reading of
+Findings 46 to 70 is **we do not know**, not "we were nearly right", and nothing here licenses
+treating a 0.247 point estimate as a real effect waiting for confirmation.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
