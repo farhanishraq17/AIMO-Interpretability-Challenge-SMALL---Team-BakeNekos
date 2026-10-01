@@ -6,6 +6,13 @@ inputs are missing on this machine (a run not downloaded here) fail loudly rathe
 leaving a stale section. The three sections only the `nakib_v2` checkout can regenerate are
 read before the rewrite and put back afterwards, unchanged (see CLAUDE.md, "Commands").
 
+**Every script that upserts a section must appear in STEPS.** A missing one is not a stale
+section, it is a deleted one: `train_text_baseline.py` rewrites the file from scratch, so any
+section nobody regenerates afterwards is gone. On 1 October an audit found 18 of 37 sections in
+exactly that state - E28 to E38 and E40 to E48 - which had been silently destroyed by every run of
+this script since they were written. `scripts/check_results_coverage.py` now asserts the
+invariant.
+
 Run:  python scripts/regenerate_results.py
 """
 
@@ -20,8 +27,13 @@ RESULTS = ROOT / "RESULTS.md"
 sys.path.insert(0, str(ROOT / "train"))
 from results_io import upsert_section  # noqa: E402
 
-# Generated on the `nakib_v2` checkout from data this machine does not hold.
-CARRIED = ("Self-generated olympiad labels", "Labelling cost model", "E21: Stage A on olympiad labels")
+# Sections no script on this machine can regenerate, preserved verbatim across the rewrite.
+# The first three come from the `nakib_v2` checkout; the last three were written from runs whose
+# generating script lives on a collaborator's checkout. Without this, `train_text_baseline.py`'s
+# rewrite silently deletes them.
+CARRIED = ("Self-generated olympiad labels", "Labelling cost model", "E21: Stage A on olympiad labels",
+           "E29: controlled DeepSeek-only transfer", "E34a — independent AIME label-yield gate",
+           "E35 — external robustness labels, source-disjoint holdout")
 STAGEA = "runs/e1b-stagea-deepseek/features/stagea-deepseek"
 TRACESTATE = "runs/e4-tracestate-deepseek/features/tracestate-deepseek"
 
@@ -44,6 +56,24 @@ STEPS = [
     ["train/eval_problem_level.py"],
     ["train/eval_familiarity.py"],
     ["train/compare_selflabels.py"],
+    # E28-E38: added 1 Oct. These existed and were absent from this list, so every run of this
+    # script deleted their sections (E48's audit).
+    ["train/eval_e27_candidates.py"],
+    ["train/eval_e28_stability.py"],
+    ["train/eval_e30_geometry.py"],
+    ["train/eval_e31_counterfactual.py"],
+    ["train/eval_e32_counterfactual_math.py"],
+    ["train/report_e37.py"],
+    ["train/report_e37_runtime.py"],
+    ["train/report_e38.py"],
+    # E40-E48: the leaderboard arithmetic and the 1 Oct analyses. All CPU, all seconds to run.
+    ["train/eval_batch_composition.py"],
+    ["train/eval_prior_sensitivity.py"],
+    ["train/eval_familiarity_shared.py"],
+    ["train/eval_published_split.py"],
+    ["train/eval_maxdrop_continuous.py"],
+    ["train/eval_budget_feasibility.py"],
+    ["train/eval_power_required.py"],
 ]
 
 

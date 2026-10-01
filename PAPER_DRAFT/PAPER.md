@@ -518,6 +518,14 @@ E32 exists solely to re-score E31 elsewhere, and it closed the lane.
 `scripts/regenerate_results.py` rebuilds every table in one command. This is also the competition's
 reproducibility requirement.
 
+That mechanism had a defect worth recording, because it is the failure mode of this discipline
+rather than an argument against it. The rebuild starts by rewriting the file from scratch, so a
+section whose producer is missing from the step list is deleted rather than left stale — and the
+command still reports success. On 1 October an audit found **18 of 37 sections** in that state,
+accumulated one experiment at a time by authors who upserted a section and never registered it.
+All 37 are now covered, and `scripts/check_results_coverage.py` asserts the invariant and fails
+when a producer is removed (F-73).
+
 **Two-rule discipline.** The `absolute_accuracy_decay` and `maxdrop` rules are never aggregated for
 the same pair (§3.2).
 

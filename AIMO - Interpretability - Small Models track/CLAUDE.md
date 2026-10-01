@@ -93,6 +93,10 @@ $py = "getting-started\.venv\Scripts\python.exe"
 # Every generated RESULTS.md section, in the only order that works (~25 min)
 & $py scripts\regenerate_results.py
 
+# Assert that command cannot delete a section (seconds). Run after adding any section:
+# a producer missing from its STEPS list means the section is deleted, not left stale (Finding 73)
+& $py scripts\check_results_coverage.py
+
 # E24: the labelled official problems in pool form; E27: leaderboard ZIPs from official labels
 & $py datagen\perturb\official_check_pool.py
 & $py submission\make_e27.py

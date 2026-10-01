@@ -2271,6 +2271,43 @@ estimated badly in *both* directions - the same arithmetic that says we could no
 Findings 46 to 70 is **we do not know**, not "we were nearly right", and nothing here licenses
 treating a 0.247 point estimate as a real effect waiting for confirmation.
 
+
+**73. `regenerate_results.py` was deleting 18 of the 37 sections it claims to rebuild, silently.**
+(Consolidation pass, 1 Oct. `scripts/check_results_coverage.py` now asserts the invariant.)
+
+The project's central reproducibility promise - stated in `CLAUDE.md`, in the handover note and in
+the report - is that one command rebuilds every number in `RESULTS.md`. It did the opposite for
+half the file.
+
+The mechanism: `train/train_text_baseline.py` **rewrites `RESULTS.md` from scratch**, and every
+later step upserts its own section. A section whose producer is not in the `STEPS` list is
+therefore not left stale, it is **deleted** - and the command prints success while the file gets
+shorter. Auditing every `## ` heading against the step list found 18 uncovered:
+
+- **E28-E38** (8 sections): the rank-candidate tables, cross-model stability, activation geometry,
+  the counterfactual pair, and the E37/E38 reports. Their scripts exist here and were simply never
+  added to `STEPS`, so every regeneration since they were written has destroyed them.
+- **E40 and E43-E48** (7 sections): the leaderboard arithmetic and the 1 Oct analyses, including
+  the six written today. Same cause.
+- **E29, E34a, E35** (3 sections): no producing script exists on this machine at all. These were
+  written from runs whose generating code lives on a collaborator's checkout, so they can only be
+  preserved, not rebuilt.
+
+Repaired both ways: the 13 scripts that exist are now in `STEPS`, and the three that cannot be
+rebuilt joined `CARRIED`, the mechanism that already preserved the three `nakib_v2` sections across
+the rewrite. Coverage is now 37 of 37.
+
+`scripts/check_results_coverage.py` asserts it going forward, and it is deliberately
+non-vacuous: removing one step from the list makes it exit 1 and name the section that would be
+lost, which was verified rather than assumed.
+
+**Why this matters more than a tidy-up.** The competition requires that organizers can reproduce
+the result from the report alone, and the report leans on this command by name. Anyone who had run
+it before today - a reviewer, a teammate, the November submission - would have produced a
+`RESULTS.md` missing every experiment from E28 onward, with no error to notice. The defect was
+introduced incrementally: each new experiment's author upserted a section and never registered it,
+including me for E40 and for all six written today.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
