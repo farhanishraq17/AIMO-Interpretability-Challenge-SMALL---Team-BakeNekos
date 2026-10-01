@@ -2112,6 +2112,43 @@ better. It is not being built: it is a different policy with no leaderboard evid
 on 27 October, and Finding 62 already showed this family is sensitive to changes that look
 harmless. It belongs in the report as an implication and in future work, not in a ZIP.
 
+
+**69. The publication hypothesis for the direction reversal gets no support: both halves of the
+official split reverse.** (E45, `train/eval_published_split.py`, 1 Oct, CPU. RESULTS, "E45:
+familiarity by publication status".)
+
+PLAN section 12's explanation for the project's one unresolved contradiction was that
+`train-main-v2` holds *published* problems, where familiarity means memorisation and predicts
+spurious, while the validation cases are mostly not those, where familiarity is fluency and
+predicts robust. It had never been tested for want of a publication indicator. There is a
+non-circular one: **8 of the 36 official problems appear verbatim in the pinned olympiad pool** -
+exact normalised text match against AIME-2024, AIME-2026, AMC validation and OlympiadBench, decided
+without reference to any model, score or label.
+
+| group | labelled problems | robust | AUC of familiarity for robust | 95% CI |
+| --- | --- | --- | --- | --- |
+| mirrored in the public pool | 8 | 6 | 0.417 | [0.000, 0.833] |
+| not identified as published | 25 | 14 | 0.299 | [0.110, 0.526] |
+| all official problems | 33 | 20 | 0.312 | [0.139, 0.500] |
+
+AUC above 0.5 is the shipped direction, familiar-is-robust; below 0.5 is the memorisation reading.
+**Both halves sit below 0.5**, and the mirrored half - the one the hypothesis says should be most
+strongly memorisation-driven - is the *less* reversed of the two, which is the opposite of the
+predicted ordering. If publication status drove the reversal, these two numbers should straddle
+0.5, and they do not.
+
+**This does not refute the hypothesis and must not be reported as refuting it.** The mirrored
+group's interval is [0.000, 0.833], which at n = 8 excludes essentially nothing. And the indicator
+is one-sided: a problem in the pool is certainly published and widely mirrored, but a problem
+absent from it is only *not identified as published*, since four datasets are not the literature.
+That asymmetry biases the comparison toward finding no difference.
+
+What it does establish is that **the leading explanation for the contradiction has now been tested
+once, on the only partition the data supports, and did not separate.** The reversal on the official
+rows is real (Findings 58, 62, and the 0.312 above) and is still unexplained. A clean test needs
+per-problem publication dates, which nothing available to us has - so this lane is closed by data
+availability, not by the result.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

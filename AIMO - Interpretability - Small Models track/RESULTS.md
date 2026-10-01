@@ -860,3 +860,19 @@ Mean pairwise agreement **0.821** (range 0.727 to 0.880). Within length deciles,
 Every model's own ranking correlates **0.893 to 0.957** with the consensus of all four. The four models are, to this resolution, ranking the same problems in the same order.
 
 **What follows.** The familiarity ranking is a property of the *problem*, not of the model scoring it - the same shape Finding 38 and LF-12 found for the robustness label itself. So the per-model forward pass the shipped policy pays for is not buying model-specific information; it is recomputing a near-identical ordering four times. The only genuinely model-specific quantity in `e27k` is the robust **count**, which is exactly where Finding 63 located the gain, and which costs nothing to evaluate.
+
+## E45: familiarity by publication status
+
+36 official problems; **8 appear verbatim in the pinned olympiad pool** (exact normalised text match against AIME-2024, AIME-2026, AMC validation and OlympiadBench). Familiarity is the cross-model consensus NLL rank (Finding 68); a *lower* rank means more familiar. Labels are pooled per problem.
+
+| group | problems | labelled | robust | AUC of familiarity for robust | 95% CI |
+| --- | --- | --- | --- | --- | --- |
+| mirrored in the public pool | 8 | 8 | 6 | 0.417 | [0.000, 0.833] |
+| not identified as published | 25 | 25 | 14 | 0.299 | [0.110, 0.526] |
+| all official problems | 33 | 33 | 20 | 0.312 | [0.139, 0.500] |
+
+AUC above 0.5 means **familiar problems are robust** - the direction the shipped policy uses. Below 0.5 means familiarity predicts spurious, the memorisation reading.
+
+The two halves point the same way: 0.417 on the 8 mirrored problems against 0.299 on the 25 others. Both intervals are wide and both contain 0.5, so this neither confirms nor refutes the hypothesis; it bounds how large an effect could be hiding at this sample size.
+
+**The indicator is one-sided.** A problem in the pool is certainly published and widely mirrored; a problem absent from it is only *not identified as published*, since the pool covers four sources and not the whole literature. The contrast is therefore weaker than published-against-unpublished and is biased toward finding no difference. A clean test needs publication dates per problem, which nothing available to us has.

@@ -625,8 +625,17 @@ verbatim — where familiarity means memorisation and predicts *spurious*; the v
 mostly not those problems, where familiarity is ordinary fluency and predicts *robust*. The
 organizers' own report splits results by published versus unpublished, so the distinction is theirs.
 
-Testing it needs labels on a population partitioned by publication date, which no amount of our
-compute can produce and which the organizers have confirmed is not coming (F-59). **It no longer
+**We have since tested it once, and it got no support** (F-69). Eight of the 36 official problems
+appear verbatim in our pinned olympiad pool - a publication indicator decided by text match, with
+no reference to any model or label. Splitting on it, familiarity scores AUC 0.417 on the mirrored
+problems and 0.299 on the rest: **both below 0.5**, both reversed, and the mirrored half is the
+*less* reversed of the two, which is the opposite of what the hypothesis predicts. If publication
+status drove the reversal, those two numbers should straddle 0.5.
+
+That is not a refutation. At n = 8 the mirrored interval is [0.000, 0.833], and the indicator is
+one-sided: absence from a four-dataset pool is not evidence of being unpublished. But the leading
+explanation has now been tested on the only partition the data supports and did not separate. A
+clean test needs per-problem publication dates, which nothing available to us has (F-59). **It no longer
 decides what we ship** — §4.2's count argument settles `e27k` over `e27e` without reference to the
 ranking's direction — but it remains the most interesting open question in the project.
 
