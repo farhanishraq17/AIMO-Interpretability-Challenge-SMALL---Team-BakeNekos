@@ -15,7 +15,7 @@ Sixteen sections and a reference checklist. They answer different questions:
   worked), §14 (what we would do differently). That is the manual.
 - **Want the evidence?** §6 is the failures, one subsection per lane, each with the test that
   killed it. It is the longest section on purpose — the writeup prize is awarded partly on negative
-  results, and we have eleven.
+  results, and we have fourteen.
 - **Want the method?** §4.2 is the one piece of real formalism: the per-model robust count in
   closed form, `t = (d − 1)/2`, derived from a measured class balance rather than tuned.
 - **Judging it?** §9 generalization, §10 efficiency, §15 contributions.
@@ -36,7 +36,7 @@ submission artifacts at the competition's library versions, and matplotlib is no
 | `fig1_layer_curve` | §6.1 | Every layer beats the honestly nested probe. The gap is the selection artifact |
 | `fig2_leaderboard_ladder` | §7.1 | All 22 uploads, with the chance and constants-ceiling lines |
 | `fig3_null_distribution` | §7.2 | Correct counts alone score 8.05; the observed 12 is at p = 0.055 |
-| `fig4_inversion` | §6.7 | Offline AUC against leaderboard score — the relation runs backwards |
+| `fig4_inversion` | §6.8 | Offline AUC against leaderboard score — the relation runs backwards |
 
 Colours come from a palette validated for colour-vision deficiency (adjacent-pair ΔE and
 contrast), and every series carries a direct label rather than relying on hue alone.

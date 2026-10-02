@@ -19,15 +19,18 @@ The AIMO Interpretability Challenge asks a question that sounds like classificat
 given a model and a problem, will that model's answer survive perturbations that leave the
 mathematics unchanged? We ran 41 experiments across two competition tracks over six weeks,
 spending roughly 300 GPU-hours on a shared free-tier fleet. **Almost all of them failed**, and
-the failures are the substance of this report: eleven distinct signals — hidden-state probes,
+the failures are the substance of this report: fourteen rejected hypotheses over eleven distinct signals — hidden-state probes,
 reasoning-trace uncertainty, answer agreement under rewriting, self-generated perturbation labels,
 activation geometry, contamination statistics — either sat at chance or reversed sign when moved
 to an independent population.
 
 What survived is a method with **no learned parameters at all**. It takes one forward pass per
 problem, ranks the batch by the scoring model's own mean token negative log-likelihood, and calls
-the more familiar half robust, with the count per model fixed by a closed-form identity rather
-than fitted. It scores **12/14 = 0.857** on the hidden validation set, above the 0.79 that led the
+the more familiar half robust, with the count per model fixed by a closed-form identity rather than
+fitted. Both halves of it turn out to be smaller than they look: the ranking is a property of the
+problem rather than of the model scoring it — four checkpoints from four families agree at Spearman
+0.82 — so the only model-specific quantity in the method is four integers measured from the
+evaluation distribution. It scores **12/14 = 0.857** on the hidden validation set, above the 0.79 that led the
 board when we started, and it runs in **334 seconds for four models** where a rejected alternative
 needed 5,293 seconds for one.
 
@@ -129,7 +132,7 @@ position:
 
 That is the argument for the rest of this report. A method with no fitted parameters cannot fail to
 transfer in the way a fitted one can (§9); a method that never generates a token is hard to beat on
-runtime (§10); and eleven documented negative results are worth more in a writeup than a
+runtime (§10); and fourteen documented negative results are worth more in a writeup than a
 thirteenth rung that does not exist.
 
 We therefore optimised for three things in this order: a method that cannot overfit because it has
@@ -323,9 +326,12 @@ reporting things that never worked.
 | 9 | Counterfactual prompt-state sensitivity | **AUC 0.735**, the strongest new signal found | Template CI and max-T fail; independent population gives 0.545, CI [0.428, 0.658] | 6.5 |
 | 10 | External robustness labels support a transferring model | Real labels, 233 configurations | Putnam holdout AUC 0.609, CI [0.442, 0.769] | 6.6 |
 | 11 | Budget-path reasoning diagnostics | Ranking gates passed; GSM-Plus confirmation passed | **Runtime gate**: 5,293 s for one model against a 3,600 s whole-run budget | 6.6 |
-| 12 | Min-K tail shape, the best offline candidate of twelve | **AUC 0.867**, CI [0.728, 0.973], maxT p = 0.0010 | **4/14 on the leaderboard** | 6.7 |
+| 12 | Min-K tail shape, the best offline candidate of twelve | **AUC 0.867**, CI [0.728, 0.973], maxT p = 0.0010 | **4/14 on the leaderboard** | 6.8 |
+| 13 | Publication status explains the direction reversal | — | Both halves reverse (AUC 0.417, 0.299) instead of straddling 0.5 | 6.7 |
+| 14 | The reversal survives a sharper instrument | Spearman **+0.247**, sign consistent in every model | Every CI spans zero | 6.7 |
 
-Entry 12 is the one we cannot explain, and §6.7 treats it separately.
+Entries 13 and 14 are the last two attempts on the reversal, and §6.7 reports why they could
+not have succeeded. Entry 12 is the one we cannot explain at all, and §6.8 treats it separately.
 
 ### 6.1 The shipped baseline is at chance
 
@@ -411,7 +417,35 @@ one pre-registered confirmation, **passed its GSM-Plus confirmation and then fai
 gate**: 5,293 s to extract features for Qwen alone, against a 3,600 s budget for everything. E38's
 exact-prefix audit failed every comparison.
 
-### 6.7 The offline/online inversion
+### 6.7 Why the last two attempts could not have worked
+
+The direction reversal of §12 is the project's one unexplained result, and it was attacked twice
+more after the rest of this section was written.
+
+**Publication status does not explain it** (F-69). Eight of the 36 official problems appear
+verbatim in our pinned olympiad pool, a publication indicator decided by text match with no
+reference to any model or label. The memorisation hypothesis predicts the two halves straddle
+chance. They do not: AUC **0.417** on the mirrored problems and **0.299** on the rest, both
+reversed, and the mirrored half — the one that should be most memorisation-driven — is the *less*
+reversed of the two.
+
+**A sharper instrument does not rescue it either** (F-70). Scored against `max_drop` directly
+rather than the binarised label, familiarity correlates **+0.247**, positive in every model and
+every subset, and **+0.225 within length deciles** so it is not the length artifact that drives
+every text statistic here. Every interval still spans zero.
+
+**Both results are about sample size, and we can say by how much** (F-72). Detecting a correlation
+of +0.247 at 80% power needs **127 rows**; we have 37. Across the three lanes tested this way, the
+requirement is 63 to 320 rows against the 33 to 61 we hold, and power at the sizes actually run was
+**14% to 53%**. The experiments were not capable of returning a positive result even if their
+hypotheses were true, which is why the nulls in this section are so uniform.
+
+The converse deserves equal weight and is easy to drop: low power does not make the observed
+effects real. An effect estimated at n = 33 is estimated badly in *both* directions — the same
+arithmetic that says we could not detect +0.247 says we could not distinguish it from +0.6 or from
+zero. **The honest reading of this section is that we do not know, not that we were nearly right.**
+
+### 6.8 The offline/online inversion
 
 The most uncomfortable result in the project, and the one we cannot explain.
 
@@ -551,15 +585,47 @@ selected.
 model and a 117B mixture-of-experts. We verified identical behaviour across four checkpoints from
 four different families (E39).
 
+**And the model-specific surface is smaller than it looks.** The policy loads the model being
+scored, which implies the ranking is model-specific information. Measured, it is almost not: across
+the 193 problems all four models scored, their familiarity rankings agree at mean pairwise Spearman
+**0.821**, and **0.748 within length deciles** where length cannot drive it; each model sits 0.893
+to 0.957 against the consensus of all four (F-68). The four models rank the same problems in
+essentially the same order.
+
+This is the same shape the robustness *label* has (§1.2): a property of the problem, not of the
+pair. So the ranking generalizes for the reason problem properties do, and **the only genuinely
+model-specific quantity in the method is the robust count** — four integers, measured rather than
+fitted. That is a smaller surface to defend than "a per-model likelihood model", and it is the
+precise sense in which this method has little to overfit.
+
+It also implies a cheaper variant — rank once, apply per-model counts, a fourfold reduction in
+test-time cost — which we did not build. It is a different policy with no leaderboard evidence, the
+freeze was close, and F-62 had already shown this family moves under changes that look harmless.
+We report it as an implication rather than shipping it.
+
 **Its assumptions are stated and testable.** The method assumes (i) familiar problems are more
 robust, and (ii) the per-model balances `d_m` hold. Assumption (ii) is directly measurable for five
 submissions, and we re-measured it twelve days later with all four values reproducing exactly
 (F-64). Assumption (i) is the contested one — see §12.
 
-**What does not generalize, and we say so.** The counts are measured on the *validation* set. The
-prizes are scored on a private test set of 30 problems whose class prior may differ. If it does, the
-tilts are wrong, and the prior-free `e27e` would be the safer artifact. We ship `e27k` because the
-balances are the only measurement we have, and measured beats assumed.
+**What does not generalize, and we say so — with the size of the exposure.** The counts are
+measured on the *validation* set; the prizes are scored on a private test set of 30 problems whose
+class prior may differ. F-67 quantifies what that costs. A policy calling `c` of `n` robust with an
+uninformative ranking scores `c(2r/n − 1) + n − r`, linear in `c`, so lowering `c` by one gains
+`1 − 2r/n` cases: **the crossover is a robust share of exactly 0.5, independent of batch size.**
+
+Two consequences. Qwen and DeepSeek have zero tilt, so they contribute nothing whatever their prior
+does — **the entire difference between `e27k` and `e27e` rides on two models**. And those two are
+the ones our sources disagree about: the validation probes make Skywork and Olmo spurious-leaning,
+while the organizers' own labelled split makes both majority robust, at 0.667 and 0.778. If the
+private shares matched the official split, the tilts would cost about 0.89 cases rather than gain
+roughly one.
+
+So the choice is not "0.86 against 0.71" — that compares scores on the set where `e27k` is right by
+construction. It is a **symmetric bet on whether two models stay spurious-leaning**, worth about a
+case either way. We ship `e27k` because the balances are the only measurement anyone has, and
+measured beats assumed; `e27e` is the prior-free alternative and the right choice for anyone who
+weights the official split more heavily than the validation set.
 
 ---
 
@@ -689,7 +755,7 @@ used for a different purpose. Mean token NLL is the oldest such signal; *Min-K%*
 averages the lowest-probability tokens, *Min-K%++* (Zhang et al., 2024) normalises it per token, and
 the zlib-compression ratio is from Carlini et al.'s training-data extraction work (2021), with the
 reference-model calibration from *Membership Inference Attacks From First Principles* (Carlini et
-al., 2022). We implemented all of them (E23, E28). The relevant negative result is §6.7: the
+al., 2022). We implemented all of them (E23, E28). The relevant negative result is §6.8: the
 statistic with the strongest contamination-detection credentials offline (Min-K gap) was the worst
 predictor of robustness on the hidden set, and plain mean NLL was the best.
 
@@ -726,7 +792,7 @@ signals into null results (§6.5).
 empirical and methodological: a training-free predictor competitive on the task, a closed-form
 result for its only free parameters (§4.2), a way to read the evaluation distribution's class
 balance off constant submissions (§7.2), and a documented inversion between offline validation and
-held-out behaviour that we cannot explain (§6.7).
+held-out behaviour that we cannot explain (§6.8).
 
 ---
 
@@ -736,12 +802,20 @@ held-out behaviour that we cannot explain (§6.7).
    produced more usable structure than 120 GPU-hours of panel sampling that preceded them.
 2. **Probe the evaluation distribution early.** Five constant submissions measure the class balance
    of every model, and that measurement — not any feature — is what produced our best score.
-3. **Distrust any offline gate on this task** (§6.7).
+3. **Distrust any offline gate on this task** (§6.8).
 4. **Count records, not work lists** (§11.3).
 5. **Choose a population that ships ground truth.** The panel's fatal flaw was needing an answer key
    that did not exist (LF-14).
 6. **Budget tokens, not GPU-hours.** Every sampling failure in this project was a context-length
    failure wearing a compute-budget costume.
+7. **Cost the method before testing it for signal.** Per-pair cost must not exceed the budget
+   divided by the pair count — here about 30 s, or 2,700 generated tokens. It is one
+   multiplication, needs no GPU and no data, and would have rejected two of the eight method
+   families outright (§10). We ran them for weeks instead.
+8. **Compute the power before running the experiment, not after the null.** At 33 labelled
+   problems, most of what we tested could not have reached significance at the effect sizes we
+   were hoping for (§6.7). Knowing that in week one would have redirected the whole project toward
+   acquiring labels rather than toward testing signals against the labels we had.
 
 ---
 
@@ -808,16 +882,24 @@ were identical across two machines.
 2. **A leaderboard-arithmetic method** for extracting the evaluation distribution's per-model class
    balance from constant submissions, and for testing whether an observed score exceeds what those
    counts alone explain (§7.2).
-3. **Eleven documented negative results**, several with independent-population confirmations, and a
-   measured **inversion between offline validation and leaderboard behaviour** on this task (§6).
+3. **Fourteen documented negative results**, several with independent-population confirmations,
+   and a measured **inversion between offline validation and leaderboard behaviour** on this task
+   (§6).
 4. **A correction to the organizers' published baseline**: its 58.37% is a layer-selection artifact;
    honest nested cross-validation puts it at 0.5005 (§6.1).
-5. **Two structural results about the task**: robustness is a property of the problem rather than
-   the (model, problem) pair, and `reasoning_effort` almost never changes the label (§11.2).
+5. **Three structural results about the task**: robustness is a property of the problem rather than
+   the (model, problem) pair (§1.2); the familiarity *signal* is a problem property too, so the
+   only model-specific quantity in our method is four measured integers (§9); and
+   `reasoning_effort` almost never changes the label (§11.2).
 6. **A tokenizer defect** in transformers 5.13 that silently empties DeepSeek's input and affects
    the organizers' own baseline (§3.2).
-
----
+7. **A feasibility result about the task's compute budget**: two of the method families we pursued
+   could not have been submitted at any accuracy, missing the 3600-second whole-run budget by 10×
+   and 11×, and a one-multiplication gate catches this before any GPU time is spent (§10).
+8. **A power analysis of our own null results** (§6.7): the lanes we closed needed 63 to 320
+   labelled rows and had 33 to 61, so they could not have returned a positive result even if their
+   hypotheses were true. We state the converse with equal weight — this does not make the effects
+   real.
 
 ---
 
@@ -844,7 +926,7 @@ were identical across two machines.
 
 | # | Believed citation | Used in | Confidence | ✓ |
 | --- | --- | --- | --- | --- |
-| R6 | Shi et al., *Detecting Pretraining Data from Large Language Models*, 2023 — introduces Min-K% | §6.7, E23, E28 | high | ☐ |
+| R6 | Shi et al., *Detecting Pretraining Data from Large Language Models*, 2023 — introduces Min-K% | §6.8, E23, E28 | high | ☐ |
 | R7 | Zhang et al., *Min-K%++*, 2024 | E23 `min_k_pp_20` | medium — confirm authors | ☐ |
 | R8 | Carlini et al., *Extracting Training Data from Large Language Models*, 2021 — the zlib-ratio baseline | E23 `zlib_ratio` | high | ☐ |
 | R9 | Carlini et al., *Membership Inference Attacks From First Principles*, 2022 — reference-model calibration | E23 `relative_nll` | high | ☐ |
@@ -904,5 +986,5 @@ each. `RESULTS.md` carries 29 generated metric tables.
 3. Can official-family perturbations with verified answer preservation reproduce the organizers'
    labels? This is the gate that would reopen supervised work, and it is pre-registered in the Main
    Track's `protocols/M3_PROTOCOL.md`.
-4. Is the offline/online inversion (§6.7) a property of this task, of 14-case evaluation, or of our
+4. Is the offline/online inversion (§6.8) a property of this task, of 14-case evaluation, or of our
    offline gates?
