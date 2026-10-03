@@ -7,12 +7,15 @@ consideration, plus a peer review of up to three other reports between 15 and 30
 | --- | --- |
 | `PAPER.md` | The whole draft. Written to be read end to end by someone who has never seen the repository |
 
+**Small Models Track only.** The Main Track's experiments are not complete, so the paper carries no
+Main Track content — no sections, results or `LF-n` findings. See that track's `CLAUDE.md`.
+
 ## How to read it
 
-Sixteen sections and a reference checklist. They answer different questions:
+Fifteen sections and a reference checklist. They answer different questions:
 
 - **New to the project?** §1 (the task and why it is hard), §4 (what we actually ship), §7 (what
-  worked), §14 (what we would do differently). That is the manual.
+  worked), §13 (what we would do differently). That is the manual.
 - **Want the evidence?** §6 is the failures, one subsection per lane, each with the test that
   killed it. It is the longest section on purpose — the writeup prize is awarded partly on negative
   results, and we have fourteen.
@@ -58,13 +61,13 @@ and per-figure alt text if the submission format wants it.
 
 ## Rules it has to satisfy
 
-- Organizers must be able to reproduce the score **from the report alone** — hence §15, and hence
+- Organizers must be able to reproduce the score **from the report alone** — hence §14, and hence
   the rule that no number is hand-typed into a document.
 - The implementation must be open-sourced alongside it.
 - Award-considered teams peer-review up to three other reports.
 
 ## Keeping it honest
 
-Every number in `PAPER.md` comes from a script in one of the two track folders. If a number here
+Every number in `PAPER.md` comes from a script in the Small Models Track folder. If a number here
 and a number in a `RESULTS.md` table disagree, **the table is right** — it was generated, the paper
 was typed. Re-check with `scripts/regenerate_results.py` before submitting.

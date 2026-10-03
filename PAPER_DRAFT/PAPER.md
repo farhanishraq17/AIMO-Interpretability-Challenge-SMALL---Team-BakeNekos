@@ -1,6 +1,6 @@
 # Predicting Reasoning Robustness Without Training Data
 
-### A record of the AIMO Interpretability Challenge, both tracks
+### A record of the AIMO Interpretability Challenge, Small Models Track
 
 **Farhan Ishraq**¹ · *[co-author names to be filled in — see `README.md`]*
 
@@ -8,8 +8,8 @@
 <https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Team-BakeNekos>
 
 **Draft — 30 September 2026.** Every number here is regenerable from the repository; the
-commands are in §15. Findings are cited as `F-n` (Small Models Track, `PROGRESS.md`) and `LF-n`
-(Main Track). Where this draft and a `RESULTS.md` table disagree, the table is right.
+commands are in §14. Findings are cited as `F-n` (`PROGRESS.md`). Where this draft and a
+`RESULTS.md` table disagree, the table is right.
 
 ---
 
@@ -17,8 +17,8 @@ commands are in §15. Findings are cited as `F-n` (Small Models Track, `PROGRESS
 
 The AIMO Interpretability Challenge asks a question that sounds like classification and is not:
 given a model and a problem, will that model's answer survive perturbations that leave the
-mathematics unchanged? We ran 41 experiments across two competition tracks over six weeks,
-spending roughly 300 GPU-hours on a shared free-tier fleet. **Almost all of them failed**, and
+mathematics unchanged? We ran 41 experiments over six weeks, spending roughly 300 GPU-hours on a
+shared free-tier fleet. **Almost all of them failed**, and
 the failures are the substance of this report: fourteen rejected hypotheses over eleven distinct signals — hidden-state probes,
 reasoning-trace uncertainty, answer agreement under rewriting, self-generated perturbation labels,
 activation geometry, contamination statistics — either sat at chance or reversed sign when moved
@@ -81,13 +81,10 @@ measure.
 
 Three properties, each of which defeated a standard approach.
 
-**The label is a property of the problem, not the pair.** Of the 33 labelled problems in the
-official split, 11 carry labels for two or more models, and **all 11 agree** — every pairwise
-comparison is exactly 1.000, including `gpt-oss-120b` against each of the four small checkpoints
-(LF-12). A per-problem oracle scores 0.986 against the 71 labelled rows where always-robust scores
-0.732. An earlier measurement on a different subset found 20/20 agreement at p = 0.0005 (F-38).
-So the model-specific white-box machinery the competition invites is, empirically, aimed at
-variance that barely exists.
+**The label is a property of the problem, not the pair.** Wherever two of the four evaluated models
+are labelled on the same official problem, they agree: **20 of 20 pairs**, label-permutation
+p = 0.0005, against a chance agreement rate of 0.608 (F-38). So the model-specific white-box
+machinery the competition invites is, empirically, aimed at variance that barely exists.
 
 **Labels are almost absent.** The only in-population labelled data is 82 rows over 36 problems, of
 which 71 carry a label. Everything else available is Hendrycks MATH, a different distribution, and
@@ -148,16 +145,15 @@ generalization argument.
 | --- | --- |
 | Competition | AIMO Interpretability Challenge, NeurIPS 2026, Fields Model Initiative |
 | Scoring | Codabench competition 16180; 10 submissions/day, 300 total |
-| Tracks | **Small Models** (open weights < 10B) and **Main** (adds `openai/gpt-oss-120b`) |
-| Evaluated models | `Qwen/Qwen3.5-4B`, `Skywork/Skywork-OR1-Math-7B`, `allenai/Olmo-3-7B-Think`, `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`, and in the Main Track `openai/gpt-oss-120b` |
+| Track | **Small Models** (open weights < 10B) |
+| Evaluated models | `Qwen/Qwen3.5-4B`, `Skywork/Skywork-OR1-Math-7B`, `allenai/Olmo-3-7B-Think`, `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` |
 | Evaluation hardware | 1× RTX PRO 6000 (Blackwell, sm_120), 96 GB, 3600 s, offline |
 | Our hardware | Kaggle free tier: T4×2, 2 sessions and 30 GPU-h per week per account, ~11 accounts shared with other projects |
 | Local hardware | RTX 3050 6 GB — cannot hold any target model; used for data work, CPU training and packaging |
 
-The asymmetry between evaluation hardware and our hardware shaped everything. We could never run
-`gpt-oss-120b` at all (LF-3), and a T4×2 kernel decodes 10–90 tokens/s depending on the model
-(LF-11), which made any generation-heavy method unaffordable to *develop*, independently of
-whether it would be affordable to *run*.
+The asymmetry between evaluation hardware and our hardware shaped everything. Generation on T4s is
+slow enough that any generation-heavy method was unaffordable to *develop*, independently of
+whether it would be affordable to *run*: E14's 3.86M generated tokens took 10.1 GPU-hours (F-24).
 
 ---
 
@@ -378,8 +374,7 @@ variants and applied the official rule. Twice.
 
 The deeper issue: our perturbation family (`answer_modulus`) is not one of the official seven. It
 changes what is asked, so it measures a different quantity. Doing this properly needs official-style
-families with verified answer preservation — which is exactly the Main Track's planned Lane A, and
-which the T4 fleet cannot afford (§11.3).
+families with verified answer preservation, which the T4 fleet cannot afford.
 
 ### 6.4 Test-time methods are unaffordable and at chance
 
@@ -419,7 +414,7 @@ exact-prefix audit failed every comparison.
 
 ### 6.7 Why the last two attempts could not have worked
 
-The direction reversal of §12 is the project's one unexplained result, and it was attacked twice
+The direction reversal of §11 is the project's one unexplained result, and it was attacked twice
 more after the rest of this section was written.
 
 **Publication status does not explain it** (F-69). Eight of the 36 official problems appear
@@ -564,8 +559,8 @@ when a producer is removed (F-73).
 the same pair (§3.2).
 
 **Contract checks before every upload.** `coverage = 1.0`, `invalid_predictions = 0`, native
-`bool`s, and the correct presence or absence of `small.txt` — a Main-Track ZIP containing that
-marker scores 0.00 and cost four uploads to diagnose (F-21).
+`bool`s, and the `small.txt` marker that selects the track — getting it wrong scored 0.00 and cost
+four uploads to diagnose (F-21).
 
 ---
 
@@ -581,9 +576,9 @@ no training step at all. The failure mode that killed lanes B, E-offline and F �
 on 29 clusters that reverses on an independent population* — cannot occur, because nothing is
 selected.
 
-**It is architecture-agnostic by construction.** The same six lines apply unchanged to a 4B dense
-model and a 117B mixture-of-experts. We verified identical behaviour across four checkpoints from
-four different families (E39).
+**It is architecture-agnostic by construction.** The same six lines apply unchanged to any
+autoregressive model. We verified identical behaviour across four checkpoints from four different
+families, 4B to 8B (E39).
 
 **And the model-specific surface is smaller than it looks.** The policy loads the model being
 scored, which implies the ranking is model-specific information. Measured, it is almost not: across
@@ -606,7 +601,7 @@ We report it as an implication rather than shipping it.
 **Its assumptions are stated and testable.** The method assumes (i) familiar problems are more
 robust, and (ii) the per-model balances `d_m` hold. Assumption (ii) is directly measurable for five
 submissions, and we re-measured it twelve days later with all four values reproducing exactly
-(F-64). Assumption (i) is the contested one — see §12.
+(F-64). Assumption (i) is the contested one — see §11.
 
 **What does not generalize, and we say so — with the size of the exposure.** The counts are
 measured on the *validation* set; the prizes are scored on a private test set of 30 problems whose
@@ -658,57 +653,9 @@ and it needs no GPU, no data and no labels. We never applied it. The underlying 
 past this competition: any method that generates pays the length of a chain of thought against the
 length of a problem statement, on every pair.
 
-For the Main Track this is sharper still. Listing `gpt-oss-120b` outside the split set means its
-**62 GiB checkpoint is never loaded** — the constant is both the best answer available and the
-fastest, and with five models sharing 3600 s that is a material saving.
-
 ---
 
-## 11. The Main Track
-
-### 11.1 What it adds
-
-Five models instead of four; the fifth, `gpt-oss-120b`, is the only one whose `reasoning_effort`
-varies (`low`/`medium`/`high`). The four small checkpoints are shared, so the small-track policy
-covers them unchanged; the only new modelling problem is the fifth model.
-
-### 11.2 Two results that simplify it
-
-**Robustness is a property of the problem** (LF-12, §1.2). One score per problem, broadcast to every
-model, loses almost nothing.
-
-**`reasoning_effort` almost never changes the label** (LF-13). Across problems labelled at two
-efforts: `high` vs `medium` agree 10/10; `high` vs `low` and `low` vs `medium` each flip once in 6.
-Of 6 problems labelled at all three, 5 are unanimous — and both flips involve `low`. A shared,
-effort-blind prediction costs at most one row in 22.
-
-### 11.3 The proxy panel, and what it cost
-
-Unable to run `gpt-oss-120b` (LF-3: Kaggle's `NvidiaH100` shape returns T4×2 on every account), we
-built a proxy panel — eight (model, effort) cells over 46 originals and 453 official variant texts,
-on quantised builds via Ollama. **Twelve kernels, ~120 GPU-hours, and one usable cell.**
-
-The failure is instructive. Every kernel reported `COMPLETE`, and `summary.json` reported 637
-completions — but that field was the *work list length*, computed before sampling. Counting actual
-records gave 11–64% coverage for seven of eight cells (LF-11). The binding constraint was never GPU
-hours: a 16k context **truncated 43–97% of thinking-model replies** before they produced an answer.
-Only `low` effort, at 1,876 generated tokens per reply against 17k–26k at medium and high, was cheap
-enough to finish.
-
-And the panel could not have answered its question anyway. Grading needs each problem's true answer,
-since the perturbations preserve it — and neither the 36 official problems nor the 10 reference
-problems ship one (LF-14). **The fix was not to build an answer key but to change the population**:
-505 olympiad problems whose answers are published (LF-15).
-
-### 11.4 Status
-
-`M11a` — the small-track policy for four models, `True` for `gpt-oss-120b`, no `small.txt` — is
-built and contract-checked at coverage 1.0 (LF-16). The scaled programme in that track's `PLAN.md`
-is written against hardware we do not have.
-
----
-
-## 12. The one unresolved contradiction
+## 11. The one unresolved contradiction
 
 The shipped direction — **familiar problems are robust** — holds on DeepSeek's 142 MATH instances
 and on the hidden validation set repeatedly. It **reverses** on the 34 official olympiad rows, where
@@ -737,7 +684,7 @@ ranking's direction — but it remains the most interesting open question in the
 
 ---
 
-## 13. Related work
+## 12. Related work
 
 **Citations below are from memory and have not been verified against the literature — check every
 one before submission.** Titles and authors are given rather than venues where we are less sure.
@@ -761,7 +708,7 @@ predictor of robustness on the hidden set, and plain mean NLL was the best.
 
 To our knowledge the *direction* we found — familiar problems being **more** robust on the
 evaluation distribution, while familiarity predicts brittleness on published olympiad problems
-(§12) — is not reported in that literature, which studies contamination as a threat to benchmark
+(§11) — is not reported in that literature, which studies contamination as a threat to benchmark
 validity rather than as a feature.
 
 **Probing and its selection artifacts.** Linear probing of hidden states follows Alain and Bengio
@@ -796,30 +743,25 @@ held-out behaviour that we cannot explain (§6.8).
 
 ---
 
-## 14. What we would do differently
+## 13. What we would do differently
 
-1. **Read the labels before sampling anything.** Two zero-GPU analyses of 82 rows (LF-12, LF-13)
-   produced more usable structure than 120 GPU-hours of panel sampling that preceded them.
-2. **Probe the evaluation distribution early.** Five constant submissions measure the class balance
+1. **Probe the evaluation distribution early.** Five constant submissions measure the class balance
    of every model, and that measurement — not any feature — is what produced our best score.
-3. **Distrust any offline gate on this task** (§6.8).
-4. **Count records, not work lists** (§11.3).
-5. **Choose a population that ships ground truth.** The panel's fatal flaw was needing an answer key
-   that did not exist (LF-14).
-6. **Budget tokens, not GPU-hours.** Every sampling failure in this project was a context-length
+2. **Distrust any offline gate on this task** (§6.8).
+3. **Budget tokens, not GPU-hours.** Every sampling failure in this project was a context-length
    failure wearing a compute-budget costume.
-7. **Cost the method before testing it for signal.** Per-pair cost must not exceed the budget
+4. **Cost the method before testing it for signal.** Per-pair cost must not exceed the budget
    divided by the pair count — here about 30 s, or 2,700 generated tokens. It is one
    multiplication, needs no GPU and no data, and would have rejected two of the eight method
    families outright (§10). We ran them for weeks instead.
-8. **Compute the power before running the experiment, not after the null.** At 33 labelled
+5. **Compute the power before running the experiment, not after the null.** At 33 labelled
    problems, most of what we tested could not have reached significance at the effect sizes we
    were hoping for (§6.7). Knowing that in week one would have redirected the whole project toward
    acquiring labels rather than toward testing signals against the labels we had.
 
 ---
 
-## 15. Reproducibility
+## 14. Reproducibility
 
 ```bash
 # Every generated table in the Small Models Track (~25 min)
@@ -832,19 +774,16 @@ python train/eval_batch_composition.py
 python submission/make_e27.py     # 13 candidates incl. the incumbent
 python submission/make_e28.py     # rank successors
 python submission/make_probes.py  # the 5 constant probes
-
-# Main Track tables
-python "../AIMO - Interpretability - Large Models track/scripts/write_results.py"
 ```
 
-Repository layout: one folder per track, each with `CLAUDE.md` (conventions), `COMPETITION.md`
+Repository layout: the Small Models Track folder holds `CLAUDE.md` (conventions), `COMPETITION.md`
 (rules), `PLAN.md`, `PROGRESS.md` (numbered findings), `RESULTS.md` (generated — never hand-edited),
 `experiments.md` (registry) and `protocols/` (pre-registrations). Submissions are indexed by score
 in `submission/README.md`, and the built ZIPs are committed, so the artifact that scored can be
 uploaded from a clone without rebuilding. Kernels are exported to `kernels/` exactly as pushed, so
 any run can be rebuilt if a Kaggle account disappears.
 
-### 15.1 The shipped artifact, verified in the competition image
+### 14.1 The shipped artifact, verified in the competition image
 
 The organizers must be able to reproduce the result from this report alone, so the shipped ZIP was
 run inside `Dockerfile.competition` itself, with networking disabled (E42, F-65, F-66).
@@ -874,7 +813,7 @@ were identical across two machines.
 
 ---
 
-## 16. Summary of contributions
+## 15. Summary of contributions
 
 1. **A training-free robustness predictor** that scores 12/14 on the hidden validation set, ranking
    a batch by the scoring model's own likelihoods and fixing its counts by a closed-form identity in
@@ -887,10 +826,9 @@ were identical across two machines.
    (§6).
 4. **A correction to the organizers' published baseline**: its 58.37% is a layer-selection artifact;
    honest nested cross-validation puts it at 0.5005 (§6.1).
-5. **Three structural results about the task**: robustness is a property of the problem rather than
-   the (model, problem) pair (§1.2); the familiarity *signal* is a problem property too, so the
-   only model-specific quantity in our method is four measured integers (§9); and
-   `reasoning_effort` almost never changes the label (§11.2).
+5. **Two structural results about the task**: robustness is a property of the problem rather than
+   the (model, problem) pair (§1.2); and the familiarity *signal* is a problem property too, so the
+   only model-specific quantity in our method is four measured integers (§9).
 6. **A tokenizer defect** in transformers 5.13 that silently empties DeepSeek's input and affects
    the organizers' own baseline (§3.2).
 7. **A feasibility result about the task's compute budget**: two of the method families we pursued
@@ -916,7 +854,7 @@ were identical across two machines.
 
 | # | Believed citation | Used in | Confidence | ✓ |
 | --- | --- | --- | --- | --- |
-| R1 | Mirzadeh et al., *GSM-Symbolic: Understanding the Limitations of Mathematical Reasoning in Large Language Models*, 2024 | §13, the premise of the task | high | ☐ |
+| R1 | Mirzadeh et al., *GSM-Symbolic: Understanding the Limitations of Mathematical Reasoning in Large Language Models*, 2024 | §12, the premise of the task | high | ☐ |
 | R2 | Hendrycks et al., *Measuring Mathematical Problem Solving With the MATH Dataset*, 2021 | §3.1, §6.2 — our labelled distribution | high | ☐ |
 | R3 | *MATH-Perturb* — perturbation benchmark, 2025 | §6.6, E35 training source | medium — check exact authors and title | ☐ |
 | R4 | *Putnam-AXIOM* — competition benchmark with variations | §6.6, E35 holdout | medium — check authors and year | ☐ |
@@ -943,9 +881,9 @@ were identical across two machines.
 
 | # | Believed citation | Used in | Confidence | ✓ |
 | --- | --- | --- | --- | --- |
-| R13 | Cunningham et al., *Sparse Autoencoders Find Highly Interpretable Features in Language Models*, 2023 | §13, lane C | high | ☐ |
-| R14 | Bricken et al., *Towards Monosemanticity*, Anthropic, 2023 | §13 | high | ☐ |
-| R15 | Templeton et al., *Scaling Monosemanticity*, Anthropic, 2024 | §13 | high | ☐ |
+| R13 | Cunningham et al., *Sparse Autoencoders Find Highly Interpretable Features in Language Models*, 2023 | §12, lane C | high | ☐ |
+| R14 | Bricken et al., *Towards Monosemanticity*, Anthropic, 2023 | §12 | high | ☐ |
+| R15 | Templeton et al., *Scaling Monosemanticity*, Anthropic, 2024 | §12 | high | ☐ |
 
 ### Uncertainty, calibration and self-consistency
 
@@ -974,17 +912,16 @@ were identical across two machines.
 
 ## Appendix A — Experiment index
 
-`experiments.md` in each track folder carries the full registry with configuration and outcome for
-all 41 experiments. `PROGRESS.md` carries findings F-1…F-64 and LF-1…LF-16 with the evidence for
-each. `RESULTS.md` carries 29 generated metric tables.
+`experiments.md` carries the full registry with configuration and outcome for all 41 experiments.
+`PROGRESS.md` carries findings F-1…F-73 with the evidence for each. `RESULTS.md` carries 37
+generated metric tables.
 
 ## Appendix B — Open questions
 
-1. Does familiarity predict robustness differently for published and unpublished problems (§12)?
-2. Does the per-problem invariance (LF-12) hold at n ≈ 500, or is it an artifact of the
+1. Does familiarity predict robustness differently for published and unpublished problems (§11)?
+2. Does the per-problem invariance (F-38) hold at n ≈ 500, or is it an artifact of the
    three-valued rule discarding the ambiguous band?
 3. Can official-family perturbations with verified answer preservation reproduce the organizers'
-   labels? This is the gate that would reopen supervised work, and it is pre-registered in the Main
-   Track's `protocols/M3_PROTOCOL.md`.
+   labels? This is the gate that would reopen supervised work.
 4. Is the offline/online inversion (§6.8) a property of this task, of 14-case evaluation, or of our
    offline gates?

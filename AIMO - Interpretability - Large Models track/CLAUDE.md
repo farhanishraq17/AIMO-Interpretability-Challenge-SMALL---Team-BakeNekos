@@ -15,6 +15,13 @@ Workspace for the **AIMO Interpretability Challenge (NeurIPS 2026)**, entered in
 - **Scoring:** Codabench competition 16180, not Kaggle. Kaggle is only free GPU capacity.
 - **Deadlines:** submissions close **1 Nov 2026**; report and open-source code due **15 Nov 2026**.
 
+## NO PAPER WRITING FOR THE MAIN TRACK
+
+**The Main Track's experiments are not complete, so do not write any paper or report content for
+it.** Paper writing is for the **Small Models Track only**. Do not add Main Track sections,
+claims, results or `LF-n` findings to `../PAPER_DRAFT/`, and do not draft a Main Track report
+anywhere else. Work in this folder is experiments only until this rule is lifted by the team.
+
 ## Documents: read before changing direction
 
 | File | Role | Maintained by |

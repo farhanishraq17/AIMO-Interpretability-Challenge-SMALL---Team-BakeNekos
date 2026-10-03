@@ -13,8 +13,9 @@ Both folders now carry the same document set — `CLAUDE.md`, `COMPETITION.md`, 
 `PROGRESS.md`, `RESULTS.md`, `experiments.md`, `protocols/` — with the same role for each file.
 Findings are numbered separately: `1..64` in the small track, `LF-1..LF-16` in the Main Track.
 
-`PAPER_DRAFT/` holds the technical report due 15 November, which covers **both** tracks and is
-the only document that does. Start at its `README.md`.
+`PAPER_DRAFT/` holds the technical report due 15 November. Start at its `README.md`.
+**Paper writing is for the Small Models Track only.** The Main Track's experiments are not
+complete, so no paper content is written for it (see that track's `CLAUDE.md`).
 
 **Work inside one track's folder.** Every script resolves its paths from its own location, so
 run them from anywhere, but read that track's `CLAUDE.md` before changing anything: the
