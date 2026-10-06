@@ -7,7 +7,24 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
-### Current execution and decision
+### Running now: E49 (pushed 7 Oct)
+
+E37's frozen budget-path score, re-extracted with batched `transformers` (the path a submission
+would take) and scored once on all 34 official rows. Protocol: `protocols/E49_PROTOCOL.md`.
+Review behind it: `REVIEW_GENERALIZATION.md`. Code is on branch `e49-protocol`.
+
+| Kernel | Account | Rows | Batch cap (tokens) | Status |
+| --- | --- | --- | --- | --- |
+| `aimo-small-e49-deepseek` | TASHIN (`tashintahir`) | 10 | 60,000 | running |
+| `aimo-small-e49-olmo` | Labib (`gmnoorlabib`) | 9 | 50,000 | running |
+| `aimo-small-e49-qwen` | Mashrafi (`wimpykid67`) | 12 | 400,000 | running |
+| `aimo-small-e49-skywork` | Nasif (`nasifol`) | 3 | 150,000 | running |
+
+- **Do not join `features.jsonl` to labels.** The 34 rows are scored once, by
+  `train/eval_e49_official.py`, after all four finish and protocol §6.4 is signed off.
+- Download with `python scripts/kaggle_followup.py output e49-<model> --account <ALIAS>`.
+
+### Previous execution: E37 (closed)
 
 | Retry | Account | Status | Result |
 | --- | --- | --- | --- |
