@@ -55,12 +55,18 @@ prompt, the answer forcing and the decision rule.
 
 ## 2. Frozen predictor and decision
 
-- **Training:** `train/prepare_e37_model.py` rebuilds the E37 training set from
-  `ssubhnil/Qwen3-Math-Eval@f64c82f5ce9249155ad7c70991a9711d92963cce` and verifies its hashes
-  against the confirmation run. The model is `build_examples(..., "math_perturb")`, then
-  `feature_columns`, then `make_model()`: median imputation, standardisation, class-balanced
-  logistic regression with `C = 1`, seed 36. All three come from `train/eval_e36_budget_path.py`,
-  unchanged.
+- **Training data:** E37's four MATH-Perturb shards from
+  `ssubhnil/Qwen3-Math-Eval@f64c82f5ce9249155ad7c70991a9711d92963cce`.
+- **Training:** `build_examples(..., "math_perturb")`, then `feature_columns`, then `make_model()`:
+  median imputation, standardisation, class-balanced logistic regression with `C = 1`, seed 36.
+  All three come from `train/eval_e36_budget_path.py`, unchanged.
+- **Amendment, 7 Oct, before any extraction:** the archive now answers 401 to anonymous
+  downloads, so `train/prepare_e37_model.py` cannot fetch it.
+  - E35 kept the same four files in `runs/e35-external/math_perturb/`. Their SHA-256 match the
+    confirmation run's manifest (`kernels/runs/e37-confirmation-Arifin/result.json`).
+  - The scorer refuses any other bytes (`verify_archive`).
+  - Reading those shards whole gives the same 1,001 training examples (769 robust) and
+    bit-identical coefficients as `load_partition`'s filtered read. That was checked on 7 Oct.
 - **Decision:** within each `(model_id, reasoning_effort)` batch, the higher-scoring `ceil(n/2)`
   rows are robust, using `train/eval_e37_official.py` `half_rank`. There are no per-model tilts
   (`REVIEW_GENERALIZATION.md` §4.3).
@@ -179,6 +185,6 @@ record. Nothing in §1's frozen list changes, and the old E37 features stay unsc
 | --- | --- |
 | 6–8 Oct | commit this protocol and its code; optional smoke calibration on one real checkpoint |
 | 8–12 Oct | four extractions (expected under 3 GPU-hours each on a T4 pair) |
-| by 13 Oct | `prepare_e37_model.py`, then the one scoring run |
+| by 13 Oct | the one scoring run, `--math-dir runs/e35-external/math_perturb` |
 | 14–24 Oct | §6 if it passes |
 | 27 Oct | freeze under §6.4 |

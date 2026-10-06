@@ -25,8 +25,7 @@ shipped familiarity ranking's accuracy on the same rows and batches (0.353). Any
 E37's own metrics and gates are reported beside them, unchanged, for the record.
 
 Run:  python train/eval_e49_official.py --simulate-gates       # the false-pass / power table, CPU
-      python train/prepare_e37_model.py        # once: rebuilds data/e37/math_perturb from the pinned archive
-      python train/eval_e49_official.py --math-dir data/e37/math_perturb \
+      python train/eval_e49_official.py --math-dir runs/e35-external/math_perturb \
           --feature-run runs/e49-qwen-<ALIAS> --feature-run runs/e49-skywork-<ALIAS> \
           --feature-run runs/e49-olmo-<ALIAS> --feature-run runs/e49-deepseek-<ALIAS> \
           --out kernels/runs/e49-official/result.json
@@ -35,6 +34,7 @@ Run:  python train/eval_e49_official.py --simulate-gates       # the false-pass 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -55,6 +55,22 @@ from eval_familiarity import load_scores  # noqa: E402
 STAGE = "E49 official budget-path extraction (transformers, batched)"
 MIN_PROBLEM_AUC = 0.65
 MIN_BALANCED_ACCURACY = 0.55
+CONFIRMATION = ROOT / "kernels" / "runs" / "e37-confirmation-Arifin" / "result.json"
+
+
+def verify_archive(math_dir: Path) -> list[str]:
+    """The training shards must be byte-identical to the four E37 was confirmed with.
+
+    The pinned archive answered 401 to anonymous downloads on 7 Oct, so `prepare_e37_model.py`
+    cannot fetch it. E35 kept the same four files; checking their hashes keeps the predictor frozen
+    wherever the bytes come from.
+    """
+    provenance = json.loads(CONFIRMATION.read_text(encoding="utf-8"))["provenance"]["files"]
+    expected = {e["sha256"] for e in provenance if e["path"].startswith("data/math_perturb/")}
+    found = {hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(math_dir.glob("*.parquet"))}
+    if found != expected or len(expected) != 4:
+        raise ValueError(f"{math_dir} is not E37's MATH-Perturb archive: {len(found & expected)} of 4 shards match")
+    return sorted(found)
 
 
 def problem_labels(official_rows: pd.DataFrame) -> pd.Series:
@@ -197,6 +213,7 @@ def main() -> None:
         return
     if not args.math_dir or not args.feature_run:
         parser.error("--math-dir and at least one --feature-run are required")
+    archive = verify_archive(args.math_dir)
     result = score(
         read_shards(args.math_dir),
         pd.read_parquet(args.official_rows),
@@ -204,6 +221,7 @@ def main() -> None:
         read_runs(args.feature_run),
         args.bootstrap,
     )
+    result["training_archive_sha256"] = archive
     payload = json.dumps(result, indent=2)
     print(payload)
     if args.out:
