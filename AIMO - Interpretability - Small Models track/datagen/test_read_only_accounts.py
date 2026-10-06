@@ -48,7 +48,26 @@ def main() -> None:
     assert "RSD" in k.load_accounts(), "RSD's token was removed; reads would break"
     assert k.kernel_ref(any_name, "RSD").startswith("rsdaiyan/"), "RSD refs no longer resolve"
 
-    print(f"read-only accounts: {sorted(k.READ_ONLY_ACCOUNTS)} - push refused, read allowed. ok")
+    # `scripts/kaggle_followup.py` is a second push path (E37, E49) and must refuse RSD too. Its
+    # Kaggle call is replaced first, so a broken guard fails this test instead of pushing.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    import kaggle_followup as f
+
+    def no_push(*args):
+        raise AssertionError(f"kaggle_followup reached the Kaggle CLI for RSD: {args}")
+
+    f.call, saved = no_push, sys.argv
+    sys.argv = ["kaggle_followup.py", "push", "e49-qwen", "--account", "RSD"]
+    try:
+        f.main()
+        refusal = None
+    except SystemExit as exc:
+        refusal = str(exc)
+    finally:
+        sys.argv = saved
+    assert refusal and "read-only" in refusal, f"kaggle_followup did not refuse RSD: {refusal!r}"
+
+    print(f"read-only accounts: {sorted(k.READ_ONLY_ACCOUNTS)} - push refused on both launchers, read allowed. ok")
 
 
 if __name__ == "__main__":
