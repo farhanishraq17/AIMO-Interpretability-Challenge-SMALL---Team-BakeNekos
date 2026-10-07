@@ -183,7 +183,8 @@ model.
    that score is calibrated to these 14 cases (Findings 63, 67), and E49 was chosen on independent
    data. Otherwise `e27k` stays.
 
-    Sign-off: ______________________  date: __________
+    **Signed off as drafted by the project owner, 8 Oct 2026**, after extraction finished and before
+    any feature was joined to a label.
 
 ## 7. If §5 fails
 
