@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import torch
 
-from extract_budget_path_hf import RowBudget, batches, cost, generate
+from extract_budget_path_hf import PROBES, RowBudget, Sizer, batches, cost, fit_memory, generate, positions
 
 EOS = 2
 
@@ -28,13 +28,34 @@ class FakeModel:
         return torch.cat([input_ids, self.continuation], dim=1)
 
 
+JOBS = [(f"p{i}", budget, [1] * (10 + i)) for i in range(3) for budget in (8, 16, 32, 64)]
+
+
 def test_batches_keep_every_job_within_the_cap():
-    jobs = [(f"p{i}", budget, [1] * (10 + i)) for i in range(3) for budget in (8, 16, 32, 64)]
-    groups = batches(jobs, cap=200)
-    assert sorted(job for group in groups for job in group) == sorted(jobs)
+    groups = batches(JOBS, Sizer(200).fits)
+    assert sorted(job for group in groups for job in group) == sorted(JOBS)
     assert all(cost(group) <= 200 or len(group) == 1 for group in groups)
-    assert [job[1] for group in groups for job in group] == sorted((job[1] for job in jobs), reverse=True)
-    assert len(batches(jobs, cap=0)) == 1
+    assert [job[1] for group in groups for job in group] == sorted((job[1] for job in JOBS), reverse=True)
+    assert len(batches(JOBS, Sizer().fits)) == 1
+
+
+def test_fit_memory_recovers_a_linear_device():
+    # Two devices with known overhead, per-sequence and per-position bytes; the probes' peaks follow
+    # the model exactly, so the fit must return the coefficients unchanged.
+    truth, width = [(1000.0, 300.0, 7.0), (0.0, 50.0, 2.0)], 40
+    peaks = {(n, t): [o + n * (k + s * (width + t)) for o, k, s in truth] for n, t in PROBES}
+    for fitted, expected in zip(fit_memory(peaks, width), truth):
+        assert all(abs(a - b) < 1e-6 for a, b in zip(fitted, expected)), (fitted, expected)
+
+
+def test_sizer_keeps_predicted_peak_under_the_margin_and_tightens_after_oom():
+    sizer = Sizer(memory=[(0.0, 0.0, 1.0)], available=[1_000])  # one byte per cached position
+    groups = batches(JOBS, sizer.fits)
+    assert len(groups) > 1 and all(sizer.predict(g)[0] <= 0.85 * 1_000 or len(g) == 1 for g in groups)
+    assert sizer.predict(groups[0]) == [len(groups[0]) * positions(groups[0])]
+    before = max(len(g) for g in groups)
+    sizer.shrink(groups[0])
+    assert sizer.safety == 0.425 and max(len(g) for g in batches(JOBS, sizer.fits)) < before
 
 
 def test_row_budget_finishes_rows_independently():

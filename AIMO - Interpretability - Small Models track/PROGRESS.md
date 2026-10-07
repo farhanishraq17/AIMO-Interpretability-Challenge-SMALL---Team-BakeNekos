@@ -2308,6 +2308,52 @@ it before today - a reviewer, a teammate, the November submission - would have p
 introduced incrementally: each new experiment's author upserted a section and never registered it,
 including me for E40 and for all six written today.
 
+**74. E49: the budget-path score, re-extracted on the evaluation path, fails its official-row
+gate; `e27k` stays.** (`protocols/E49_PROTOCOL.md`, `train/eval_e49_official.py`,
+`kernels/runs/e49-official/result.json`; extraction 7 Oct, one scoring 8 Oct at `41ab4cd`, after the
+owner signed off the freeze rule.)
+
+E37's frozen predictor, trained only on MATH-Perturb and confirmed on Putnam (0.765) and GSM-Plus
+(0.673), was scored once on all 34 official small-track rows. The features were re-extracted with
+batched `transformers` `generate`, the only engine the evaluation image has.
+
+| Measure | E49 | Familiarity ranking, same rows and batches | Gate |
+| --- | --- | --- | --- |
+| Problem-level AUC (20 problems) | **0.659** [0.387, 0.909] | — | ≥ 0.65: pass |
+| Half-rank balanced accuracy | **0.521** | 0.308 | > 0.55: **fail** |
+| Row AUC | 0.571 | 0.358 | reported only |
+| Half-rank accuracy | 0.529 | 0.353 | reported only |
+| Per-model AUC | Qwen 0.53, Olmo 0.64, DeepSeek 0.62, Skywork 0.00 (3 rows) | | reported only |
+
+- **E49 closes under §7.** `e27k` remains the incumbent, nothing in the frozen list changes, and the
+  34 official rows have now been used once for this signal. They are not to be re-scored with
+  other features or thresholds.
+- **What the numbers allow.** A weakly positive ranking (row AUC 0.571), below the gate. The gate
+  simulation shows a true AUC of 0.60 passes only 37% of the time at n = 34, so this is not evidence
+  of absence either. Finding 72's caveat holds in both directions: the effect is unresolved.
+- **On the same rows it out-ranks the shipped familiarity ranking** (0.571 against 0.358). Neither
+  reaches always-robust's 0.706 accuracy, which a half split on a 71%-robust set cannot.
+- **Runtime record** (T4 pair, fp16, batched HF):
+
+  | Model | Generated tokens per row | Tokens/s |
+  | --- | --- | --- |
+  | Qwen | 32,145 | 43.8 |
+  | DeepSeek | 25,423 | 9.1 |
+  | Olmo | 21,389 | 13.6 |
+  | Skywork | 18,715 | 21.8 |
+
+  The evaluation card was never measured.
+- **Execution, for whoever generates at length on T4s next:**
+  - Hand-set batch caps ran out of memory late in the first runs: Qwen retried 6 times, Olmo 4,
+    DeepSeek 2.
+  - A memory model measured at start-up removed retries in 6 of 7 slices. It has two limits: one
+    calibration was degenerate (zero per-position slope), and it does not model prefill, so it
+    under-predicts wide forced-answer prompts by 20–30%.
+  - One slice failed on a single forced prompt of about 7k tokens. Attention needed 2.86 GiB on one
+    T4, so its rows came from the pre-registered fallback run.
+  - Kaggle releases output only when a session ends, so long runs were split into row slices on
+    parallel kernels.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

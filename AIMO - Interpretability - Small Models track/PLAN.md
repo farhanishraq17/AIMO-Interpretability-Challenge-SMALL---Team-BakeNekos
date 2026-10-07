@@ -747,7 +747,7 @@ above.
 | 2 | E38a exact-prefix audit | Completed on Tamim3 and failed: every stored shorter trace differed from the longest trace's prefix. See the generated RESULTS section. |
 | 3 | E38b target-engine equivalence | Closed by the failed CPU gate; no GPU pilot. |
 | 4 | Candidate packaging | No eligible new candidate. Keep E27k and preserve the negative results. |
-| 5 (6 Oct) | **E49**: E37's frozen budget-path score, batched `transformers` extraction, one scoring of all 34 official rows | Pre-registered in `protocols/E49_PROTOCOL.md` (review: `REVIEW_GENERALIZATION.md`). Gates: problem AUC ≥ 0.65 and balanced accuracy > 0.55, about 11% false-pass. Runtime recorded, not gated; the submission would be anytime. The freeze rule (§6.4) needs owner sign-off before extraction is read. |
+| 5 (6 Oct) | **E49**: E37's frozen budget-path score, batched `transformers` extraction, one scoring of all 34 official rows | Pre-registered in `protocols/E49_PROTOCOL.md` (review: `REVIEW_GENERALIZATION.md`). **Closed 8 Oct: failed** (problem AUC 0.659 passed; half-rank balanced accuracy 0.521 against > 0.55). `e27k` stays (Finding 74). |
 
 E27k remains the incumbent. No count/threshold search on the 14-case leaderboard. E37 and E38
 are closed under their protocols. Record their negative results before proposing another

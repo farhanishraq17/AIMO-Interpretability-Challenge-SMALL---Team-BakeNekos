@@ -1,0 +1,33 @@
+{
+  "job": "e49-deepseek-r2",
+  "account": "Nasif",
+  "ref": "nasifol/aimo-small-e49-deepseek-r2",
+  "source_sha256": {
+    "datagen/extract_budget_path_hf.py": "3ebe6aed151df373b3efbac3c62c7dcea318e35ed2e91b1be78bf76e41fe6186",
+    "datagen/extract_budget_path.py": "be83ec2bcb5a873175215b4e74d449e09721eef2489e54c3103bd0f9d777fd68",
+    "datagen/extract_features.py": "276c02467202eb0145398625df7cb6cc5811145b40d5da16e2cb6a0214d1fedc",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/perturb/answers.py": "10d240d3db4d6b13863b43559b907b8dc4c3d9bc8a87e97d3fd1311db0946b05",
+    "datagen/perturb/sample.py": "24db4563abf0c5d0e58d33781434e0ec3a8993a47c3f41ec3523a05ffb992277",
+    "train/eval_e36_budget_path.py": "ed75a10f854b19d3e447cb8f1570185dcc8b0991be4016e86be270ddfb00c51e",
+    "protocols/E49_PROTOCOL.md": "0833856e83059d3ecca7543a3351743f41dd9b23d55fdc5e9608f8e3e86a9828",
+    "data/train_main/rows.parquet": "819a249baaca378370fb72f419959c26ebb25d31e57d3a7eb91f8618a5d987f8",
+    "data/train_main/summary.json": "2038704a86e229497e7d34422fed034f597a5cc4b0db13b289e94d9de4ead6fa",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be"
+  },
+  "kernel_sha256": "7591fa3d0c550621cb54370b02523c251b30bb6ad3613f02d0f076dd7fd3279f",
+  "submitted_at": "2026-10-07T00:23:55.295169+00:00",
+  "metadata": {
+    "id": "nasifol/aimo-small-e49-deepseek-r2",
+    "title": "aimo-small-e49-deepseek-r2",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}
