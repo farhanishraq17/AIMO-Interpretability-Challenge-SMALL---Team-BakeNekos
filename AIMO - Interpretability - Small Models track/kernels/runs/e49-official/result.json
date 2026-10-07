@@ -1,0 +1,122 @@
+{
+  "stage": "E49 official transfer",
+  "metrics": {
+    "rows": 34,
+    "problem_auc": 0.6593406593406593,
+    "problem_auc_ci95_template_bootstrap": [
+      0.38734375,
+      0.9090909090909091
+    ],
+    "row_auc": 0.5708333333333333,
+    "model_aucs": {
+      "Qwen/Qwen3.5-4B": 0.53125,
+      "Skywork/Skywork-OR1-Math-7B": 0.0,
+      "allenai/Olmo-3-7B-Think": 0.6428571428571428,
+      "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": 0.6190476190476191
+    },
+    "half_rank_balanced_accuracy": 0.5208333333333333,
+    "half_rank_accuracy": 0.5294117647058824,
+    "familiarity_half_rank_accuracy": 0.35294117647058826,
+    "familiarity_half_rank_balanced_accuracy": 0.30833333333333335,
+    "familiarity_row_auc": 0.3583333333333334,
+    "always_robust_accuracy": 0.7058823529411765
+  },
+  "gates": {
+    "coverage_complete_and_clean": true,
+    "problem_auc_at_least_0_65": true,
+    "half_rank_balanced_accuracy_above_0_55": false
+  },
+  "passed": false,
+  "runtime_record": {
+    "Qwen/Qwen3.5-4B": {
+      "rows": 12,
+      "generated_tokens": 385740,
+      "generation_seconds": 8809.4,
+      "session_seconds": 15099.6,
+      "sessions": 1,
+      "dtype": [
+        "torch.float16"
+      ],
+      "gpus": [
+        "Tesla T4, Tesla T4"
+      ],
+      "preflight_agreement_tokens": [
+        32
+      ],
+      "tokens_per_row": 32145.0,
+      "tokens_per_second": 43.78731809203805
+    },
+    "Skywork/Skywork-OR1-Math-7B": {
+      "rows": 3,
+      "generated_tokens": 56145,
+      "generation_seconds": 2577.5,
+      "session_seconds": 2732.7,
+      "sessions": 1,
+      "dtype": [
+        "torch.float16"
+      ],
+      "gpus": [
+        "Tesla T4, Tesla T4"
+      ],
+      "preflight_agreement_tokens": [
+        32
+      ],
+      "tokens_per_row": 18715.0,
+      "tokens_per_second": 21.782735208535403
+    },
+    "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": {
+      "rows": 10,
+      "generated_tokens": 254228,
+      "generation_seconds": 27853.0,
+      "session_seconds": 29016.9,
+      "sessions": 5,
+      "dtype": [
+        "torch.float16"
+      ],
+      "gpus": [
+        "Tesla T4, Tesla T4"
+      ],
+      "preflight_agreement_tokens": [
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "tokens_per_row": 25422.8,
+      "tokens_per_second": 9.127490755035364
+    },
+    "allenai/Olmo-3-7B-Think": {
+      "rows": 9,
+      "generated_tokens": 192504,
+      "generation_seconds": 14115.300000000001,
+      "session_seconds": 15032.2,
+      "sessions": 3,
+      "dtype": [
+        "torch.float16"
+      ],
+      "gpus": [
+        "Tesla T4, Tesla T4"
+      ],
+      "preflight_agreement_tokens": [
+        32,
+        32,
+        32
+      ],
+      "tokens_per_row": 21389.333333333332,
+      "tokens_per_second": 13.63796731206563
+    }
+  },
+  "e37_gates_for_the_record": {
+    "problem_auc_at_least_0_70": false,
+    "template_ci_lower_above_0_50": false,
+    "half_rank_ba_above_e27_constants": true,
+    "runtime_below_3000_seconds": false
+  },
+  "training_archive_sha256": [
+    "5847dce191c2bbc1c5c318fa68cbfb92390c2ca4bf8f60acffe17e89dfb20b71",
+    "7c30e327359fe0da5040a19aa9f860016ce8a3d168b21102d572e3d7d376fddd",
+    "a7314378c59059883ee8e93ab175212fe34aa3048cb0ce6ad55382cdd60f2b5a",
+    "e858245ef020a6373fc0d0d141927cd9c2da5755aae0a196b9a145aac3d5d6d7"
+  ]
+}

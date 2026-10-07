@@ -1,8 +1,9 @@
 # E49: E37's frozen budget-path score, generated on the evaluation path, scored once on the official rows
 
-Status: **pre-registered 6 October 2026, before any E49 extraction.** No E49 feature exists, and no
-one has computed an official-row accuracy for the budget-path signal under any protocol. §6.4
-needs the project owner's sign-off before the first extraction is read.
+Status: **closed 8 October 2026: failed gate 3** (half-rank balanced accuracy 0.521, needed
+> 0.55; problem AUC 0.659 passed gate 2). `e27k` stays. Result: `kernels/runs/e49-official/result.json`,
+PROGRESS Finding 74. Pre-registered 6 October, before any extraction; §6.4 was signed off before
+scoring.
 
 ## Motivation
 
