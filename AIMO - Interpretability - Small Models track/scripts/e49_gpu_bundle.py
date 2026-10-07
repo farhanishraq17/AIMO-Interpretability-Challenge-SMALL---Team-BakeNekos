@@ -32,11 +32,23 @@ SETTINGS = {
     "olmo": ("allenai/Olmo-3-7B-Think", 50_000, 3),
     "deepseek": ("deepseek-ai/DeepSeek-R1-0528-Qwen3-8B", 60_000, 5),
 }
+# 7 Oct re-runs, split over parallel kernels because a session's output is only downloadable when the
+# whole session ends: part -> (model, --offset, --limit, --max-batch-tokens). The caps are the values
+# the first runs held without running out of memory (DeepSeek 60,000; Olmo 20,982 after its retry).
+PARTS = {
+    **{f"deepseek-r{i}": ("deepseek", i, 2, 60_000) for i in range(0, 10, 2)},
+    **{f"olmo-r{i}": ("olmo", i, 3, 20_982) for i in range(0, 9, 3)},
+}
+JOBS = [*SETTINGS, *PARTS]
 GUARD_SECONDS = 11 * 3600  # Kaggle ends sessions at 12 h; the extractor starts no new group after 10
 
 
-def render(model: str) -> tuple[str, dict]:
-    checkpoint, cap, group = SETTINGS[model]
+def render(job: str) -> tuple[str, dict]:
+    model, offset, limit, cap = PARTS.get(job, (job, 0, None, None))
+    checkpoint, default_cap, group = SETTINGS[model]
+    cap, group = (default_cap, group) if cap is None else (cap, 0)
+    slice_args = [] if limit is None else ["--offset", str(offset), "--limit", str(limit)]
+    model = job  # the output directory names the part
     entries = {name: base64.b64encode((ROOT / name).read_bytes()).decode() for name in FILES}
     hashes = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in FILES}
     source = f'''import base64, json, os, runpy, subprocess, sys, time
@@ -56,7 +68,7 @@ subprocess.run([sys.executable, "-m", "pip", "install", "--no-cache-dir", "-q", 
 freeze = subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True, check=True)
 (out / "environment.txt").write_text(freeze.stdout)
 cmd = [sys.executable, "datagen/extract_budget_path_hf.py", "--model-id", {checkpoint!r}, "--out-dir", str(out),
-       "--dtype", "float16", "--max-batch-tokens", "{cap}", "--group-size", "{group}", "--max-hours", "10"]
+       "--dtype", "float16", "--max-batch-tokens", "{cap}", "--group-size", "{group}", "--max-hours", "10", *{slice_args!r}]
 result = runpy.run_path(str(root / "scripts/kaggle_process_guard.py"))["run_guarded"](cmd, root, out / "runner.log", timeout={GUARD_SECONDS})
 (out / "execution.json").write_text(json.dumps({{**result, "end_to_end_seconds": time.time() - started, "command": cmd}}, indent=2))
 raise SystemExit(result["exit_code"])

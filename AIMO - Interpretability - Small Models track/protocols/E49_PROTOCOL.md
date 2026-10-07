@@ -100,6 +100,17 @@ sequences × (prompt width + budget).
 | Olmo-3-7B-Think | ~128 KB + a 4,096-token window on 24 layers | 50,000 | 3 |
 | DeepSeek-R1-0528-Qwen3-8B | ~147 KB | 60,000 | 5 |
 
+- **Amendment, 7 Oct, during extraction (execution only, recorded before any slice runs):**
+  - A Kaggle session's output can only be downloaded once the whole session ends. DeepSeek's first
+    run (TASHIN) projects to about 8.5 h and Olmo's (Labib) to about 5 h.
+  - Both are therefore re-run as row slices on parallel kernels: DeepSeek as 5 × 2 rows and Olmo
+    as 3 × 3 rows. These are the `e49-<model>-r<offset>` jobs in `scripts/e49_gpu_bundle.py`, using
+    the batch caps the first runs held.
+  - **For DeepSeek and Olmo, the scored features are the slices'.** The first runs are fallbacks,
+    used for a row only if its slice fails. Qwen and Skywork keep their first runs.
+  - The extractor now also sizes calls from a memory model measured on the GPU at start-up. If
+    that calibration fails, the caps alone apply.
+  - Nothing here touches §1's frozen list.
 - **Launch:** `python scripts/kaggle_followup.py push e49-<qwen|skywork|olmo|deepseek> --account <ALIAS>`.
   It refuses read-only accounts (RSD). Do not use the excluded `farhanishraqq` GPU account.
 - **Kernel environment:** the `Dockerfile.competition` pins with Kaggle's own torch, no vLLM.

@@ -9,8 +9,14 @@ vLLM, so that figure described neither the path a submission would take nor the 
 * every (problem, budget) pair is its own sequence, and a per-row stopping criterion ends each
   at its own budget. The four budgets therefore stay independent generations, as E37 requires
   (E38 closed prefix reuse), while sharing one batch;
-* `--max-batch-tokens` caps sequences x (prompt width + budget) per call, which is the KV-cache
-  bound. A call that runs out of memory is retried at half the cap, and the retry is recorded;
+* on GPU, calls are sized from **measured** memory, not from config arithmetic. Hand-set caps
+  ran out of memory late in Qwen's and Olmo's first E49 runs, after most of a call's work was done.
+  - Three short probe generations fit a per-GPU model:
+    peak = overhead + sequences x (per sequence + per position x cache length).
+  - Each call is filled while every GPU's predicted peak stays under 85% of its free memory.
+  - An out-of-memory error halves that margin for the rest of the session and re-splits the call.
+  - Predicted and measured peaks are recorded for every call, so each run checks the model.
+  - `--max-batch-tokens` remains an optional extra cap, and is the only limit on CPU;
 * the prompt, answer forcing, features and record schema are E37's, imported unchanged, so
   `train/eval_e37_official.py` and `train/eval_e49_official.py` both read the output.
 
@@ -72,7 +78,7 @@ class RowBudget(StoppingCriteria):
         return (input_ids.shape[1] - self.width) >= self.budgets.to(input_ids.device)
 
 
-def generate(model, prompts: list[list[int]], budgets: list[int], pad_id: int, stop_ids: list[int]):
+def generate(model, prompts: list[list[int]], budgets: list[int], pad_id: int, stop_ids: list[int], **extra):
     """Greedy decoding of left-padded prompts. Returns, per row, (tokens, hit_budget), and call stats."""
     width = max(len(p) for p in prompts)
     ids = torch.full((len(prompts), width), pad_id, dtype=torch.long)
@@ -85,7 +91,7 @@ def generate(model, prompts: list[list[int]], budgets: list[int], pad_id: int, s
         output = model.generate(
             input_ids=ids.to(model.device), attention_mask=mask.to(model.device), do_sample=False,
             max_new_tokens=max(budgets), eos_token_id=stop_ids or None, pad_token_id=pad_id,
-            stopping_criteria=StoppingCriteriaList([RowBudget(width, budgets)]),
+            stopping_criteria=StoppingCriteriaList([RowBudget(width, budgets)]), **extra,
         )
     seconds = time.time() - started
     stop = set(stop_ids)
@@ -105,18 +111,95 @@ def generate(model, prompts: list[list[int]], budgets: list[int], pad_id: int, s
     return results, stats
 
 
+def positions(batch: list[tuple]) -> int:
+    """Cache length every row of a call reaches: padded to the widest prompt, run to the longest budget."""
+    return max(len(job[2]) for job in batch) + max(job[1] for job in batch)
+
+
 def cost(batch: list[tuple]) -> int:
-    """KV-cache tokens a call holds: every row is padded to the widest prompt and runs to the longest budget."""
-    return len(batch) * (max(len(job[2]) for job in batch) + max(job[1] for job in batch))
+    """Cached positions a call holds, summed over its rows."""
+    return len(batch) * positions(batch)
 
 
-def batches(jobs: list[tuple], cap: int) -> list[list[tuple]]:
-    """Group (key, budget, prompt) jobs, longest budget first, so that each call's cost <= cap."""
+# Memory calibration: (sequences, decode steps) of three short generations. The first two differ
+# only in length and give the per-position cost; the first and third differ only in batch size and
+# separate the per-sequence cost from fixed overhead.
+PROBES = ((2, 64), (2, 448), (6, 64))
+SAFETY = 0.85  # share of each GPU's free memory a call may be predicted to fill
+
+
+def fit_memory(peaks: dict[tuple[int, int], list[int]], width: int) -> list[tuple[float, float, float]]:
+    """Per device (overhead, per sequence, per position), in bytes, from the probes' peak memory.
+
+    A call's peak above idle is modelled as overhead + sequences x (per_sequence + per_position x
+    positions). Measuring it covers what a config-based estimate misses: allocator overhead,
+    Qwen3.5's linear-attention state, Olmo's sliding-window layers, and how `device_map` splits
+    the layers between GPUs.
+    """
+    (n1, t1), (_, t2), (n3, _) = PROBES
+    model = []
+    for short, long, wide in zip(peaks[PROBES[0]], peaks[PROBES[1]], peaks[PROBES[2]]):
+        per_position = max(0.0, (long - short) / (n1 * (t2 - t1)))
+        per_row = max(0.0, (wide - short) / (n3 - n1))  # one row at width + t1 positions
+        overhead = max(0.0, short - n1 * per_row)
+        model.append((overhead, max(0.0, per_row - per_position * (width + t1)), per_position))
+    return model
+
+
+class Sizer:
+    """Decides whether a call fits: an optional cap on cached positions and, on GPU, measured memory."""
+
+    def __init__(self, cap: int = 0, memory: list[tuple[float, float, float]] | None = None,
+                 available: list[int] | None = None):
+        self.cap, self.memory, self.available, self.safety = cap, memory, available, SAFETY
+
+    def predict(self, batch: list[tuple]) -> list[float]:
+        return [o + len(batch) * (k + s * positions(batch)) for o, k, s in self.memory]
+
+    def fits(self, batch: list[tuple]) -> bool:
+        if self.cap and cost(batch) > self.cap:
+            return False
+        return not self.memory or all(p <= self.safety * a for p, a in zip(self.predict(batch), self.available))
+
+    def shrink(self, batch: list[tuple]) -> str:
+        """After an out-of-memory error, tighten the limit that applies, for the rest of the run."""
+        if self.memory:
+            self.safety /= 2
+            return f"memory safety {self.safety:.3f}"
+        self.cap = min(self.cap or cost(batch), cost(batch)) // 2
+        return f"max_batch_tokens {self.cap}"
+
+
+def calibrate(model, prompt: list[int], pad_id: int) -> tuple[Sizer, dict]:
+    """Fit the memory model on this checkpoint and these GPUs with the three probes."""
+    devices = range(torch.cuda.device_count())
+    peaks = {}
+    for n, steps in PROBES:
+        torch.cuda.empty_cache()
+        idle = [torch.cuda.memory_allocated(d) for d in devices]
+        for d in devices:
+            torch.cuda.reset_peak_memory_stats(d)
+        # min_new_tokens holds EOS back, so every row really reaches `steps`.
+        generate(model, [prompt] * n, [steps] * n, pad_id, [], min_new_tokens=steps)
+        peaks[(n, steps)] = [torch.cuda.max_memory_allocated(d) - i for d, i in zip(devices, idle)]
+    torch.cuda.empty_cache()
+    available = [torch.cuda.mem_get_info(d)[0] for d in devices]
+    memory = fit_memory(peaks, len(prompt))
+    record = {"probes": [list(p) for p in PROBES], "probe_width": len(prompt), "safety": SAFETY, "devices": [
+        {"available_gb": round(a / 2**30, 2), "overhead_gb": round(o / 2**30, 3),
+         "per_sequence_mb": round(k / 2**20, 2), "per_position_kb": round(s / 2**10, 2)}
+        for a, (o, k, s) in zip(available, memory)
+    ]}
+    return Sizer(memory=memory, available=available), record
+
+
+def batches(jobs: list[tuple], fits) -> list[list[tuple]]:
+    """Group (key, budget, prompt) jobs, longest budget first, filling each call while `fits` allows."""
     ordered = sorted(jobs, key=lambda job: (-job[1], len(job[2]), job[0]))
     groups, current = [], []
     for job in ordered:
         trial = current + [job]
-        if current and cap and cost(trial) > cap:
+        if current and not fits(trial):
             groups.append(current)
             current = [job]
         else:
@@ -124,23 +207,32 @@ def batches(jobs: list[tuple], cap: int) -> list[list[tuple]]:
     return groups + [current] if current else groups
 
 
-def run_jobs(model, jobs: list[tuple], cap: int, pad_id: int, stop_ids: list[int], calls: list[dict]) -> dict:
-    """Generate every job, halving the cap on out-of-memory. Returns {(key, budget): (tokens, hit)}."""
+def run_jobs(model, jobs: list[tuple], sizer: Sizer, pad_id: int, stop_ids: list[int], calls: list[dict]) -> dict:
+    """Generate every job; on out-of-memory, tighten `sizer` and re-split. Returns {(key, budget): (tokens, hit)}."""
     results = {}
-    pending = batches(jobs, cap)
+    cuda = torch.cuda.is_available()
+    devices = range(torch.cuda.device_count()) if cuda else range(0)
+    pending = batches(jobs, sizer.fits)
     while pending:
         batch = pending.pop(0)
+        idle = [torch.cuda.memory_allocated(d) for d in devices]
+        for d in devices:
+            torch.cuda.reset_peak_memory_stats(d)
         try:
             outputs, stats = generate(model, [j[2] for j in batch], [j[1] for j in batch], pad_id, stop_ids)
         except torch.cuda.OutOfMemoryError:
             if len(batch) == 1:
                 raise
             torch.cuda.empty_cache()
-            cap = min(cap or cost(batch), cost(batch)) // 2
-            calls.append({"oom_retry": True, "sequences": len(batch), "new_cap": cap})
-            print(f"  out of memory at {len(batch)} sequences; retrying at max_batch_tokens={cap}", flush=True)
-            pending = batches(batch, cap) + pending
+            limit = sizer.shrink(batch)
+            calls.append({"oom_retry": True, "sequences": len(batch), "positions": positions(batch), "new_limit": limit})
+            print(f"  out of memory at {len(batch)} sequences; retrying with {limit}", flush=True)
+            pending = batches(batch, sizer.fits) + pending
             continue
+        if cuda:
+            stats["measured_peak_gb"] = [round((torch.cuda.max_memory_allocated(d) - i) / 2**30, 2) for d, i in zip(devices, idle)]
+        if sizer.memory:
+            stats["predicted_peak_gb"] = [round(p / 2**30, 2) for p in sizer.predict(batch)]
         calls.append(stats)
         print(f"  {stats['sequences']} seqs, budget {stats['max_budget']}: {stats['generated_tokens']} tokens "
               f"in {stats['seconds']:.0f}s ({stats['generated_tokens'] / max(stats['seconds'], 1e-9):.0f} tok/s)",
@@ -173,10 +265,12 @@ def main() -> None:
     parser.add_argument("--dtype", default="float16", choices=["auto", "float16", "bfloat16", "float32"],
                         help="float16 on T4s (emulated bf16 is ~3x slower, Finding 13); bfloat16 on cards with native bf16")
     parser.add_argument("--max-batch-tokens", type=int, default=0,
-                        help="cap on sequences x (prompt width + budget) per generate call; 0 = one call per group")
+                        help="optional cap on sequences x (prompt width + budget) per call; on GPU, calls are "
+                             "also sized from a measured memory model; 0 = no cap")
     parser.add_argument("--group-size", type=int, default=0, help="problems per written group; 0 = all at once")
     parser.add_argument("--num-shards", type=int, default=1)
     parser.add_argument("--shard-index", type=int, default=0)
+    parser.add_argument("--offset", type=int, default=0, help="skip this many rows of the sorted shard (split one model over kernels)")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--max-hours", type=float, default=None, help="start no new group after this long")
     parser.add_argument("--no-filter-model", action="store_true",
@@ -194,7 +288,7 @@ def main() -> None:
     if rows.empty:
         raise SystemExit(f"no labelled small-track rows for {args.model_id}")
     assignment = assign_shards(list(rows["problem_key"]), args.num_shards, "roundrobin")
-    rows = rows[rows["problem_key"].map(assignment) == args.shard_index].sort_values("problem_key")
+    rows = rows[rows["problem_key"].map(assignment) == args.shard_index].sort_values("problem_key").iloc[args.offset:]
     rows = rows.head(args.limit) if args.limit else rows
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -220,6 +314,17 @@ def main() -> None:
         "started_unix": round(started), "load_seconds": round(time.time() - started, 1),
         "preflight": preflight(model, list(prompts.values()), pad_id, stops), "calls": [],
     }
+    # One sizer for the whole session, so a limit tightened after out-of-memory stays tightened.
+    sizer = Sizer(args.max_batch_tokens)
+    if cuda:
+        try:
+            sizer, session["memory_model"] = calibrate(model, max(prompts.values(), key=len), pad_id)
+            sizer.cap = args.max_batch_tokens
+            print(f"memory model: {session['memory_model']['devices']}", flush=True)
+        except Exception as exc:  # sizing is an optimisation; never lose a run to it
+            torch.cuda.empty_cache()
+            session["memory_model"] = {"error": f"{type(exc).__name__}: {exc}"}
+            print(f"memory calibration failed ({exc}); sizing by --max-batch-tokens only", flush=True)
 
     metadata_path = args.out_dir / "metadata.json"
     previous = json.loads(metadata_path.read_text(encoding="utf-8")) if metadata_path.is_file() else {}
@@ -230,6 +335,8 @@ def main() -> None:
         "rows_in_shard": int(len(rows)),
         "num_shards": args.num_shards,
         "shard_index": args.shard_index,
+        "offset": args.offset,
+        "limit": args.limit,
         "budgets": list(BUDGETS),
         "smoke_divisor": args.smoke_divisor,
         "forced_tokens": FORCED_TOKENS,
@@ -265,7 +372,7 @@ def main() -> None:
         keys = [str(key) for key in group["problem_key"]]
         jobs = [(key, budget, prompts[key]) for key in keys for budget in BUDGETS]
         scaled = {budget: max(1, budget // args.smoke_divisor) for budget in BUDGETS}
-        primary = run_jobs(model, [(k, scaled[b], p) for k, b, p in jobs], args.max_batch_tokens, pad_id, stops, session["calls"])
+        primary = run_jobs(model, [(k, scaled[b], p) for k, b, p in jobs], sizer, pad_id, stops, session["calls"])
 
         traces = {}
         for key, budget, _ in jobs:
@@ -277,7 +384,7 @@ def main() -> None:
         forced_budget = max(1, FORCED_TOKENS // args.smoke_divisor)
         forced_jobs = [(f"{key}@{budget}", forced_budget, encode_forced_prompt(tokenizer, problems[key], traces[(key, budget)][0]))
                        for key, budget in need]
-        forced = run_jobs(model, forced_jobs, args.max_batch_tokens, pad_id, stops, session["calls"]) if forced_jobs else {}
+        forced = run_jobs(model, forced_jobs, sizer, pad_id, stops, session["calls"]) if forced_jobs else {}
 
         with records_path.open("a", encoding="utf-8") as handle:
             for row in group.itertuples(index=False):
