@@ -560,8 +560,6 @@ These are also added to the §5 table.
    it was called with? E26 depends on the answer, and nothing else does.
 3. **Best submission is `e27k` at 0.86** (12/14, Findings 60-61), with `e27e` at 0.71 as the
    prior-free version and E11 v2 at 0.64 as the zero-GPU fallback.
-4. **Accept the AIMO3 competition rules on one fleet account** if the Main Track's L4 is ever to
-   run: every H100 push is refused until an account owner accepts them (Large track, LF-3).
 
 ### 11.5 Housekeeping, bundled with E22
 

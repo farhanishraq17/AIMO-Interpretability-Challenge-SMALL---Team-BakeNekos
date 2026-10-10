@@ -22,9 +22,9 @@ complete, so no paper content is written for it (see that repository's `CLAUDE.m
 run them from anywhere, but read the track's `CLAUDE.md` before changing anything: the
 conventions, the Kaggle fleet notes and the label invariants live there.
 
-No cross-repository imports remain: the Main Track keeps frozen copies of the small-track files it
-uses in its `vendor/small_track/`. If you change `datagen/perturb/answers.py`,
-`datagen/tokenizer_check.py` or `submission/e27d-familiarity/solution.py`, tell the Main Track.
+The two tracks are handled separately from now on. Nothing here depends on the Main Track
+repository, and the Main Track keeps its own frozen copies of the small-track files it used, so a
+change here never needs to be passed on.
 
 Never commit `Secrets.env`, and before every commit `git grep --cached -n "KGAT_"` must print
 nothing.
