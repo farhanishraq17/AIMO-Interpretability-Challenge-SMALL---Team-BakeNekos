@@ -143,8 +143,8 @@ behind it, which the 27 Oct freeze has to decide.
 
 ## Not in this track
 
-The Main Track's first ZIP is `../AIMO - Interpretability - Large Models track/submission/make_m11a.py`
-→ `dist/solution-m11a-constant-gptoss-main.zip`. It ships `e27k`'s policy for these four models plus
+The Main Track's first ZIP is `submission/make_m11a.py` in its own repository,
+`https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-LARGE---Team-BakeNekos`, → `dist/solution-m11a-constant-gptoss-main.zip`. It ships `e27k`'s policy for these four models plus
 a constant for `gpt-oss-120b`, and it must **not** contain `small.txt`.
 
 E37 produced no ZIP: it passed its GSM-Plus confirmation and then failed its frozen runtime gate,

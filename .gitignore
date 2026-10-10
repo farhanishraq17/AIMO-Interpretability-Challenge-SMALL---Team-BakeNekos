@@ -16,12 +16,10 @@ local_e36_deps/
 data/
 dist/
 # ...but the built submission ZIPs ship: the friend and the organizers both need them, and the
-# rules require the implementation to be open-sourced. Only these two folders, never the
+# rules require the implementation to be open-sourced. Only this folder, never the
 # submodule's 27 MB upstream baselines.
 !AIMO - Interpretability - Small Models track/dist/
 !AIMO - Interpretability - Small Models track/dist/**
-!AIMO - Interpretability - Large Models track/dist/
-!AIMO - Interpretability - Large Models track/dist/**
 features/
 runs/
 # ...except the per-run manifests `scripts/export_kernels.py` copies next to each kernel.
