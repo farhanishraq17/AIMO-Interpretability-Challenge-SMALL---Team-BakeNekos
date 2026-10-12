@@ -135,7 +135,7 @@ There are three levels, and only the last decides prizes:
 | --- | --- | --- |
 | Local: `getting-started/scripts/run_local.py` | The public `val-sample` (24 cases, only **1** small-model case), run through the same ingestion and scoring programs Codabench uses | Contract and packaging checks: `coverage 1.0`, `invalid_predictions 0`, `small.txt` placement. **Not** a score estimate. |
 | **Live Codabench leaderboard** | Task "AIMO Robustness Validation **v8** - Small Model Track" (task id 36241, **created 16 Sep 2026 22:35 UTC**; recorded as v7 before, Finding 35) in the Competition Phase. Input and reference data are non-public, i.e. the hidden validation set, which the website says "covers all types of models contained in the test set". | The only external estimate of real performance. It is public and shows Accuracy, Coverage, and Invalid predictions. |
-| Final ranking | Held-out private test set, scored after the deadline | Prizes. Ties are broken by average runtime over repeated runs. |
+| Final ranking | Held-out private test set, scored after the deadline, on "a new set of problems and variants" (organizers, `getting-started` issue #7). The solution to rank is submitted through the organizers' Google Form, not taken from the leaderboard. | Prizes. Ties are broken by average runtime over repeated runs. |
 
 Scoring details from `components/scoring_program/scoring.py`:
 

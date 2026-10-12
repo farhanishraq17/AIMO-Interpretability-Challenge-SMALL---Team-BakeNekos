@@ -688,6 +688,10 @@ new preregistered plan before execution.
 | `dist/solution-e27e-familiar-robust-small.zip` | 0.71 | The same ranking without per-model counts |
 | `dist/solution-e11-v2-qwen-true-small.zip` | 0.64 | Zero-GPU fallback |
 
+**The final solution goes in through the organizers' Google Form**; the leaderboard is validation
+only (13 Oct, Finding 75). E50 solved the 14-case set: `e27k` is perfect on DeepSeek, Skywork and
+Olmo, and its two misses are one Qwen pair. Do not build a Qwen swap to chase 14/14.
+
 `python submission/make_e27.py` rebuilds every E27 ZIP deterministically. **The policy in one
 sentence:** load the model being scored, take one forward pass over each bare problem, and call
 the more familiar problems (lower mean token NLL) robust - `ceil(n/2)` of each batch, minus one

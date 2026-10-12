@@ -941,3 +941,40 @@ For each effect the project actually observed, the sample size needed to detect 
 **This is the project's central constraint, stated as a quantity**, and it is the justification for the Main Track's Lane A, which was designed to label roughly 500 olympiad problems. A labelling run producing 100 rows would have settled nothing; 500 clears every row in this table at once. The plan was right even though it never ran.
 
 **What it does not excuse.** Low power explains why the nulls are uninformative; it does not make the observed effects real. An effect estimated at n = 33 is estimated badly in both directions, and the honest reading of Findings 46 to 70 is that we do not know - not that we were nearly right.
+
+## E50: the hidden set, solved from the leaderboard
+
+All 17 scores below are reproduced by exactly **2** hidden states, out of every assignment of batch sizes summing to 14 and an R/S label per familiarity rank. Inputs are the recorded scores only; no balance or batch size is assumed.
+
+| submission | correct of 14 | source |
+| --- | --- | --- |
+| all-False | 7 | Finding 64 |
+| True for Qwen only | 8 | Finding 64 |
+| True for DeepSeek only | 8 | Finding 64 |
+| True for Skywork only | 6 | Finding 64 |
+| True for Olmo only | 6 | Finding 64 |
+| `e27d` unfamiliar half | 4 | Finding 49 |
+| `e27e` familiar half | 10 | Finding 58 |
+| `e27f` constants | 9 | Finding 58 |
+| `e27g` split Qwen only | 9 | Finding 58 |
+| `e27h` split DeepSeek only | 10 | Finding 58 |
+| `e27i` split Skywork only | 9 | Finding 58 |
+| `e27j` split Olmo only | 9 | Finding 58 |
+| `e27k` tilted | 12 | Finding 60 |
+| `e27m` Qwen one fewer | 11 | Finding 61 |
+| `e27n` DeepSeek one fewer | 11 | Finding 61 |
+| `e27o` Qwen one more | 11 | Finding 61 |
+| `e27p` DeepSeek one more | 11 | Finding 61 |
+
+Labels in familiarity order, most familiar first, and what `e27k` gets right:
+
+| model | cases | robust | state A | state B | `e27k` correct |
+| --- | --- | --- | --- | --- | --- |
+| Qwen | 5 | 3 | R S R S R | S R R S R | 3 of 5 |
+| DeepSeek | 3 | 2 | R R S | R R S | 3 of 3 |
+| Skywork | 3 | 1 | R S S | R S S | 3 of 3 |
+| Olmo | 3 | 1 | R S S | R S S | 3 of 3 |
+
+**`e27k`'s counts are exact and its ranking is perfect on DeepSeek, Skywork and Olmo.** Its two misses are one swapped pair inside Qwen's batch: one of Qwen's two most familiar problems is spurious and its least familiar is robust. The states differ only in which of the top two.
+
+Under a ranking with no information and `e27k`'s exact counts on this composition, P(score >= 12) = **0.0481**, P(14) = 0.0037, mean 7.60/14. E40's 0.0552 averaged over 56 compositions; this is the same test on the one composition the scores allow.
