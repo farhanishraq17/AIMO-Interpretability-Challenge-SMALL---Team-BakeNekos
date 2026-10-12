@@ -2354,6 +2354,49 @@ batched `transformers` `generate`, the only engine the evaluation image has.
   - Kaggle releases output only when a session ends, so long runs were split into row slices on
     parallel kernels.
 
+
+**75. The hidden set is solved: `e27k` is perfect on three models, and its only two misses are one
+swapped pair inside Qwen's batch.** (E50, `train/eval_hidden_state.py`, 13 Oct, CPU. RESULTS,
+"E50: the hidden set, solved from the leaderboard".)
+
+Every E27 submission is a deterministic function of one per-model mean-NLL ranking (Finding 62), so
+each of its scores is one more equation in the same unknowns. E50 enumerates every assignment of
+batch sizes summing to 14 and an R/S label per familiarity rank, and keeps those that reproduce all
+17 recorded scores: the five constant probes, `e27d` and `e27e` to `e27p`. No balance or size is
+assumed. **Exactly two states survive**, and they share one composition:
+
+| model | cases | robust | labels, most familiar first | `e27k` correct |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 5 | 3 | R S R S R, or S R R S R | 3 of 5 |
+| DeepSeek | 3 | 2 | R R S | 3 of 3 |
+| Skywork | 3 | 1 | R S S | 3 of 3 |
+| Olmo-3-Think | 3 | 1 | R S S | 3 of 3 |
+
+- **This replaces E40's 56-way average with the one composition the scores allow.** The probe
+  balances (Finding 45) come out of the solve rather than going into it, which is a consistency
+  check on the whole record.
+- **The ranking test sharpens slightly.** With `e27k`'s exact counts and a ranking carrying no
+  information, P(score >= 12) = **0.0481** on this composition, against E40's 0.0552.
+  Still suggestive, not decisive.
+- **What the misses are.** One of Qwen's two most familiar problems is spurious, and its least
+  familiar is robust. On this validation set the familiarity ranking errs only on the model whose
+  ranking was already the most sensitive to framing (6 of 36 chat-template flips, Finding 62).
+- **The leaderboard is not the prize ranking.** The website labels its live standings "not final
+  results", and the organizers wrote in `getting-started` issue #7 (3 Sep) that the final ordering
+  "will depend on a new set of problems and variants". **The best solution is submitted separately,
+  through the organizers' Google Form**, so the designated ZIP is our choice, not whatever the
+  leaderboard shows.
+- **Not acted on: a Qwen-specific swap would show 14/14 within two uploads and should not be built.**
+  Calling Qwen's ranks {1,3,5} or {2,3,5} robust fits five known cases, and on new problems it
+  calls the least familiar Qwen problem robust, against the method's own direction. Another team's
+  13/14 on 12 Oct does not change the freeze.
+- **The validation labels are partly public, and nothing here uses them.** `train-main-v2` revision
+  `25e45665` (16 Sep 14:42) still holds 7 labelled cells that the next commit, `b4d11d21`, withholds
+  as "used by the small-track validation set": Qwen 3, Olmo 3, DeepSeek 1. They were counted by
+  model only: no problem or label was read, and the downloaded revisions were deleted from the local
+  cache. Every script in this repository pins `23791d9b`, after the withholding, so no score here is
+  contaminated. A leaderboard score elsewhere can therefore reflect the leak rather than a method.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

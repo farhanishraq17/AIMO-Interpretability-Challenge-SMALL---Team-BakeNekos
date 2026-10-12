@@ -74,6 +74,8 @@ STEPS = [
     ["train/eval_maxdrop_continuous.py"],
     ["train/eval_budget_feasibility.py"],
     ["train/eval_power_required.py"],
+    # E50: the hidden set solved from every recorded leaderboard score. CPU, seconds.
+    ["train/eval_hidden_state.py"],
 ]
 
 
