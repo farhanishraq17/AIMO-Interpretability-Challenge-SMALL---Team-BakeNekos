@@ -43,7 +43,7 @@ removed on 26 Sep.)
   `if ($?)`). Git Bash is also available.
 - **Git:**
   - Branch `main`, remote
-    `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Team-BakeNekos`.
+    `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-SMALL---Team-BakeNekos`.
   - `getting-started/` is a **submodule** pinned to upstream `aimo-interp/getting-started` at
     `995f992` (12 Sep README update: competition-phase model list); clone with `--recurse-submodules`.
     **Upstream has since moved to `de79405`** (PR #9, `reasoning_effort` support, 2 commits

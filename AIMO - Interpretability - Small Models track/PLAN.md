@@ -18,7 +18,7 @@
 - `RESULTS.md`: generated metric tables.
 - `CLAUDE.md`: working conventions and commands.
 
-**Repository:** https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Team-BakeNekos
+**Repository:** https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-SMALL---Team-BakeNekos
 
 ---
 
