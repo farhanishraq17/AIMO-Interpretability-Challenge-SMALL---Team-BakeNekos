@@ -978,3 +978,49 @@ Labels in familiarity order, most familiar first, and what `e27k` gets right:
 **`e27k`'s counts are exact and its ranking is perfect on DeepSeek, Skywork and Olmo.** Its two misses are one swapped pair inside Qwen's batch: one of Qwen's two most familiar problems is spurious and its least familiar is robust. The states differ only in which of the top two.
 
 Under a ranking with no information and `e27k`'s exact counts on this composition, P(score >= 12) = **0.0481**, P(14) = 0.0037, mean 7.60/14. E40's 0.0552 averaged over 56 compositions; this is the same test on the one composition the scores allow.
+
+## E51: what the labels measure
+
+**Organizers' olympiad sample**, all 8 configurations, 7 problems, eligible rows only:
+
+| family | rows | mean drop | share with drop >= 0.25 |
+| --- | --- | --- | --- |
+| distract | 38 | 0.02 | **0.00** |
+| domain | 38 | 0.03 | **0.00** |
+| rephrase | 38 | 0.03 | **0.03** |
+| rename | 38 | 0.02 | **0.03** |
+| typos | 38 | 0.03 | **0.03** |
+| expert_no_solution | 28 | 0.27 | **0.43** |
+| expert_perturbations | 28 | 0.04 | **0.11** |
+| paraphrase | 3 | 0.25 | **1.00** |
+
+The family that sets `max_drop` on the 18 spurious (configuration, problem) pairs: expert_no_solution 10, expert_perturbations 3, paraphrase 3, rename 1, typos 1.
+
+**DeepSeek, Hendrycks MATH tables (what every MATH-trained model learned)**, 314 eligible rows:
+
+| family | rows | mean drop | share with drop >= 0.25 |
+| --- | --- | --- | --- |
+| domain | 100 | 0.68 | **0.86** |
+| distract | 70 | 0.26 | **0.33** |
+| rephrase | 51 | 0.09 | **0.10** |
+| rename | 49 | 0.04 | **0.06** |
+| typos | 44 | 0.01 | **0.02** |
+
+**DeepSeek, olympiad sample**, 32 eligible rows:
+
+| family | rows | mean drop | share with drop >= 0.25 |
+| --- | --- | --- | --- |
+| distract | 5 | 0.00 | **0.00** |
+| domain | 5 | 0.03 | **0.00** |
+| rename | 5 | 0.00 | **0.00** |
+| typos | 5 | 0.00 | **0.00** |
+| rephrase | 5 | 0.04 | **0.00** |
+| expert_perturbations | 4 | 0.00 | **0.00** |
+| expert_no_solution | 3 | 0.17 | **0.33** |
+
+**Exploratory: E24's own base samples (k = 4, temperature 0.6, 24k cap) against the official labels of the same 27 pairs** (21 robust). AUC oriented so that above 0.5 means the stated direction predicts robust:
+
+| signal | direction | AUC | 95% bootstrap CI |
+| --- | --- | --- | --- |
+| solved | more of 4 samples correct | 0.679 | [0.400, 0.923] |
+| tokens | shorter reasoning traces | 0.714 | [0.446, 0.935] |

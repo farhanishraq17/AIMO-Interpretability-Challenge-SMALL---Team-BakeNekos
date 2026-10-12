@@ -2397,6 +2397,46 @@ assumed. **Exactly two states survive**, and they share one composition:
   cache. Every script in this repository pins `23791d9b`, after the withholding, so no score here is
   contaminated. A leaderboard score elsewhere can therefore reflect the leak rather than a method.
 
+
+**76. The two label sources measure different perturbations: MATH labels are domain-rewording
+brittleness, olympiad labels are mostly failure to notice an impossible premise.** (E51,
+`train/eval_label_mechanics.py`, 13 Oct, CPU. RESULTS, "E51: what the labels measure".)
+
+A label is spurious when any perturbation family costs 25 points or more. Which family does that,
+on eligible rows (base accuracy 1.0):
+
+| population | family with the most drops >= 0.25 | surface families (rephrase, rename, typos) |
+| --- | --- | --- |
+| DeepSeek, Hendrycks MATH tables (all our training labels) | **domain 0.86**, distract 0.33 | 0.02 - 0.10 |
+| Organizers' olympiad sample, 8 configurations | **`expert_no_solution` 0.43** | 0.00 - 0.03 |
+| DeepSeek, olympiad sample | **`expert_no_solution` 0.33** | 0.00 |
+
+- **On olympiad problems a model has solved, the five surface families almost never break it.**
+  `expert_no_solution` sets `max_drop` on 10 of the 18 spurious pairs in the organizers' sample.
+  Its variants add one premise that contradicts the rest, for example "the system registers at
+  least 21 departures" where at most 15 are possible, so the correct answer is that there is no
+  solution. Its sibling `expert_perturbations` adds a consistent premise and rarely hurts (0.11).
+  The `train-main-v2` card agrees on the rule: robust means accuracy "survives every perturbation
+  type", so missing one contradiction is enough.
+- **This explains the transfer failures without new data.** Every model trained on MATH labels
+  learned "breaks when the story is moved to another domain", a family that never bites on
+  olympiad problems. Findings 32, 39 and 40 are the expected result, not bad luck, and the
+  self-labelling lanes (E15-E24) generated `answer_modulus` and surface variants, never the family
+  that decides olympiad labels.
+- **It gives the familiarity reversal a mechanism, untested.** A model that recognises a problem
+  can answer from memory without checking an added premise, which predicts familiar = spurious
+  where problems are published (the official rows, with 2025 AIME I verbatim). Where they are not,
+  familiarity is fluency, which predicts the opposite. Finding 69 found no support for the
+  publication split at n = 34, so this stays a hypothesis.
+- **Solving reliably goes with being robust, weakly** (exploratory, on the 34 used rows): E24's
+  4-sample solve count gives AUC 0.679 [0.400, 0.923] and shorter traces 0.714 [0.446, 0.935].
+- **Caveats.** The per-family table is 7 problems; `train-main-v2`, validation and test do not
+  publish families, so the share of their labels this mechanism decides is unknown.
+- **Public paired data exists for exactly this mechanism.** `BeyondHsueh/ReliableMath`
+  (CC-BY-4.0, revision `c059d6e6`) pairs 30 AIME 2024 and 79 AMC 2023 originals with 229
+  contradiction and 198 removed-premise rewrites, so the family can be measured on our four
+  models without generating variants. `PLAN.md` section 12.6 turns this into the next experiment.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

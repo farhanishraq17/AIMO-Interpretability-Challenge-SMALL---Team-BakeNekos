@@ -76,6 +76,8 @@ STEPS = [
     ["train/eval_power_required.py"],
     # E50: the hidden set solved from every recorded leaderboard score. CPU, seconds.
     ["train/eval_hidden_state.py"],
+    # E51: which perturbation families make a label spurious. CPU, needs the e24b runs.
+    ["train/eval_label_mechanics.py"],
 ]
 
 

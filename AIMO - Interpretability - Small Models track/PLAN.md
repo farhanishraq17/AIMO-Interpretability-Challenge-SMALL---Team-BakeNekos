@@ -778,3 +778,57 @@ Reproducibility: E37's table is rebuilt by `train/report_e37.py`. The older omni
 - **Never mix the two label rules** for one pair: the older `absolute_accuracy_decay` rule and
   `train-main-v2`'s three-valued `max_drop` rule. Mixing them corrupted two labels (Finding 44).
 - **Group by template, not by text**, whenever `train-main-v2` is used (Finding 34).
+
+### 12.6 Next steps toward generalization (13 October)
+
+**Why the direction changes.** Finding 76: on olympiad problems a model has solved, surface
+rewrites almost never flip the label. The family that does is `expert_no_solution`, an added
+premise that contradicts the rest. Our only large label source, DeepSeek's MATH tables, measures
+domain-rewording brittleness instead, which is why nothing trained on it transferred. The next
+labels must target the family that decides olympiad labels.
+
+**Not worth doing, and why:**
+
+- **A RAG pipeline.** Nothing at decision time is generated, so there is nothing to augment. Used
+  as a nearest-neighbour lookup it is a classifier whose training set ships inside the ZIP, which
+  the rules forbid ("never bundle datasets or labels"). Used as a contamination check it finds
+  nothing on the test problems, which are new and half unpublished, and the model's own NLL
+  already measures memorisation without an index.
+- **More paraphrase-style datasets** from old math questions. Surface families drop 0-3% of
+  eligible olympiad rows (Finding 76); labels built from them would teach the MATH mechanism again.
+
+**E52, pilot: do our models notice an impossible premise, and can one forward pass predict it?**
+Pre-register in `protocols/E52_PROTOCOL.md` before any output is read.
+
+| Item | Choice |
+| --- | --- |
+| Problems | `BeyondHsueh/ReliableMath` at `c059d6e6`: 79 AMC 2023 originals, one `contradict` rewrite each, fixed by its id before sampling |
+| Models | Qwen3.5-4B and Skywork-OR1-Math-7B first, the two fastest under vLLM (75 and 117 tok/s per engine, Findings 26, 37). DeepSeek and Olmo run at about 30 tok/s and join only if the pilot passes |
+| Decoding | The organizers' settings (FAQ): temperature 1.0, top-k 40, top-p 0.95. `datagen/perturb/sample.py` needs a `--top-k` flag |
+| Samples and cap | k = 2 on the original as the eligibility screen, k = 4 on the rewrite, 12k-token cap. The cap undercounts late abstentions, which reasoning models produce at length on ill-posed problems (MiP-Overthinking); record the cap-hit rate |
+| Grading | A rewrite sample counts as correct when it abstains: no numeric final answer, or a no-solution statement in the final answer. Audit the grader by hand on 30 traces before reading any result |
+| Cost | About 4M generated tokens per model: 8-10 session-hours at the measured rates, split over three accounts |
+
+Three questions, each with a gate fixed now:
+
+1. **Per-model detection rate** on eligible problems. This is the first independent evidence on
+   the prior bet behind `e27k`'s tilts (Finding 67): the validation balances predict that Skywork
+   detects contradictions less often than Qwen. Reported, not gated.
+2. **Is detection a property of the problem?** Cohen's kappa between the two models on shared
+   eligible problems. Reported.
+3. **Does a one-pass signal on the original predict detection?** Mean NLL, length, and a
+   prompt-state probe, as in the pre-generation probes of Lugoloobi et al. (arXiv 2602.09924).
+   **Gate:** AUC with a bootstrap CI lower bound above 0.5 on at least 60 eligible pairs.
+
+**E53, only if gate 3 passes:** fit that signal on all E52 pairs and ship it as a one-pass
+submission with `e27k`'s ranking as the per-batch fallback. Then run the Docker test, read the
+leaderboard once as a sanity check, and decide by 27 October which ZIP goes in the organizers'
+Google Form. If the gate fails, `e27k` is the submission and Finding 76 plus E52 go in the report
+as the mechanism and its negative result.
+
+| Dates | Step |
+| --- | --- |
+| 14 - 15 Oct | `--top-k`, the abstention grader, ReliableMath pool, protocol; push the Qwen and Skywork pilots |
+| 16 - 18 Oct | Grader audit, then the three questions; gate 3 decides E53 |
+| 19 - 24 Oct | E53 build, GPU check, Docker test, one leaderboard read |
+| 27 Oct | Freeze; the chosen ZIP goes in the Google Form before 1 Nov |
