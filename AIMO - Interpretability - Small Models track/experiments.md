@@ -7,7 +7,13 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
-### E52: running since 13 Oct (protocol `protocols/E52_PROTOCOL.md`, committed `1d636c6` before launch)
+### E52: closed 13 Oct, gate 3 failed with no positive class (Finding 77)
+
+**Result:** within 16k tokens neither model flags a contradiction. Skywork answered 217 of 274 rewrite
+samples (44% with the original problem's answer) and flagged none; Qwen truncated 103 of 130 and flagged 2.
+No eligible pair was robust-like, so no one-pass signal could be tested. `e27k` stays.
+
+Protocol `protocols/E52_PROTOCOL.md`, committed `1d636c6` before launch.
 
 Do our models notice an impossible premise (Finding 76), and does one forward pass predict which
 problems they miss? ReliableMath AMC 2023, 75 originals and 164 contradiction rewrites, organizers'
@@ -15,11 +21,11 @@ decoding, 16k cap. Analysis: `python train/eval_e52.py` once every output below 
 
 | Kernel | Account | Work | Status |
 | --- | --- | --- | --- |
-| `e52-qwen-a` | Mashrafi | Qwen3.5-4B, 38 problems, both phases, one engine per T4 | pushed 13 Oct |
-| `e52-qwen-b` | Nasif | Qwen3.5-4B, the other 37 | pushed 13 Oct |
-| `e52-skywork-a` | Samin | Skywork, 38 problems, TP=2 | pushed 13 Oct |
-| `e52-skywork-b` | DIDHITI | Skywork, the other 37. TASHIN refused (both GPU slots busy); MUBAMAN's session got no GPU (`nvidia-smi` missing, quota) | pushed 13 Oct |
-| `e52-features` | Labib | mean NLL and Stage A states, all four models | pushed 13 Oct |
+| `e52-qwen-a` | Mashrafi | Qwen3.5-4B, 38 problems, both phases, one engine per T4 | complete, 3.4 h |
+| `e52-qwen-b` | Nasif | Qwen3.5-4B, the other 37 | complete, 2.8 h |
+| `e52-skywork-a` | Samin | Skywork, 38 problems, TP=2 | complete, 2.8 h |
+| `e52-skywork-b` | DIDHITI | Skywork, the other 37. TASHIN refused (both GPU slots busy); MUBAMAN's session got no GPU (`nvidia-smi` missing, quota) | complete, 2.7 h |
+| `e52-features` | Labib | mean NLL and Stage A states, all four models | complete, 0.4 h |
 
 Download: `python scripts/kaggle_followup.py output e52-<job> --account <alias>`.
 
@@ -139,6 +145,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E48 | How many labels would each closed lane have needed? | local | Done | **63 to 320 rows; we had 33 to 61.** Power was 14-53%, so the experiments could not have returned a positive result even if their hypotheses were true (Finding 72) |
 | E50 | What exactly is the hidden set, given every score we have? | local | Done | **Solved to two states**, both Qwen 5, DeepSeek 3, Skywork 3, Olmo 3. `e27k` is perfect on the last three; its two misses are one swapped Qwen pair. Ranking null p = 0.048 on that composition. A public pre-withholding `train-main-v2` revision exposes 7 validation labels; unused (Finding 75) |
 | E51 | Which perturbation families make a label spurious? | local | Done | **Different ones per population.** MATH: domain (0.86 of rows drop >= 0.25). Olympiad: `expert_no_solution` (0.43), surface families <= 0.03. MATH-trained models learned the wrong mechanism (Finding 76) |
+| E52 | Do our models notice an impossible premise, and does one forward pass predict it? | Kaggle | Done, gate failed | **Almost never, so there is nothing to predict.** Skywork 0 of 274 rewrite samples flagged (44% gave the original answer); Qwen 2 of 130, with 79% out of budget. No robust-like pair; `e27k` stays (Finding 77) |
 | **E34a** | Can official-like surface perturbations yield a usable new AIME label set? | Kaggle (`tashintahir`) | **Done — failed gate** | Only 1/52 originals was 4/4 correct; one robust label, no spurious label; E34b closed and no submission |
 | **E35** | Do independently published robustness labels support a source-transferring problem-text model? | local | **Done — failed gate** | Putnam holdout AUC 0.609, CI [0.442, 0.769]; official transfer not opened |
 | Official data | `aimo-interp/train-main-v2`, published 17 Sep | local | Ingested 20 Sep | Labels for all four models; their label rule differs from ours; MATH->olympiad transfer is below chance (Finding 30) |

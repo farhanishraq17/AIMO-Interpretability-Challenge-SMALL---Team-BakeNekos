@@ -1024,3 +1024,30 @@ The family that sets `max_drop` on the 18 spurious (configuration, problem) pair
 | --- | --- | --- | --- |
 | solved | more of 4 samples correct | 0.679 | [0.400, 0.923] |
 | tokens | shorter reasoning traces | 0.714 | [0.446, 0.935] |
+
+## E52: contradiction detection
+
+**Q1: how often each model notices the contradiction**, on problems it solved in every base sample:
+
+| model | problems sampled | eligible | detection rate [95% CI] | without truncated samples | robust-like | answered the original's answer |
+| --- | --- | --- | --- | --- | --- | --- |
+| qwen | 75 | 28 | 0.021 [0.000, 0.054] | 0.107 | 0.000 | 0.092 |
+| skywork | 75 | 63 | 0.000 [0.000, 0.000] | 0.000 | 0.000 | 0.438 |
+
+Rewrite samples by outcome: truncated 155, answered 240, detected 3, other 6.
+
+Per model, every sample (descriptive; the cap is the protocol's 16k):
+
+| model | base correct | base hit the cap | rewrites answered | truncated | detected | other |
+| --- | --- | --- | --- | --- | --- | --- |
+| qwen | 62 / 150 | 89 / 150 | 23 | 103 | 3 | 1 |
+| skywork | 130 / 150 | 17 / 150 | 217 | 52 | 0 | 5 |
+
+**Q2: is detection a property of the problem?** On 28 problems both models solved: Spearman of detection rates nan, Cohen's kappa of robust-like nan.
+
+**Q3: does one forward pass on the original predict it?** 91 labelled pairs (0 robust-like). Gate: the probe's pooled AUC has a problem-bootstrap CI lower bound above 0.5, with at least 60 pairs.
+
+| signal | direction | AUC [95% CI] |
+| --- | --- | --- |
+
+**Gate 3: FAIL.**

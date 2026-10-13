@@ -2437,6 +2437,48 @@ on eligible rows (base accuracy 1.0):
   contradiction and 198 removed-premise rewrites, so the family can be measured on our four
   models without generating variants. `PLAN.md` section 12.6 turns this into the next experiment.
 
+
+**77. E52: within 16k tokens neither model flags an impossible premise. Skywork answers anyway,
+often with the original problem's answer; Qwen runs out of budget deliberating. Gate 3 fails with
+no positive class.** (`protocols/E52_PROTOCOL.md`, `train/eval_e52.py`, runs on Mashrafi, Nasif,
+Samin, DIDHITI and Labib, 13 Oct, 12.1 session-hours. RESULTS, "E52: contradiction detection".)
+
+ReliableMath's 75 AMC 2023 problems and all 164 contradiction rewrites, sampled with the
+organizers' decoding (temperature 1.0, top-k 40, top-p 0.95) at k = 2 and a 16k cap. The
+pre-registered hand audit of 30 random rewrite samples agreed with the grader 30 of 30.
+
+| | Qwen3.5-4B | Skywork-OR1-Math-7B |
+| --- | --- | --- |
+| base samples correct / hit the cap | 62 / 150 and **89 / 150** | 130 / 150 and 17 / 150 |
+| eligible problems (2 of 2 solved) | 28 | 63 |
+| rewrite samples: answered / truncated / flagged | 23 / **103** / 2 | **217** / 52 / **0** |
+| answered with the original problem's answer | 9.2% | **43.8%** |
+| detection rate on eligible problems | 0.021 [0.000, 0.054] | 0.000 |
+
+- **Skywork never flags a contradiction**, in 274 samples. It finishes and answers, and 44% of its
+  samples give exactly the original problem's answer. That is the spurious behaviour the official
+  family probes for, in its plainest form.
+- **Qwen deliberates instead of answering.** 79% of its rewrite samples, and 59% of its base
+  samples on the unaltered problems, used all 16k tokens. Several truncated traces in the audit had
+  already noticed the clash ("this combination is definitely contradictory") and were still
+  weighing it. Both of its genuine flags end in `\boxed{undefined}`. The organizers sample to 100k
+  tokens, where Qwen would finish more often; this run cannot say how often it would then abstain.
+- **Gate 3 fails without a test.** No eligible pair reached the robust-like threshold, so there is
+  nothing for a one-pass signal to predict and Q2 is undefined. Per the protocol, `e27k` remains
+  the submission and E53 is not planned.
+- **One grader error, found after the audit.** One of Qwen's three "detected" samples answered 2.4
+  and only remarked that the dimensions were "physically impossible"; the pattern matched the
+  remark. Its genuine flags are 2, not 3. The audit passed under its own rule, so the script is
+  left as registered; no decision depends on the difference.
+- **What it adds to Finding 67's bet.** The validation probes make Skywork spurious-leaning and
+  Qwen robust-leaning; the official split makes Skywork majority robust. On an independent
+  population and the deciding family, Skywork is the model that answers through a contradiction
+  and Qwen the one that stops to reason about it. That supports the direction of `e27k`'s Skywork
+  tilt, by a mechanism rather than a balance. Olmo, the other tilted model, was not run.
+- **What it says about the labels.** If the official `expert_no_solution` family behaves like
+  these rewrites, a Skywork pair can be robust only on problems that have no such variant (3 of the
+  organizers' 10 sample problems have none). Whether a problem has one is not visible at test time.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

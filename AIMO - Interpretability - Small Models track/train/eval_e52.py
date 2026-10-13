@@ -173,7 +173,16 @@ def main() -> None:
                      f"{(part.label == 'robust_like').mean():.3f} | {kept:.3f} |")
         result["models"][short] = {"eligible": len(part), "rate": part.rate.mean(), "ci": [low, high],
                                    "robust_like": float((part.label == "robust_like").mean())}
-    lines += ["", "Rewrite samples by outcome: " + ", ".join(f"{k} {int(v)}" for k, v in total.items()) + "."]
+    lines += ["", "Rewrite samples by outcome: " + ", ".join(f"{k} {int(v)}" for k, v in total.items()) + ".",
+              "", "Per model, every sample (descriptive; the cap is the protocol's 16k):", "",
+              "| model | base correct | base hit the cap | rewrites answered | truncated | detected | other |",
+              "| --- | --- | --- | --- | --- | --- | --- |"]
+    for short in MODELS:
+        base = load_records(short, "base")
+        n = sum(r["n_samples"] for r in base)
+        part = frame[frame.model == short]
+        lines.append(f"| {short} | {sum(r['n_correct'] for r in base)} / {n} | {sum(r['n_hit_length'] for r in base)} / {n} | "
+                     + " | ".join(str(int(part[c].sum())) for c in ("answered", "truncated", "detected", "other")) + " |")
 
     wide = eligible.pivot_table(index="pool_id", columns="model", values="rate")
     if set(MODELS) <= set(wide.columns) and len(wide.dropna()) >= 5:
