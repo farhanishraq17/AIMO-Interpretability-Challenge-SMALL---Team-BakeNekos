@@ -20,16 +20,6 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 
 ---
 
-## Built, not yet uploaded: leaderboard-only probes
-
-| ZIP | What it does | Status |
-| --- | --- | --- |
-| `lb-qwen-swap-a` | `e27k`, but a Qwen batch of exactly 5 calls familiarity ranks 1, 3, 5 robust | Expected 14/14 or 10/14 (PLAN §12.7 A1) |
-| `lb-qwen-swap-b` | the same with ranks 2, 3, 5 | Upload only if `-a` scores 10/14 (A2) |
-
-Built by `make_qwen_swap.py` from E50's solved hidden set (Finding 75). **They fit five known cases
-and are never the final submission**; the Google Form takes `e27k`.
-
 ## The leaderboard series
 
 | Score | | Submission | What it does | What it settled |

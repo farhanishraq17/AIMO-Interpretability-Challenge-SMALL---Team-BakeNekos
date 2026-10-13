@@ -848,23 +848,17 @@ Two different targets, and they must not be confused. **The leaderboard** is 14 
 that decide nothing; another team leads at 13/14. **The prizes** are decided on a new private set of
 problems and variants, from the ZIP each team sends through the organizers' Google Form.
 
-**A. The leaderboard: 14/14 in at most two uploads.** E50 solved the set (Finding 75): `e27k`'s only
-misses are one swapped pair in Qwen's five cases, and the two states that fit every score differ only
-in which of Qwen's two most familiar problems is spurious.
+**A. The leaderboard: no fitting to the 14 cases (owner's rule, 14 Oct).** E50 solved the set
+(Finding 75), and a per-case fix of Qwen's swapped pair would show 14/14. It was built and then
+withdrawn: it fits five known cases and says nothing about new problems. **Only methods that
+generalize are built from now on**; the board is read once per candidate, as a sanity check, never to
+choose between variants.
 
-| Step | Upload | Outcome |
-| --- | --- | --- |
-| A1 | `dist/solution-lb-qwen-swap-a-small.zip` (Qwen ranks 1, 3, 5 robust) | 14/14, or 10/14 if the other state holds |
-| A2 | only if A1 scores 10: `dist/solution-lb-qwen-swap-b-small.zip` (ranks 2, 3, 5) | 14/14 |
-| A3 | only if neither reaches 14 | the hidden set changed: rerun the five constant probes (`submission/make_probes.py`) and `train/eval_hidden_state.py` before anything else |
-
-- Built by `submission/make_qwen_swap.py`, which proves the base source is `e27k` byte for byte and
-  self-tests the one injected rule. Both pass the official local scorer (coverage 1.0, 0 invalid).
-- **Not worth an upload:** suffix NLL with `e27k`'s counts. Given `e28a`'s recorded 10/14, it can score
-  at most 12 (E50 section of RESULTS). The never-uploaded `e28b`/`e28c` statistics are unconstrained
-  but rank like mean NLL, and fixing Qwen needs its fifth problem moved into the top three.
-- **What it is:** a fit to five known cases. The ZIP says so in its source, the report must say so in
-  §7.2, and **neither probe goes in the Google Form.**
+- Suffix NLL with `e27k`'s counts is not worth an upload either: given `e28a`'s recorded 10/14 it can
+  score at most 12 (E50 section of RESULTS).
+- The route with a real chance of beating `e27k` on new problems is labelling the deciding family at
+  the organizers' 100k budget on better compute, gated on reproducing the 34 official labels first
+  (planned with the owner, 14 Oct).
 
 **B. The prize: send `e27k` through the Google Form.** `dist/solution-e27k-tilted-small.zip`,
 SHA-256 `b79addef…`: Docker-tested in the competition image (Findings 65-66), GPU-audited and
@@ -879,6 +873,5 @@ repeatable (Finding 62), one forward pass per problem.
   generates no tokens.
 - **Freeze 27 Oct**; send before 1 Nov, 12:55 UTC; keep the confirmation with the ZIP's SHA-256.
 
-**C. The report:** update §7.2 if A1/A2 are uploaded (it currently says the swap was not submitted),
-fill in the author list, and decide whether to mention the public validation-label revision of
+**C. The report:** fill in the author list, and decide whether to mention the public validation-label revision of
 Finding 75 (after telling the organizers).
