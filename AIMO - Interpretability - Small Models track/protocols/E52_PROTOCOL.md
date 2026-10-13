@@ -158,3 +158,10 @@ allocated the cache but ran out of memory in the sampler warm-up (394 MiB reques
 Olmo's 100k vocabulary). Olmo kernels now use utilisation 0.92 and `--max-num-seqs 16`; the cache
 holds only a few 16k sequences anyway. The 12k rule is not invoked: this failure is warm-up headroom,
 which the cap does not change. Engine settings only; decoding, cap and grading are unchanged.
+
+**Third amendment, 14 October, still before any Olmo record.** Pilot 3 failed the same way, and its
+traceback places the 394 MiB request in FlashInfer's prefill workspace (`flashinfer.py`,
+`_get_workspace_buffer`), the attention backend vLLM uses on a T4. It is allocated after the cache is
+sized and is not in vLLM's memory budget, so the second amendment's diagnosis (sampler warm-up) was
+wrong. Utilisation drops to 0.85, leaving room for the workspace while keeping about 5 GiB of cache
+a GPU. Engine settings only; decoding, cap and grading are unchanged.
