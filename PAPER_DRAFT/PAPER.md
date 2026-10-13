@@ -5,9 +5,9 @@
 **Farhan Ishraq**¹ · *[co-author names to be filled in — see `README.md`]*
 
 ¹ Correspondence: farhanishraq2003@gmail.com · Code:
-<https://github.com/farhanishraq17/AIMO-Interpretability-Challenge---Team-BakeNekos>
+<https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-SMALL---Team-BakeNekos>
 
-**Draft — 30 September 2026.** Every number here is regenerable from the repository; the
+**Draft — 14 October 2026.** Every number here is regenerable from the repository; the
 commands are in §14. Findings are cited as `F-n` (`PROGRESS.md`). Where this draft and a
 `RESULTS.md` table disagree, the table is right.
 
@@ -17,22 +17,33 @@ commands are in §14. Findings are cited as `F-n` (`PROGRESS.md`). Where this dr
 
 The AIMO Interpretability Challenge asks a question that sounds like classification and is not:
 given a model and a problem, will that model's answer survive perturbations that leave the
-mathematics unchanged? We ran 41 experiments over six weeks, spending roughly 300 GPU-hours on a
-shared free-tier fleet. **Almost all of them failed**, and
-the failures are the substance of this report: fourteen rejected hypotheses over eleven distinct signals — hidden-state probes,
+mathematics unchanged? We ran more than forty experiments over seven weeks, spending well over 300
+GPU-hours on a shared free-tier fleet. **Almost all of them failed**, and
+the failures are the substance of this report: sixteen rejected hypotheses over twelve distinct signals — hidden-state probes,
 reasoning-trace uncertainty, answer agreement under rewriting, self-generated perturbation labels,
 activation geometry, contamination statistics — either sat at chance or reversed sign when moved
 to an independent population.
 
-What survived is a method with **no learned parameters at all**. It takes one forward pass per
-problem, ranks the batch by the scoring model's own mean token negative log-likelihood, and calls
-the more familiar half robust, with the count per model fixed by a closed-form identity rather than
-fitted. Both halves of it turn out to be smaller than they look: the ranking is a property of the
-problem rather than of the model scoring it — four checkpoints from four families agree at Spearman
-0.82 — so the only model-specific quantity in the method is four integers measured from the
-evaluation distribution. It scores **12/14 = 0.857** on the hidden validation set, above the 0.79 that led the
-board when we started, and it runs in **334 seconds for four models** where a rejected alternative
-needed 5,293 seconds for one.
+We make four claims. **First**, what survived has **no learned parameters at all**: one forward
+pass per problem, rank the batch by the scoring model's own mean token negative log-likelihood,
+call the more familiar half robust, with the count per model fixed by a closed-form identity rather
+than fitted. The ranking is a property of the problem rather than of the model scoring it — four
+checkpoints from four families agree at Spearman 0.82 — so the only model-specific quantity in the
+method is four integers measured from the evaluation distribution. It scores **12/14 = 0.857** on
+the hidden validation set, above the 0.79 that led the board when we started; solved exactly from
+our own submissions, its only two misses are one swapped pair inside one model's batch. **Second**,
+nothing transferred from our labelled MATH data to the olympiad distribution the competition scores,
+and we can say why twice over. In mechanism: the two label sources are decided by different
+perturbation families — domain rewording on MATH, where it breaks 86% of solved rows, and on
+olympiad problems a single added premise that contradicts the rest, which the models answer straight
+through (one of the two we tested flagged it in 0 of 274 samples). In power: the lanes we closed
+needed 63 to 320 labelled rows and had 33 to 61, so power ran 14% to 53% and the experiments could
+not have returned a positive result even had their hypotheses been true. **Third**, offline validation was *anti-correlated* with leaderboard
+behaviour — the candidate with the best offline credentials (AUC 0.867, maxT p = 0.0010) scored
+4/14, while the one that failed its offline gate scored 12/14. **Fourth**, two of the eight method
+families we pursued could not have been submitted at any accuracy, missing the 3,600-second
+whole-run budget by 10× and 11×, where ours runs in **334 seconds for four models**; the gate that
+catches this is one multiplication and we never applied it.
 
 We argued in advance that on a 14-case board where scores are multiples of 1/14, leaderboard
 position would saturate; four days later three teams were tied at the top. When a public board
@@ -117,6 +128,13 @@ vector the achievable totals are spaced two apart (§7.2), so 12/14 is not one r
 continuum of better scores, it is one rung below **14/14, a perfect ranking on every case**. There
 is nowhere to go but perfect.
 
+On 12 October another team reached **13/14**. That does not contradict the argument: an odd total is
+unreachable for any policy that calls each model's exact robust count, so it comes from a different
+count vector, and it is still one case on a set the private ranking does not use. The organizers
+said in advance that the final ordering *"will depend on a new set of problems and variants"*
+(`getting-started` issue #7), and the website labels the live board "not final results". §7.2 shows
+exactly which two of our fourteen calls are wrong.
+
 When a public board saturates, three things decide the outcome, and none of them is leaderboard
 position:
 
@@ -129,13 +147,24 @@ position:
 
 That is the argument for the rest of this report. A method with no fitted parameters cannot fail to
 transfer in the way a fitted one can (§9); a method that never generates a token is hard to beat on
-runtime (§10); and fourteen documented negative results are worth more in a writeup than a
-thirteenth rung that does not exist.
+runtime (§10); and sixteen documented negative results are worth more in a writeup than one more
+case on a board the prizes do not use.
 
-We therefore optimised for three things in this order: a method that cannot overfit because it has
-nothing to fit; a method whose per-problem cost is a single forward pass; and a written record
-where every negative result is reproducible. §10 gives the efficiency analysis, §9 the
-generalization argument.
+We therefore state what we claim up front:
+
+1. **A training-free predictor.** One forward pass per problem, no fitted estimator, no training
+   data, and per-model counts derived in closed form from a measured class balance rather than
+   tuned. Its only model-specific quantity is four integers. §4, §9.
+2. **Nothing transfers, and we can say why.** Sixteen rejected hypotheses, several with
+   independent-population confirmations; a mechanism — the MATH and olympiad labels are decided by
+   different perturbation families, and on the olympiad one the models answer through an impossible
+   premise; and a power analysis saying the nulls are substantially measuring sample size, stated
+   together with what that does *not* excuse. §6.
+3. **Offline validation was anti-correlated with held-out behaviour.** The best offline candidate
+   scored 4/14; the one that failed its offline gate scored 12/14. We report it as an observation,
+   not a theory, and it is why we stopped selecting methods offline. §6.8.
+4. **Two method families could never have shipped.** Costed consistently, they miss the whole-run
+   budget by 10× and 11×. The gate that catches this needs no GPU, no data and no labels. §10.
 
 ---
 
@@ -166,7 +195,8 @@ whether it would be affordable to *run*: E14's 3.86M generated tokens took 10.1 
 | `aimo-interp/train-main-v2` | 82 rows, 36 olympiad problems, 5 models, `maxdrop` labels | The only in-population labels |
 | `aimo-interp/val-sample` | 28 public validation rows, mixed models | Packaging check only — 1 small-track case |
 | `aimo-interp/augmented-sample-math-agg` | Hendrycks MATH, aggregated, for `qwen3-8b:low` | The uncertainty baseline's training set |
-| `aimo-interp-challenge-sample-full` | 10 AIME-2025 reference problems × 8 systems, **and the official perturbed texts** (453 variants) | Calibration exemplars |
+| `aimo-interp-challenge-sample-full` | 10 AIMO reference problems (`aimo-2025-reference`) × 8 systems, per-family results, **and the official perturbed texts** (453 variants) | The only per-family evidence on olympiad problems (§6.2) |
+| `BeyondHsueh/ReliableMath` | 75 AMC 2023 problems with integer answers and 164 human-checked contradiction rewrites (CC-BY-4.0) | The deciding family, measured on our models (§6.9) |
 | `aimo-interp/problems-public` | Symbolic chains | **Private. Will not be shared** (F-59) |
 | Our olympiad pool | 505 problems with integer answers: OlympiadBench 362, AMC 83, AIME-2024 30, AIME-2026 30 | Unlabelled; the population the test set is drawn from |
 
@@ -284,8 +314,8 @@ evaluation distribution rather than parameters fitted to features. This matters 
 
 ## 5. Experimental programme
 
-41 experiments in seven lanes. Full registry in `experiments.md`; what follows is what each lane
-was *for*, and what it returned.
+More than forty experiments in eight lanes. Full registry in `experiments.md`; what follows is
+what each lane was *for*, and what it returned.
 
 | Lane | Question | Experiments | Verdict |
 | --- | --- | --- | --- |
@@ -294,40 +324,46 @@ was *for*, and what it returned.
 | C — traces | Does the reasoning trace carry it? | E2, E2f, E14, E36 | At chance, and 28k tokens per problem |
 | D — self-labelling | Can we make our own labels? | E7, E15–E20, E24 | κ = −0.135 on MATH, +0.286 on olympiad, neither usable |
 | E — familiarity | Does contamination predict brittleness? | E12, E23, E27, E28, E29 | Fails offline gates, **wins on the leaderboard** |
-| F — external | Do other robustness datasets transfer? | E34, E35, E37, E38 | Real labels found; ranking does not transfer; runtime gate fails |
-| G — arithmetic | What do the leaderboard numbers force? | Probes, E40, E41 | The decisive lane, and the cheapest |
+| F — external | Do other robustness datasets transfer? | E34, E35, E37, E38, E49 | Real labels found; ranking does not transfer; runtime gate fails, then the official-row gate |
+| G — arithmetic | What do the leaderboard numbers force? | Probes, E40, E41, E50 | The decisive lane, and the cheapest; it ends by solving the hidden set |
+| H — mechanism | What decides a label, and do our models show it? | E51, E52, E52b | An impossible added premise decides olympiad labels; the models answer through it |
 
 ---
 
 ## 6. What failed
 
 This section is the point of the report. Each entry states the hypothesis, the strongest result it
-ever produced, and the test that killed it.
+ever produced, and the test that killed it. The `Script` column names the file in `train/` that
+reproduces it, so the negative results are held to the same reproducibility standard as the
+positive one; the one refit that was never scripted says so.
 
 A negative result is only worth reading if it is strong enough to have been a positive one. The
 column that matters below is **"best result"** — several of these reached AUC 0.73–0.87 before the
 test that rejected them, which is why they were pursued and why reporting them is not the same as
 reporting things that never worked.
 
-| # | Hypothesis | Best result it reached | What rejected it | § |
-| --- | --- | --- | --- | --- |
-| 1 | Linear probes on hidden states predict robustness | 58.37% as published; AUC 0.75–0.85 inner-fold | Nested selection gives **0.5005**; the gap is layer selection | 6.1 |
-| 2 | A model trained on MATH transfers to olympiad problems | 0.717 balanced acc in-distribution | **AUC 0.429** on olympiad rows | 6.2 |
-| 3 | Training the text block on olympiad labels instead rescues it | — | No; n = 33 is the binding limit | 6.2 |
-| 4 | Self-labelling on MATH reproduces official labels | — | Cohen's **κ = −0.135**, worse than chance | 6.3 |
-| 5 | Self-labelling on *olympiad* problems does | κ = +0.286, sign flipped | CI spans 0; **~1 label per GPU-hour** | 6.3 |
-| 6 | Answer agreement under rewriting predicts robustness | — | Chance (0.507), at **28k tokens/problem** | 6.4 |
-| 7 | Reasoning-trace uncertainty features predict it | — | Near chance; adding them *lowers* fusion 0.717 → 0.693 | 6.4 |
-| 8 | Architecture-invariant activation geometry | Family-wise selected signal | **Reverses sign** on independent MATH data | 6.5 |
-| 9 | Counterfactual prompt-state sensitivity | **AUC 0.735**, the strongest new signal found | Template CI and max-T fail; independent population gives 0.545, CI [0.428, 0.658] | 6.5 |
-| 10 | External robustness labels support a transferring model | Real labels, 233 configurations | Putnam holdout AUC 0.609, CI [0.442, 0.769] | 6.6 |
-| 11 | Budget-path reasoning diagnostics | Ranking gates passed; GSM-Plus confirmation passed | **Runtime gate**: 5,293 s for one model against a 3,600 s whole-run budget | 6.6 |
-| 12 | Min-K tail shape, the best offline candidate of twelve | **AUC 0.867**, CI [0.728, 0.973], maxT p = 0.0010 | **4/14 on the leaderboard** | 6.8 |
-| 13 | Publication status explains the direction reversal | — | Both halves reverse (AUC 0.417, 0.299) instead of straddling 0.5 | 6.7 |
-| 14 | The reversal survives a sharper instrument | Spearman **+0.247**, sign consistent in every model | Every CI spans zero | 6.7 |
+| # | Hypothesis | Best result it reached | What rejected it | Script | § |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Linear probes on hidden states predict robustness | 58.37% as published; AUC 0.75–0.85 inner-fold | Nested selection gives **0.5005**; the gap is layer selection | `train_stagea_probes.py` | 6.1 |
+| 2 | A model trained on MATH transfers to olympiad problems | 0.717 balanced acc in-distribution | **AUC 0.429** on olympiad rows | `eval_official_holdout.py` | 6.2 |
+| 3 | Training the text block on olympiad labels instead rescues it | — | No; n = 33 is the binding limit | none recorded (F-40) | 6.2 |
+| 4 | Self-labelling on MATH reproduces official labels | — | Cohen's **κ = −0.135**, worse than chance | `compare_selflabels.py` | 6.3 |
+| 5 | Self-labelling on *olympiad* problems does | κ = +0.286, sign flipped | CI spans 0; **~1 label per GPU-hour** | `compare_selflabels.py` | 6.3 |
+| 6 | Answer agreement under rewriting predicts robustness | — | Chance (0.507), at **28k tokens/problem** | `eval_agreement.py` | 6.4 |
+| 7 | Reasoning-trace uncertainty features predict it | — | Near chance; trace states buy AUC but cost a full generation | `train_stageb_features.py`, `train_fusion.py` | 6.4 |
+| 8 | Architecture-invariant activation geometry | Family-wise selected signal | **Reverses sign** on independent MATH data | `eval_e30_geometry.py` | 6.5 |
+| 9 | Counterfactual prompt-state sensitivity | **AUC 0.735**, the strongest new signal found | Template CI and max-T fail; independent population gives 0.545, CI [0.428, 0.658] | `eval_e31_counterfactual.py`, `eval_e32_counterfactual_math.py` | 6.5 |
+| 10 | External robustness labels support a transferring model | Real labels, 233 configurations | Putnam holdout AUC 0.609, CI [0.442, 0.769] | `eval_e35_external.py` | 6.6 |
+| 11 | Budget-path reasoning diagnostics | Ranking gates passed; GSM-Plus confirmation passed | **Runtime gate**: 7,526 s for the two models that completed, against a frozen 3,000 s limit | `eval_e36_budget_path.py`, `report_e37_runtime.py` | 6.6 |
+| 12 | Min-K tail shape, the best offline candidate of twelve | **AUC 0.867**, CI [0.728, 0.973], maxT p = 0.0010 | **4/14 on the leaderboard** | `eval_e28_stability.py` | 6.8 |
+| 13 | Publication status explains the direction reversal | — | Both halves reverse (AUC 0.417, 0.299) instead of straddling 0.5 | `eval_published_split.py` | 6.7 |
+| 14 | The reversal survives a sharper instrument | Spearman **+0.247**, sign consistent in every model | Every CI spans zero | `eval_maxdrop_continuous.py` | 6.7 |
+| 15 | Budget-path score, re-extracted on the evaluation path, ranks the official rows | Problem AUC **0.659**, passing its gate | Half-rank balanced accuracy **0.521** against a pre-registered > 0.55 | `eval_e49_official.py` | 6.6 |
+| 16 | One forward pass predicts which problems a model answers an impossible premise on | — | **No positive class**: Qwen flagged 2 of 130 rewrite samples, Skywork 0 of 274 | `eval_e52.py` | 6.9 |
 
 Entries 13 and 14 are the last two attempts on the reversal, and §6.7 reports why they could
 not have succeeded. Entry 12 is the one we cannot explain at all, and §6.8 treats it separately.
+Entry 16 is the one that explains the most, and §6.9 reports it.
 
 ### 6.1 The shipped baseline is at chance
 
@@ -360,6 +396,24 @@ block was measured across that gap and every one failed (F-32, F-39, F-40):
 Training the text block *on* olympiad labels instead does not rescue it (F-40). There is no version
 of this that works at n = 33.
 
+**Why, in one table** (F-76). A label is spurious when *any* family costs 25 points, so the question
+is which family does that, population by population. On rows where the model had solved the
+original, the share where each family dropped accuracy by 0.25 or more:
+
+| Population | The family that breaks it | Surface families (rephrase, rename, typos) |
+| --- | --- | --- |
+| DeepSeek, Hendrycks MATH (all our training labels) | **domain 0.86**, distract 0.33 | 0.02–0.10 |
+| Organizers' olympiad sample, 8 systems | **`expert_no_solution` 0.43** | 0.03 each |
+| DeepSeek alone, olympiad sample | **`expert_no_solution` 0.33** | 0.00 |
+
+`expert_no_solution` adds one premise that contradicts the rest — in the organizers' own example,
+*"the system registers a cumulative total of at least 21.0 individual departures"* where at most 15
+are possible — so the right answer is that none exists. It sets `maxdrop` on 10 of the 18 spurious
+pairs in that sample. Every model we trained on MATH therefore learned *"breaks when the story moves
+to another domain"*, a family that does not break a single eligible olympiad row in the organizers'
+sample. The transfer failures in the table above are what that predicts. The caveat is size: the
+per-family table rests on 7 eligible problems, and the official splits publish no families at all.
+
 ### 6.3 Self-labelling: two attempts, both rejected
 
 If labels are the bottleneck, make labels. We sampled models on originals and on perturbed
@@ -373,18 +427,28 @@ variants and applied the official rule. Twice.
   lane unaffordable anyway.
 
 The deeper issue: our perturbation family (`answer_modulus`) is not one of the official seven. It
-changes what is asked, so it measures a different quantity. Doing this properly needs official-style
-families with verified answer preservation, which the T4 fleet cannot afford.
+changes what is asked, so it measures a different quantity. §6.2's table makes that sharper than we
+knew when we ran these: on olympiad problems the family that decides the label is
+`expert_no_solution`, and neither attempt generated anything like it. §6.9 measures that family
+directly.
 
-### 6.4 Test-time methods are unaffordable and at chance
+### 6.4 Test-time methods are unaffordable, and the signal is in the prompt
 
 **Answer agreement under rewriting (E14).** Hypothesis: a robust model gives the same answer when
 the problem is reworded. Result: balanced accuracy 0.507, AUC 0.497 — chance — at **28,000 generated
 tokens per problem** (F-24). Both halves of that sentence independently disqualify it.
 
-**Reasoning-trace uncertainty (E2f).** The published 14 uncertainty features are near chance on our
-data (F-15). Adding trace states to the fusion moves balanced accuracy 0.7173 → 0.6928 — it makes
-the model *worse* (F-18). The signal is in the prompt, not in the trace.
+**Reasoning-trace uncertainty (E2f), and what trace states actually did.** The published 14
+uncertainty features are near chance on our data (F-15). Trace *states* (E4) are a more careful
+test, and the result is more interesting than a null: adding them to the text + prompt-state fusion
+moves AUC 0.7230 → 0.7391 and balanced accuracy 0.7173 → 0.7116 (F-18) — a gain on one metric, a
+loss of 0.006 on the other, with overlapping intervals.
+
+We rejected them on **cost, not on signal**: they need a full generated trace at inference, minutes
+per problem against one forward pass. And within E4 the ordering is diagnostic — `prompt_last`
+pooling scores AUC 0.7386 while `trace_last` scores 0.6040, and the nested selector chose
+`prompt_last` in 4 of 5 folds. **States late in the reasoning are the weakest**, the opposite of the
+hypothesis E4 was built to test. The signal is in the prompt, not in the trace.
 
 ### 6.5 Activation geometry: attractive, and an artifact
 
@@ -409,12 +473,22 @@ untouched holdout, 233 labelled configurations). Problem-text ranking did not tr
 source boundary. E36 tried the reasoning *path* at four token budgets; its ranking gates passed
 strongly but its frozen absolute-threshold gate missed by 0.0025, so it formally failed. E37, the
 one pre-registered confirmation, **passed its GSM-Plus confirmation and then failed its runtime
-gate**: 5,293 s to extract features for Qwen alone, against a 3,600 s budget for everything. E38's
-exact-prefix audit failed every comparison.
+gate**. That gate was the protocol's frozen **3,000-second** end-to-end limit, set below the
+competition's 3,600 s budget: feature extraction took 5,293 s for Qwen alone and **7,526 s for the
+two models that completed**, with DeepSeek's guard stopping it at two hours. E38's exact-prefix
+audit failed every comparison.
+
+That runtime figure was measured with at most two sequences in flight under vLLM, which the
+evaluation image does not ship, so E49 gave the signal a fair second test: E37's frozen predictor,
+re-extracted with batched `transformers` generation — the only engine a submission can use — and
+scored once on all 34 official rows under a new pre-registration (F-74). It passed its problem-level
+gate (AUC **0.659**) and failed its decision gate: half-rank balanced accuracy **0.521** against
+> 0.55. On the same rows it out-ranks the shipped familiarity ranking (row AUC 0.571 against 0.358),
+and neither reaches always-robust's 0.706, which no half split on a 71%-robust set can.
 
 ### 6.7 Why the last two attempts could not have worked
 
-The direction reversal of §11 is the project's one unexplained result, and it was attacked twice
+The direction reversal of §11.1 is the project's one unexplained result, and it was attacked twice
 more after the rest of this section was written.
 
 **Publication status does not explain it** (F-69). Eight of the 36 official problems appear
@@ -463,6 +537,48 @@ gate scored 12/14.
 practical reason we stopped selecting methods offline and started reasoning about the evaluation
 distribution's arithmetic directly (§7).
 
+### 6.9 The family that decides the label: the models answer through an impossible premise
+
+§6.2 located the family that decides olympiad labels. E52 measured it on our own models, from
+public data and under a pre-registration fixed before any record existed (F-77). ReliableMath
+(Xue et al., 2025) pairs 75 AMC 2023 problems with 164 human-checked rewrites that each add a
+contradictory condition. We sampled Qwen3.5-4B and Skywork-OR1-Math-7B on originals and rewrites
+with the organizers' decoding — temperature 1.0, top-k 40, top-p 0.95 — at k = 2 and a 16k-token
+cap. A rewrite sample counted as *detected* only if it finished, gave no integer answer, and said
+there was none; a hand audit of 30 random samples agreed with that grader 30 of 30.
+
+| | Qwen3.5-4B | Skywork-OR1-Math-7B |
+| --- | --- | --- |
+| Base samples correct / out of budget | 62 / 150 and **89 / 150** | 130 / 150 and 17 / 150 |
+| Rewrite samples: answered / out of budget / flagged | 23 / **103** / 2 | **217** / 52 / **0** |
+| Answered with the *original* problem's answer | 9.2% | **43.8%** |
+
+**Skywork never flagged the contradiction**, in 274 samples. It finished and answered, and 44% of
+its answers were exactly the answer to the problem *before* the premise was added — answering from
+the pattern rather than the premises, which is precisely what the family probes for. **Qwen
+reasoned instead of answering.** 79% of its rewrite samples, and even 59% of its samples on the
+unaltered problems, ran out of the 16k budget; several truncated traces had already noticed the
+clash and were still weighing it. The organizers sample to 100k tokens, where Qwen would finish
+more often; this run cannot say how often it would then abstain.
+
+**The pre-registered gate failed without a test.** It asked whether one forward pass on the
+original predicts which problems a model handles, but no eligible pair reached the robust-like
+threshold, so there was no positive class to predict. One grader error surfaced after the audit — a
+Qwen sample that answered 2.4 while remarking that the dimensions were "physically impossible" —
+and is reported rather than patched; no decision depends on it.
+
+Two things follow. **For the submission**, the result gives the Skywork tilt of §4.2 a mechanism
+where it previously had only a balance: on the family that decides labels, Skywork is the model
+that answers through the trap (§9). **For the field**, the competition's label is substantially a
+measure of whether a model checks its premises, which none of the representation-reading methods
+in this report was aimed at. The reasoning-length behaviour matches the missing-premise
+"overthinking" reported by Fan et al. (2025).
+
+A follow-up on Olmo-3-7B-Think (E52b) could not run at these settings on our hardware: vLLM 0.20
+sized its cache as full attention on all 32 layers, 20,288 tokens on a T4 pair, and two 16k samples
+of one problem need about 33k, so every session died before reaching a rewrite (F-78). The Olmo tilt
+therefore rests on its measured balance alone.
+
 ---
 
 ## 7. What worked
@@ -501,9 +617,36 @@ from `e27e` is count arithmetic, not ranking quality. The ranking's own contribu
 observed 12 at **p = 0.055** under a null of no ranking information — suggestive, not significant,
 which is the same verdict every offline test returned, now measured on the hidden set.
 
+| Source of the 12 | Cases | How established |
+| --- | --- | --- |
+| All-False floor | 7.00 | 7 of 14 cases are spurious |
+| Correct per-model counts, random ranking | 8.05 | Null averaged over all 56 consistent compositions |
+| Observed, with the familiarity ranking | 12 | P(score ≥ 12) = 0.055 under that null |
+
 A structural detail worth carrying: for a fixed count vector the achievable totals are **spaced two
 apart**, because parity is fixed by the sum of robust calls. `e27k` can score 10, 12 or 14 and never
 11 or 13. Two cases is the minimum observable difference, not a margin.
+
+**The hidden set, solved** (F-75). The 56-way average above exists because the probes fix each
+model's balance but not its batch size. Every submission in §7.1 is a deterministic function of one
+per-model ranking, though, so each score is another equation in the same unknowns. Enumerating every
+assignment of batch sizes summing to 14 and an R/S label per familiarity rank, and keeping those that
+reproduce all 17 recorded scores — no balance or size assumed — leaves **exactly two states**, with
+one composition:
+
+| Model | Cases | Robust | Labels, most familiar first | `e27k` correct |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 5 | 3 | R S R S R, or S R R S R | 3 of 5 |
+| DeepSeek-R1-0528-Qwen3-8B | 3 | 2 | R R S | 3 of 3 |
+| Skywork-OR1-Math-7B | 3 | 1 | R S S | 3 of 3 |
+| Olmo-3-7B-Think | 3 | 1 | R S S | 3 of 3 |
+
+The probe balances come out of the solve rather than going into it, which checks the whole record
+at once. The ranking is perfect on three models; `e27k`'s two misses are one swapped pair inside
+Qwen's batch. On this composition the null of the table above gives **P(score ≥ 12) = 0.048**,
+against the 0.055 averaged over all 56. We did not submit the swap that would show 14/14: it fits
+five known cases, and on new problems it would call Qwen's least familiar problem robust, against
+the method's own direction.
 
 ![Null distribution of the score under a random ranking with e27k's counts](figures/fig3_null_distribution.svg)
 
@@ -552,7 +695,7 @@ rather than an argument against it. The rebuild starts by rewriting the file fro
 section whose producer is missing from the step list is deleted rather than left stale — and the
 command still reports success. On 1 October an audit found **18 of 37 sections** in that state,
 accumulated one experiment at a time by authors who upserted a section and never registered it.
-All 37 are now covered, and `scripts/check_results_coverage.py` asserts the invariant and fails
+Every section — 40 as of this draft — is now covered, and `scripts/check_results_coverage.py` asserts the invariant and fails
 when a producer is removed (F-73).
 
 **Two-rule discipline.** The `absolute_accuracy_decay` and `maxdrop` rules are never aggregated for
@@ -601,7 +744,7 @@ We report it as an implication rather than shipping it.
 **Its assumptions are stated and testable.** The method assumes (i) familiar problems are more
 robust, and (ii) the per-model balances `d_m` hold. Assumption (ii) is directly measurable for five
 submissions, and we re-measured it twelve days later with all four values reproducing exactly
-(F-64). Assumption (i) is the contested one — see §11.
+(F-64). Assumption (i) is the contested one — see §11.1.
 
 **What does not generalize, and we say so — with the size of the exposure.** The counts are
 measured on the *validation* set; the prizes are scored on a private test set of 30 problems whose
@@ -618,7 +761,14 @@ roughly one.
 
 So the choice is not "0.86 against 0.71" — that compares scores on the set where `e27k` is right by
 construction. It is a **symmetric bet on whether two models stay spurious-leaning**, worth about a
-case either way. We ship `e27k` because the balances are the only measurement anyone has, and
+case either way.
+
+One half of that bet now has independent support. On the perturbation family that decides
+olympiad labels, Skywork never flagged the contradiction in 274 samples while Qwen stopped to reason
+about it
+(§6.9, F-77) — the same ordering the validation balances give, reached on a different population by
+a different measurement. The Olmo half has no such evidence; the attempt to measure it could not run
+on our hardware (F-78). We ship `e27k` because the balances are the only measurement anyone has, and
 measured beats assumed; `e27e` is the prior-free alternative and the right choice for anyone who
 weights the official split more heavily than the validation set.
 
@@ -655,7 +805,9 @@ length of a problem statement, on every pair.
 
 ---
 
-## 11. The one unresolved contradiction
+## 11. Limitations, and the one unresolved contradiction
+
+### 11.1 The contradiction
 
 The shipped direction — **familiar problems are robust** — holds on DeepSeek's 142 MATH instances
 and on the hidden validation set repeatedly. It **reverses** on the 34 official olympiad rows, where
@@ -682,20 +834,63 @@ clean test needs per-problem publication dates, which nothing available to us ha
 decides what we ship** — §4.2's count argument settles `e27k` over `e27e` without reference to the
 ranking's direction — but it remains the most interesting open question in the project.
 
+§6.2 now offers a candidate mechanism, untested. If a spurious olympiad label usually means the model
+answered through an added contradiction, then a problem the model recognises is exactly one where it
+can produce the remembered answer without checking the new premise — Skywork returned the original
+problem's answer in 44% of its rewrite samples (§6.9). That predicts *familiar = spurious* wherever
+the evaluated problems are well known, and leaves room for the opposite elsewhere. It is the
+publication hypothesis again with a mechanism attached, and F-69 has already found no support for
+the publication split at n = 34, so we offer it as the next thing to test rather than an
+explanation.
+
+### 11.2 Limitations
+
+- **Sample size dominates everything.** Fourteen validation cases, 33 labelled problems, 82 rows.
+  Power ran 14% to 53% across the lanes we closed (§6.7). Most of our negative results are
+  underpowered, and we say so rather than presenting them as settled.
+- **The counts are measured on the validation set, not the test set.** §9 prices the exposure: the
+  tilts are a symmetric bet worth about a case either way, and they could cost 0.89 cases if the
+  private class shares match the official split instead.
+- **One competition is not a general law.** The offline/online inversion (§6.8) is a real
+  observation on this task. We cannot say whether it is a property of this task, of 14-case
+  evaluation, or of our own gates.
+- **We did not pursue sparse autoencoders**, which the Small Models Track was designed to invite.
+  At 33 labelled problems a feature search over thousands of sparse features has no statistical
+  power, and our template-cluster bootstrap would reject anything it found. A deliberate omission,
+  not an oversight.
+- **The forward-pass path is verified on separate hardware, not in the competition image.** §14.1
+  covers what the container check does and does not establish.
+- **The deciding family was measured narrowly.** §6.2's per-family table rests on 7 eligible
+  problems, and §6.9 used public AMC rewrites rather than the organizers' expert ones, two of the
+  four models, and a 16k cap against their 100k. Its direction is clear; its size on the test set is
+  not known.
+
 ---
 
 ## 12. Related work
 
-**Citations below are from memory and have not been verified against the literature — check every
-one before submission.** Titles and authors are given rather than venues where we are less sure.
+Every citation in this section was verified against arXiv or the publisher in October 2026; full
+entries with identifiers are in the References. Where a work's arXiv preprint and its venue fall in
+different years, the References give both and the text uses the venue year.
 
 **Perturbation robustness in mathematical reasoning.** The competition's premise — that final-answer
 accuracy overstates reasoning — is the same one behind *GSM-Symbolic* (Mirzadeh et al., 2024), which
 templates GSM8K problems and shows accuracy falling when only surface constants change, and falling
 further when an irrelevant clause is added. Our `distract` family is that construction, and the
-organizers' `maxdrop` rule is a thresholded version of the same measurement. *MATH-Perturb* and
-*Putnam-AXIOM* supply the external labels used in E35; Hendrycks et al.'s *MATH* (2021) is the
+organizers' `maxdrop` rule is a thresholded version of the same measurement. *MATH-Perturb* (Huang
+et al., 2025) and *Putnam-AXIOM* (Gulati et al., 2025) supply the external labels used in E35 —
+both are themselves benchmarks built by perturbing competition problems, which is why their labels
+were the most plausible external source available. Hendrycks et al.'s *MATH* (2021) is the
 distribution our labelled data came from and, per §6.2, the reason it did not transfer.
+
+**Unanswerable problems.** The family that decides olympiad labels, `expert_no_solution`, has its own
+literature. *ReliableMath* (Xue et al., 2025) builds unsolvable variants of AIME, AMC, MATH and
+Minerva problems by removing a necessary condition or adding a contradictory one, checks them by
+hand, and reports that models rarely identify them and usually fabricate an answer; we used its AMC
+contradiction rewrites in §6.9. Fan et al. (2025) show that reasoning models think far longer on
+problems with a missing premise instead of declining them, which is the out-of-budget behaviour we
+saw in Qwen. Neither work connects the behaviour to a robustness label, which is the connection this
+competition's rule makes.
 
 **Contamination and membership inference.** Our shipped statistic is a membership-inference score
 used for a different purpose. Mean token NLL is the oldest such signal; *Min-K%* (Shi et al., 2023)
@@ -708,7 +903,7 @@ predictor of robustness on the hidden set, and plain mean NLL was the best.
 
 To our knowledge the *direction* we found — familiar problems being **more** robust on the
 evaluation distribution, while familiarity predicts brittleness on published olympiad problems
-(§11) — is not reported in that literature, which studies contamination as a threat to benchmark
+(§11.1) — is not reported in that literature, which studies contamination as a threat to benchmark
 validity rather than as a feature.
 
 **Probing and its selection artifacts.** Linear probing of hidden states follows Alain and Bengio
@@ -720,9 +915,7 @@ reports 58.37% where honest nested selection gives 0.5005, and the difference is
 
 **Sparse autoencoders.** Feature-level interpretability via SAEs (Cunningham et al., 2023; Bricken
 et al., 2023; Templeton et al., 2024) is what the Small Models Track was designed to invite. We did
-not pursue it: with 33 labelled problems, a feature search over thousands of sparse features has no
-statistical power, and our template-cluster bootstrap would reject anything it found. We record
-this as a deliberate omission, not an oversight (§5, lane C).
+not pursue it, for the reason given in §11.2.
 
 **Uncertainty and self-consistency.** The organizers' second baseline uses token-level uncertainty
 features; the underlying idea traces to Kadavath et al. (2022) on models knowing what they know,
@@ -732,14 +925,15 @@ E14's cost — 28,000 generated tokens per problem — is the concrete reason sa
 uncertainty is a poor fit for a one-hour whole-run budget.
 
 **Multiple comparisons.** The maxT family-wise adjustment used throughout our gates follows
-Westfall and Young's resampling-based procedure. Applying it is what turned several attractive
+Westfall and Young's resampling-based procedure (1993). Applying it is what turned several attractive
 signals into null results (§6.5).
 
-**Where this work sits.** We contribute no new interpretability method. The contributions are
-empirical and methodological: a training-free predictor competitive on the task, a closed-form
-result for its only free parameters (§4.2), a way to read the evaluation distribution's class
-balance off constant submissions (§7.2), and a documented inversion between offline validation and
-held-out behaviour that we cannot explain (§6.8).
+**Where this work sits.** We contribute no new interpretability *technique*, and that is not the
+claim. The claim is methodological and it is unfavourable to the field's usual practice: on this
+task, a predictor with no fitted parameters beat every fitted one we built, and the offline metrics
+interpretability research routinely selects on were *anti-correlated* with held-out performance
+(§6.8). Both are statements about how interpretability methods should be validated, not about a new
+way to read a model.
 
 ---
 
@@ -758,6 +952,10 @@ held-out behaviour that we cannot explain (§6.8).
    problems, most of what we tested could not have reached significance at the effect sizes we
    were hoping for (§6.7). Knowing that in week one would have redirected the whole project toward
    acquiring labels rather than toward testing signals against the labels we had.
+6. **Ask what decides the label before modelling it.** The per-family table of §6.2 needed no GPU
+   and used a public table that was available from the first day. It shows that our training labels
+   and the competition's are decided by different perturbations, which explains weeks of transfer
+   failures in one line — and it is the last analysis we ran rather than the first.
 
 ---
 
@@ -767,8 +965,13 @@ held-out behaviour that we cannot explain (§6.8).
 # Every generated table in the Small Models Track (~25 min)
 python scripts/regenerate_results.py
 
-# The leaderboard arithmetic and the null test for 12/14
+# The leaderboard arithmetic and the null test for 12/14; the hidden set solved (§7.2)
 python train/eval_batch_composition.py
+python train/eval_hidden_state.py
+
+# What decides a label (§6.2), and the deciding family on our models (§6.9)
+python train/eval_label_mechanics.py
+python train/eval_e52.py              # needs the e52 runs; protocol in protocols/E52_PROTOCOL.md
 
 # Rebuild every submission ZIP, deterministically
 python submission/make_e27.py     # 13 candidates incl. the incumbent
@@ -781,7 +984,8 @@ Repository layout: the Small Models Track folder holds `CLAUDE.md` (conventions)
 `experiments.md` (registry) and `protocols/` (pre-registrations). Submissions are indexed by score
 in `submission/README.md`, and the built ZIPs are committed, so the artifact that scored can be
 uploaded from a clone without rebuilding. Kernels are exported to `kernels/` exactly as pushed, so
-any run can be rebuilt if a Kaggle account disappears.
+any run can be rebuilt if a Kaggle account disappears. The failure table in §6 names the script
+behind each rejected lane.
 
 ### 14.1 The shipped artifact, verified in the competition image
 
@@ -815,113 +1019,152 @@ were identical across two machines.
 
 ## 15. Summary of contributions
 
-1. **A training-free robustness predictor** that scores 12/14 on the hidden validation set, ranking
-   a batch by the scoring model's own likelihoods and fixing its counts by a closed-form identity in
-   the measured class balance (§4.2).
-2. **A leaderboard-arithmetic method** for extracting the evaluation distribution's per-model class
-   balance from constant submissions, and for testing whether an observed score exceeds what those
-   counts alone explain (§7.2).
-3. **Fourteen documented negative results**, several with independent-population confirmations,
-   and a measured **inversion between offline validation and leaderboard behaviour** on this task
-   (§6).
-4. **A correction to the organizers' published baseline**: its 58.37% is a layer-selection artifact;
-   honest nested cross-validation puts it at 0.5005 (§6.1).
-5. **Two structural results about the task**: robustness is a property of the problem rather than
-   the (model, problem) pair (§1.2); and the familiarity *signal* is a problem property too, so the
-   only model-specific quantity in our method is four measured integers (§9).
-6. **A tokenizer defect** in transformers 5.13 that silently empties DeepSeek's input and affects
-   the organizers' own baseline (§3.2).
-7. **A feasibility result about the task's compute budget**: two of the method families we pursued
-   could not have been submitted at any accuracy, missing the 3600-second whole-run budget by 10×
-   and 11×, and a one-multiplication gate catches this before any GPU time is spent (§10).
-8. **A power analysis of our own null results** (§6.7): the lanes we closed needed 63 to 320
-   labelled rows and had 33 to 61, so they could not have returned a positive result even if their
-   hypotheses were true. We state the converse with equal weight — this does not make the effects
-   real.
+Four claims, in the order the report makes them.
+
+**1. A training-free robustness predictor, with its only free parameters derived rather than tuned.**
+It scores 12/14 on the hidden validation set by ranking a batch on the scoring model's own
+likelihoods and fixing each model's robust count by a closed-form identity in the measured class
+balance (§4.2). The rule calls the exactly correct count in 56 of 56 batch compositions consistent
+with the measurement, where the plain median split does so in 0 of 56. Supporting this:
+
+- a **leaderboard-arithmetic method** for extracting the evaluation distribution's per-model class
+  balance from constant submissions, and for testing whether an observed score exceeds what those
+  counts alone explain (§7.2);
+- **two structural results about the task**: robustness is a property of the problem rather than
+  the (model, problem) pair (§1.2); and the familiarity *signal* is a problem property too, so the
+  only model-specific quantity in the method is four measured integers (§9).
+
+**2. Sixteen documented negative results, the mechanism behind them, and the power analysis that says
+what they do and do not establish.** Several carry independent-population confirmations, and several
+reached AUC 0.73–0.87 before the test that rejected them (§6). The mechanism is that our training
+labels and the competition's are decided by different perturbation families: domain rewording on
+MATH, and on olympiad problems one added premise that contradicts the rest, which Skywork never
+flagged in 274 samples and answered with the unchanged problem's answer in 44% of them (§6.2,
+§6.9). The lanes we closed needed 63 to 320 labelled rows and had
+33 to 61, so power ran 14% to 53% and the experiments could not have returned a positive result even
+had their hypotheses been true (§6.7). **We state the converse with equal weight: this does not make
+the observed effects real.** Supporting this: a **correction to the organizers' published baseline**,
+whose 58.37% is a layer-selection artifact that honest nested cross-validation puts at 0.5005 (§6.1).
+
+**3. A measured inversion between offline validation and held-out behaviour.** The candidate with the
+best offline credentials — AUC 0.867, CI [0.728, 0.973], maxT p = 0.0010 — scored 4/14, while the one
+that failed its offline gate scored 12/14 (§6.8). We report it as an observation, not a theory, and it
+is the reason we stopped selecting methods offline and began reasoning about the evaluation
+distribution's arithmetic directly.
+
+**4. A feasibility result about the task's compute budget.** Two of the eight method families we
+pursued could not have been submitted at any accuracy, missing the 3,600-second whole-run budget by
+10× and 11× (§10). The gate that catches this is one multiplication — per-pair cost against budget
+divided by pair count — and it needs no GPU, no data and no labels. We never applied it.
+
+**Further finding.** A **tokenizer defect** in transformers 5.13 that silently empties DeepSeek's
+input and affects the organizers' own baseline (§3.2).
 
 ---
 
 ## References
 
-> **Every entry below is from memory and unverified.** None has been checked against the
-> literature. Treat this as a checklist: confirm authors, year, title and venue for each, then
-> delete this warning. The confidence column says where to look hardest — `low` means check
-> whether the work exists as described before citing it at all. An incorrect citation in a
-> submitted report is worse than no citation, so an entry that cannot be confirmed should be cut
-> rather than guessed at.
+The twenty research entries were checked against arXiv or the publisher on **2 October 2026**, and
+entries 21 and 22 on **14 October 2026**; none was taken on trust from an earlier draft, and none was
+dropped. Where the arXiv preprint and the peer-reviewed venue fall in different years, both are given.
 
 ### Perturbation robustness in mathematical reasoning
 
-| # | Believed citation | Used in | Confidence | ✓ |
-| --- | --- | --- | --- | --- |
-| R1 | Mirzadeh et al., *GSM-Symbolic: Understanding the Limitations of Mathematical Reasoning in Large Language Models*, 2024 | §12, the premise of the task | high | ☐ |
-| R2 | Hendrycks et al., *Measuring Mathematical Problem Solving With the MATH Dataset*, 2021 | §3.1, §6.2 — our labelled distribution | high | ☐ |
-| R3 | *MATH-Perturb* — perturbation benchmark, 2025 | §6.6, E35 training source | medium — check exact authors and title | ☐ |
-| R4 | *Putnam-AXIOM* — competition benchmark with variations | §6.6, E35 holdout | medium — check authors and year | ☐ |
-| R5 | He et al., *OlympiadBench*, 2024 | §3.1, the pooled problem source | medium | ☐ |
+1. Mirzadeh, I., Alizadeh, K., Shahrokhi, H., Tuzel, O., Bengio, S., Farajtabar, M. *GSM-Symbolic:
+   Understanding the Limitations of Mathematical Reasoning in Large Language Models.* arXiv:2410.05229, 2024.
+2. Hendrycks, D., Burns, C., Kadavath, S., Arora, A., Basart, S., Tang, E., Song, D., Steinhardt, J.
+   *Measuring Mathematical Problem Solving With the MATH Dataset.* arXiv:2103.03874, 2021.
+3. Huang, K., Guo, J., Li, Z., Ji, X., Ge, J., Li, W., Guo, Y., Cai, T., Yuan, H., Wang, R., Wu, Y.,
+   Yin, M., Tang, S., Huang, Y., Jin, C., Chen, X., Zhang, C., Wang, M. *MATH-Perturb: Benchmarking
+   LLMs' Math Reasoning Abilities against Hard Perturbations.* arXiv:2502.06453, 2025.
+4. Gulati, A., Miranda, B., Chen, E., Xia, E., Fronsdal, K., Dumont, B., Obbad, E., Koyejo, S.
+   *Putnam-AXIOM: A Functional and Static Benchmark for Measuring Higher Level Mathematical
+   Reasoning in LLMs.* arXiv:2508.08292, 2025.
+5. He, C., Luo, R., Bai, Y., Hu, S., Thai, Z. L., Shen, J., Hu, J., Han, X., Huang, Y., Zhang, Y.,
+   Liu, J., Qi, L., Liu, Z., Sun, M. *OlympiadBench: A Challenging Benchmark for Promoting AGI with
+   Olympiad-Level Bilingual Multimodal Scientific Problems.* arXiv:2402.14008, 2024.
 
 ### Contamination and membership inference
 
-| # | Believed citation | Used in | Confidence | ✓ |
-| --- | --- | --- | --- | --- |
-| R6 | Shi et al., *Detecting Pretraining Data from Large Language Models*, 2023 — introduces Min-K% | §6.8, E23, E28 | high | ☐ |
-| R7 | Zhang et al., *Min-K%++*, 2024 | E23 `min_k_pp_20` | medium — confirm authors | ☐ |
-| R8 | Carlini et al., *Extracting Training Data from Large Language Models*, 2021 — the zlib-ratio baseline | E23 `zlib_ratio` | high | ☐ |
-| R9 | Carlini et al., *Membership Inference Attacks From First Principles*, 2022 — reference-model calibration | E23 `relative_nll` | high | ☐ |
+6. Shi, W., Ajith, A., Xia, M., Huang, Y., Liu, D., Blevins, T., Chen, D., Zettlemoyer, L.
+   *Detecting Pretraining Data from Large Language Models.* arXiv:2310.16789, 2023. — introduces Min-K%.
+7. Zhang, J., Sun, J., Yeats, E., Ouyang, Y., Kuo, M., Zhang, J., Yang, H. F., Li, H. *Min-K%++:
+   Improved Baseline for Detecting Pre-Training Data from Large Language Models.* arXiv:2404.02936, 2024.
+8. Carlini, N., Tramer, F., Wallace, E., Jagielski, M., Herbert-Voss, A., Lee, K., Roberts, A.,
+   Brown, T., Song, D., Erlingsson, U., Oprea, A., Raffel, C. *Extracting Training Data from Large
+   Language Models.* arXiv:2012.07805, 2020; USENIX Security, 2021. — the zlib-ratio baseline.
+9. Carlini, N., Chien, S., Nasr, M., Song, S., Terzis, A., Tramer, F. *Membership Inference Attacks
+   From First Principles.* arXiv:2112.03570, 2021; IEEE S&P, 2022. — reference-model calibration.
 
 ### Probing and its selection artifacts
 
-| # | Believed citation | Used in | Confidence | ✓ |
-| --- | --- | --- | --- | --- |
-| R10 | Alain and Bengio, *Understanding Intermediate Layers Using Linear Classifier Probes*, 2016 | §6.1 | high | ☐ |
-| R11 | Hewitt and Liang, *Designing and Interpreting Probes with Control Tasks*, 2019 | §6.1 — the direct antecedent | high | ☐ |
-| R12 | Belinkov, *Probing Classifiers: Promises, Shortcomings, and Advances*, 2022 | §6.1 | high | ☐ |
+10. Alain, G., Bengio, Y. *Understanding intermediate layers using linear classifier probes.*
+    arXiv:1610.01644, 2016.
+11. Hewitt, J., Liang, P. *Designing and Interpreting Probes with Control Tasks.* arXiv:1909.03368, 2019.
+12. Belinkov, Y. *Probing Classifiers: Promises, Shortcomings, and Advances.* arXiv:2102.12452, 2021;
+    *Computational Linguistics*, 2022.
 
 ### Sparse autoencoders
 
-| # | Believed citation | Used in | Confidence | ✓ |
-| --- | --- | --- | --- | --- |
-| R13 | Cunningham et al., *Sparse Autoencoders Find Highly Interpretable Features in Language Models*, 2023 | §12, lane C | high | ☐ |
-| R14 | Bricken et al., *Towards Monosemanticity*, Anthropic, 2023 | §12 | high | ☐ |
-| R15 | Templeton et al., *Scaling Monosemanticity*, Anthropic, 2024 | §12 | high | ☐ |
+13. Cunningham, H., Ewart, A., Riggs, L., Huben, R., Sharkey, L. *Sparse Autoencoders Find Highly
+    Interpretable Features in Language Models.* arXiv:2309.08600, 2023.
+14. Bricken, T., et al. *Towards Monosemanticity: Decomposing Language Models with Dictionary
+    Learning.* Transformer Circuits Thread, Anthropic, 2023.
+15. Templeton, A., et al. *Scaling Monosemanticity: Extracting Interpretable Features from Claude 3
+    Sonnet.* Transformer Circuits Thread, Anthropic, 2024.
 
 ### Uncertainty, calibration and self-consistency
 
-| # | Believed citation | Used in | Confidence | ✓ |
-| --- | --- | --- | --- | --- |
-| R16 | Kadavath et al., *Language Models (Mostly) Know What They Know*, 2022 | §6.4 | high | ☐ |
-| R17 | Kuhn et al., *Semantic Uncertainty*, 2023 | §6.4 | medium | ☐ |
-| R18 | Farquhar et al., semantic entropy for hallucination detection, *Nature*, 2024 | §6.4 | medium — confirm the venue claim | ☐ |
-| R19 | Wang et al., *Self-Consistency Improves Chain of Thought Reasoning*, 2023 | §6.4, E14 | high | ☐ |
+16. Kadavath, S., Conerly, T., Askell, A., Henighan, T., Drain, D., Perez, E., Schiefer, N., et al.
+    *Language Models (Mostly) Know What They Know.* arXiv:2207.05221, 2022.
+17. Kuhn, L., Gal, Y., Farquhar, S. *Semantic Uncertainty: Linguistic Invariances for Uncertainty
+    Estimation in Natural Language Generation.* arXiv:2302.09664, 2023; ICLR 2023 (spotlight).
+18. Farquhar, S., Kossen, J., Kuhn, L., Gal, Y. *Detecting hallucinations in large language models
+    using semantic entropy.* *Nature* **630**(8017), 625–630, 2024.
+19. Wang, X., Wei, J., Schuurmans, D., Le, Q., Chi, E., Narang, S., Chowdhery, A., Zhou, D.
+    *Self-Consistency Improves Chain of Thought Reasoning in Language Models.* arXiv:2203.11171,
+    2022; ICLR 2023.
 
 ### Statistics
 
-| # | Believed citation | Used in | Confidence | ✓ |
-| --- | --- | --- | --- | --- |
-| R20 | Westfall and Young, *Resampling-Based Multiple Testing*, 1993 — the maxT procedure | §6.5, every family-wise gate | medium — confirm year and title | ☐ |
+20. Westfall, P. H., Young, S. S. *Resampling-Based Multiple Testing: Examples and Methods for
+    p-Value Adjustment.* Wiley, 1993. — the maxT procedure.
 
-### Competition sources (these are ours to cite exactly, and are verifiable)
+### Unanswerable problems
 
-| # | Source | ✓ |
-| --- | --- | --- |
-| C1 | AIMO Interpretability Challenge website — <https://aimo-interp.github.io/> | ☐ |
-| C2 | Starter kit — <https://github.com/aimo-interp/getting-started>, submodule pinned at `995f9923` | ☐ |
-| C3 | Proposal paper — arXiv:2607.13899 | ☐ |
-| C4 | `aimo-interp/train-main-v2`, revision `23791d9b` — the 82 labelled rows | ☐ |
-| C5 | Codabench competition 16180 — the leaderboard and scoring programs | ☐ |
+21. Xue, B., Zhu, Q., Wang, R., Wang, S., Wang, H., Hu, M., Mi, F., Wang, Y., Shang, L., Liu, Q.,
+    Wong, K.-F. *ReliableMath: Benchmark of Reliable Mathematical Reasoning on Large Language
+    Models.* arXiv:2507.03133, 2025. — dataset `BeyondHsueh/ReliableMath`, revision `c059d6e6`, CC-BY-4.0.
+22. Fan, C., Li, M., Sun, L., Zhou, T. *Missing Premise exacerbates Overthinking: Are Reasoning
+    Models losing Critical Thinking Skill?* arXiv:2504.06514, 2025.
+
+### Competition sources
+
+23. AIMO Interpretability Challenge. <https://aimo-interp.github.io/>
+24. Štefánik, M., Mondorf, P., et al. *AIMO Interpretability Challenge.* arXiv:2607.13899. — the
+    proposal paper.
+25. Starter kit. <https://github.com/aimo-interp/getting-started>, submodule pinned at `995f9923`.
+26. `aimo-interp/train-main-v2`, revision `23791d9b` — the 82 labelled rows.
+27. `aimo-interp/aimo-interp-challenge-sample-full`, revision `c0ffb7e6` — per-family results and
+    the official perturbed texts.
+28. Codabench competition 16180 — the leaderboard and scoring programs.
 
 ## Appendix A — Experiment index
 
-`experiments.md` carries the full registry with configuration and outcome for all 41 experiments.
-`PROGRESS.md` carries findings F-1…F-73 with the evidence for each. `RESULTS.md` carries 37
-generated metric tables.
+`experiments.md` carries the full registry with configuration and outcome for every experiment.
+`PROGRESS.md` carries findings F-1…F-78 with the evidence for each. `RESULTS.md` carries 40
+generated metric tables, all covered by `scripts/regenerate_results.py`.
 
 ## Appendix B — Open questions
 
-1. Does familiarity predict robustness differently for published and unpublished problems (§11)?
+1. Does familiarity predict robustness differently for published and unpublished problems (§11.1)?
 2. Does the per-problem invariance (F-38) hold at n ≈ 500, or is it an artifact of the
    three-valued rule discarding the ambiguous band?
 3. Can official-family perturbations with verified answer preservation reproduce the organizers'
-   labels? This is the gate that would reopen supervised work.
+   labels? For the deciding family, §6.9 is a first answer: at 16k tokens neither model flags the
+   contradiction, so labels there are one-class. Whether Qwen abstains given the organizers' 100k
+   budget is the gate that would reopen supervised work.
 4. Is the offline/online inversion (§6.8) a property of this task, of 14-case evaluation, or of our
    offline gates?
+5. Does a model recognising a problem make it more likely to answer through an added contradiction
+   (§11.1)? This is the mechanism the reversal needs, and it is testable on public rewrites.

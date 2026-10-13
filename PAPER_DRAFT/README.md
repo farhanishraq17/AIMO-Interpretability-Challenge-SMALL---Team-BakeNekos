@@ -12,13 +12,16 @@ Main Track content — no sections, results or `LF-n` findings. See that track's
 
 ## How to read it
 
-Fifteen sections and a reference checklist. They answer different questions:
+Fifteen sections, a verified reference list and two appendices. They answer different questions:
 
 - **New to the project?** §1 (the task and why it is hard), §4 (what we actually ship), §7 (what
   worked), §13 (what we would do differently). That is the manual.
 - **Want the evidence?** §6 is the failures, one subsection per lane, each with the test that
   killed it. It is the longest section on purpose — the writeup prize is awarded partly on negative
-  results, and we have fourteen.
+  results, and we have sixteen.
+- **Want the explanation?** §6.2 and §6.9: our training labels and the competition's are decided
+  by different perturbation families, and on the competition's the models answer through an
+  impossible premise.
 - **Want the method?** §4.2 is the one piece of real formalism: the per-model robust count in
   closed form, `t = (d − 1)/2`, derived from a measured class balance rather than tuned.
 - **Judging it?** §9 generalization, §10 efficiency, §15 contributions.
@@ -48,11 +51,12 @@ contrast), and every series carries a direct label rather than relying on hue al
 
 Two things, and the first is the real one.
 
-1. **Verify every citation.** The **References** section is a checklist — 20 believed citations,
-   each with a confidence rating and a tick box, plus 5 competition sources that are ours to cite
-   exactly. They were written from memory and **not one has been checked**. Work down the list,
-   hardest at the `medium` rows; **cut anything that cannot be confirmed** rather than guessing.
-   An incorrect citation in a submitted report is worse than no citation.
+1. **Audit every number against its generated table.** Nobody has done this end to end. One known
+   mismatch: the generated E10 and E4 fusion tables in `RESULTS.md` were rerun on 138 of 153
+   instances and give text + prompt states **0.6916** balanced accuracy (AUC 0.7305), where the
+   paper uses `PROGRESS.md`'s **0.7173** (AUC 0.7230). That touches §6.2, §6.4 and rows 2 and 7 of
+   the §6 failure table. The citations are done: all 25 references carry identifiers and were
+   checked against arXiv or the publisher in October.
 2. **The author list is incomplete.** One name is filled in. Add co-authors, affiliations, and a
    licence for the repository.
 
