@@ -151,3 +151,10 @@ start"). Every Olmo kernel therefore adds `--enforce-eager`, which skips graph c
 memory. It is an engine setting: decoding, k, cap and grading are unchanged. The cap stays 16k. The
 12k fallback above was written for a cache that cannot hold the cap at all, and lowering the cap
 would not have fixed this failure; it still applies if eager mode cannot start at 16k.
+
+**Second amendment, 14 October, still before any Olmo record.** With eager mode the engine
+allocated the cache but ran out of memory in the sampler warm-up (394 MiB requested, 111 MiB free at
+`--gpu-memory-utilization 0.95`; the warm-up sizes its buffers for vLLM's default 256 sequences over
+Olmo's 100k vocabulary). Olmo kernels now use utilisation 0.92 and `--max-num-seqs 16`; the cache
+holds only a few 16k sequences anyway. The 12k rule is not invoked: this failure is warm-up headroom,
+which the cap does not change. Engine settings only; decoding, cap and grading are unchanged.
