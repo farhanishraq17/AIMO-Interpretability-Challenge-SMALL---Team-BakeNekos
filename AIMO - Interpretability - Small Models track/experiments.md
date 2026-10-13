@@ -7,6 +7,22 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E52b: running since 14 Oct (protocol `protocols/E52_PROTOCOL.md` §9, committed `4297317` before launch)
+
+Olmo-3-Think on E52's 75 problems, question 1 only: does it answer through a contradiction like
+Skywork (support for its `e27k` tilt) or reason about it like Qwen? Four kernels, one per quarter
+of the sorted problem keys; vLLM 0.20.0 with `transformers` 5.5.3, TP=2.
+
+| Kernel | Account | Status |
+| --- | --- | --- |
+| `e52-olmo-a` | Mashrafi | v1-v3 failed at engine start (amendments `700e1fa`, `2f29554`, `7ec5390`); **v4 sampling**: 4.95 GiB of cache a GPU, 20,288 tokens, 56 tok/s |
+| `e52-olmo-b` | Nasif | v1 failed with v2's settings; v2 pushed 14 Oct with the final settings |
+| `e52-olmo-c` | Samin | as b |
+| `e52-olmo-d` | Labib | as b |
+
+Final Olmo engine: eager, utilisation 0.85, at most 16 sequences, TP=2. vLLM 0.20 sizes Olmo's cache as
+full attention on every layer (20,288 tokens), so only about 1.5 full-length requests fit at once.
+
 ### E52: closed 13 Oct, gate 3 failed with no positive class (Finding 77)
 
 **Result:** within 16k tokens neither model flags a contradiction. Skywork answered 217 of 274 rewrite
