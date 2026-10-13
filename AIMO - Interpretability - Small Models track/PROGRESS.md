@@ -2479,6 +2479,23 @@ pre-registered hand audit of 30 random rewrite samples agreed with the grader 30
   these rewrites, a Skywork pair can be robust only on problems that have no such variant (3 of the
   organizers' 10 sample problems have none). Whether a problem has one is not visible at test time.
 
+**78. E52b could not sample Olmo-3-Think at E52's settings on a T4 pair, so the Olmo tilt keeps only
+its leaderboard support.** (`protocols/E52_PROTOCOL.md` §9 and its three amendments; kernels on
+Mashrafi, Nasif, Samin and Labib, 14 Oct, about 7.5 session-hours.)
+
+- **Three engine failures, then a fourth that ends the run.** CUDA-graph capture left 1.61 GiB of
+  cache; FlashInfer's 394 MiB prefill workspace sits outside vLLM's memory budget, so utilisation had
+  to drop to 0.85. vLLM 0.20 then sized Olmo's cache as full attention on all 32 layers, ignoring the
+  4,096-token sliding window on 24 of them: 20,288 tokens, about 1.5 full-length requests.
+- **Two 16k samples of one problem need about 33k tokens.** When both ran long, every kernel died
+  with `Cannot get 1 free blocks from the pool` instead of preempting a sibling. Saved: base records
+  for 16 of 75 problems and no rewrite sample, so section 9's reading cannot be made.
+- **Decision (14 Oct, owner):** stop. Finishing would mean one sequence at a time, about 35-40
+  session-hours. The Olmo tilt in `e27k` rests on the validation balance alone (Finding 64), while
+  the Skywork tilt also has E52's mechanism behind it (Finding 77).
+- **For anyone sampling Olmo-3-Think on T4s with vLLM 0.20:** use `--enforce-eager`, utilisation at
+  most 0.85, and either one sequence at a time or k = 1 per request at a 16k cap.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

@@ -838,4 +838,6 @@ never flagged a contradiction and answered through 79% of rewrite samples, often
 answer; Qwen ran out of budget on 79%. No one-pass signal can be trained from labels with one class,
 so E53 is not planned and **`e27k` is the submission**. What E52 does add is mechanistic support for
 the direction of the Skywork tilt (Finding 67): on the deciding family, Skywork is the model that
-answers through the contradiction. The Olmo tilt has no such support yet; Olmo was not run.
+answers through the contradiction. The Olmo tilt has no such support: E52b could not sample Olmo at these settings on T4s and was
+stopped on 14 Oct (Finding 78). **Next: the technical report**, with Findings 75-78 as its account of
+what the labels measure and how the small models behave on the family that decides them.

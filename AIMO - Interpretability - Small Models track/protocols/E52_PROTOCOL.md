@@ -109,6 +109,9 @@ called the dimensions "physically impossible"); it is reported in Finding 77 and
 
 ## 9. E52b: Olmo-3-Think on the same problems, question 1 only
 
+Status: **stopped 14 October 2026 with no rewrite sample** (Finding 78): vLLM 0.20 died with
+`Cannot get 1 free blocks from the pool` in every kernel. The reading below was not made.
+
 Pre-registered 14 October 2026, after E52 closed and before any Olmo record exists.
 
 **Why.** `e27k` tilts two models: Skywork and Olmo-3-Think each call one fewer problem robust
