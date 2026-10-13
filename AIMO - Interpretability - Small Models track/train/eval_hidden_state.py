@@ -25,7 +25,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections import defaultdict
-from itertools import product
+from itertools import permutations, product
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -78,6 +78,7 @@ LEADERBOARD = [
     ("`e27p` DeepSeek one more", {**E27K, "DeepSeek": familiar(+1)}, 11, "Finding 61"),
 ]
 OBSERVED = tuple(correct for _, _, correct, _ in LEADERBOARD)
+SUFFIX_NLL_MEDIAN = 10  # e28a: suffix NLL, median counts (Finding 50)
 
 
 def labelings(n: int):
@@ -155,6 +156,25 @@ def main() -> None:
         f"P(score >= 12) = **{tail(null, 12):.4f}**, P(14) = {null.get(14, 0.0):.4f}, mean "
         f"{sum(k * p for k, p in null.items()):.2f}/14. E40's 0.0552 averaged over 56 compositions; "
         "this is the same test on the one composition the scores allow.",
+    ]
+
+    # E28a ranked by suffix NLL, a different ordering of the same problems, with median counts. Every
+    # reordering of the solved labels consistent with its score bounds what the same statistic would
+    # score with e27k's counts, without spending an upload on it.
+    def correct(labels: tuple[bool, ...], c: int) -> int:
+        return sum(labels[:c]) + sum(not y for y in labels[c:])
+
+    possible = set()
+    for st in states:
+        for combo in product(*(sorted(set(permutations(st[m]))) for m in MODELS)):
+            if sum(correct(o, robust_count(len(o), 0)) for o in combo) == SUFFIX_NLL_MEDIAN:
+                possible.add(sum(correct(o, robust_count(len(o), TILT.get(m, 0))) for m, o in zip(MODELS, combo)))
+    lines += [
+        "",
+        f"**Suffix NLL with `e27k`'s counts.** `e28a` (suffix NLL, median counts) scored {SUFFIX_NLL_MEDIAN}/14. "
+        "Over every reordering of the solved labels consistent with that, the same statistic with `e27k`'s "
+        f"counts could score {', '.join(map(str, sorted(possible)))} of 14. It cannot beat `e27k`, so it is not "
+        "worth an upload.",
     ]
 
     body = "\n".join(lines)

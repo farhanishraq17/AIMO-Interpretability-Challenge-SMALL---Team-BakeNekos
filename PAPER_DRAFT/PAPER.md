@@ -242,7 +242,7 @@ s_i = − (1/|t(p_i)|) Σ_k log P_m( t_k | t_{<k} ),      t(p_i) = tokens of p_i
 ```
 
 No generation, no chat template, no system prompt, truncation at 2048 tokens (which never fires:
-the longest labelled problem is 641 tokens). Rank ascending — **familiar first** — and call the
+the longest official problem is 609 to 667 tokens, depending on the tokenizer). Rank ascending — **familiar first** — and call the
 first `c_m` problems robust:
 
 ```
@@ -306,7 +306,7 @@ worker OOMs, and an invalid batch scores zero with no visible traceback.
 
 ### 4.4 Learned parameters: none
 
-The shipped artifact is 3.3 KB of source and contains **no fitted estimator, no training data, no
+The shipped artifact is a 3.3 KB ZIP holding 6.3 KB of source, and contains **no fitted estimator, no training data, no
 weights**. Its only free quantities are the four balances, and those are measurements of the
 evaluation distribution rather than parameters fitted to features. This matters for §9.
 
@@ -344,12 +344,12 @@ reporting things that never worked.
 
 | # | Hypothesis | Best result it reached | What rejected it | Script | § |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Linear probes on hidden states predict robustness | 58.37% as published; AUC 0.75–0.85 inner-fold | Nested selection gives **0.5005**; the gap is layer selection | `train_stagea_probes.py` | 6.1 |
-| 2 | A model trained on MATH transfers to olympiad problems | 0.717 balanced acc in-distribution | **AUC 0.429** on olympiad rows | `eval_official_holdout.py` | 6.2 |
+| 1 | Linear probes on hidden states predict robustness | 58.37% as published; AUC 0.75–0.85 inner-fold | Its own fits average **0.5005** per layer; honest nested selection gives **0.552** | `train_stagea_probes.py` | 6.1 |
+| 2 | A model trained on MATH transfers to olympiad problems | 0.692 balanced acc in-distribution | **AUC 0.429** on olympiad rows | `eval_official_holdout.py` | 6.2 |
 | 3 | Training the text block on olympiad labels instead rescues it | — | No; n = 33 is the binding limit | none recorded (F-40) | 6.2 |
 | 4 | Self-labelling on MATH reproduces official labels | — | Cohen's **κ = −0.135**, worse than chance | `compare_selflabels.py` | 6.3 |
 | 5 | Self-labelling on *olympiad* problems does | κ = +0.286, sign flipped | CI spans 0; **~1 label per GPU-hour** | `compare_selflabels.py` | 6.3 |
-| 6 | Answer agreement under rewriting predicts robustness | — | Chance (0.507), at **28k tokens/problem** | `eval_agreement.py` | 6.4 |
+| 6 | Answer agreement under rewriting predicts robustness | — | Chance (AUC 0.458), at **28k tokens/problem** | `eval_agreement.py` | 6.4 |
 | 7 | Reasoning-trace uncertainty features predict it | — | Near chance; trace states buy AUC but cost a full generation | `train_stageb_features.py`, `train_fusion.py` | 6.4 |
 | 8 | Architecture-invariant activation geometry | Family-wise selected signal | **Reverses sign** on independent MATH data | `eval_e30_geometry.py` | 6.5 |
 | 9 | Counterfactual prompt-state sensitivity | **AUC 0.735**, the strongest new signal found | Template CI and max-T fail; independent population gives 0.545, CI [0.428, 0.658] | `eval_e31_counterfactual.py`, `eval_e32_counterfactual_math.py` | 6.5 |
@@ -367,10 +367,12 @@ Entry 16 is the one that explains the most, and §6.9 reports it.
 
 ### 6.1 The shipped baseline is at chance
 
-The organizers' `trained-probe` solution reports 58.37% ± 7.5 on DeepSeek. Reproduced honestly
-under nested cross-validation, its per-layer mean balanced accuracy is **0.5005** (F-2, F-11). The
-published figure is a **layer-selection artifact**: choosing the best layer on the same data that
-scores it inflates inner-fold AUC of 0.75–0.85 down to 0.640 held out. Averaging every layer,
+The organizers' `trained-probe` solution reports 58.37% ± 7.5 on DeepSeek. Its own shipped
+artifact disagrees: across its 1,480 validation fits the mean per-layer balanced accuracy is
+**0.5005**, and its best layer reaches 0.5059 (F-2). Our nested reproduction, which chooses the layer
+inside each fold, scores **0.552** (F-11). The published figure is a **layer-selection artifact**:
+choosing the best layer on the same data that scores it gives inner-fold AUCs of 0.75–0.85, which
+fall to 0.640 held out. Averaging every layer,
 rather than selecting one, is a genuine lead at AUC 0.749 — but see §6.2.
 
 ![Per-layer balanced accuracy for three poolings, against the text floor and the honest nested result](figures/fig1_layer_curve.svg)
@@ -390,7 +392,7 @@ block was measured across that gap and every one failed (F-32, F-39, F-40):
 | --- | --- | --- |
 | Text (char tf-idf) | 0.673 balanced acc | AUC 0.617, CI spans 0.5 |
 | Stage A prompt states | AUC 0.749 | AUC 0.429 |
-| E11 fused, shipped | 0.717 balanced acc | 0.429 |
+| E11 fused, shipped | 0.692 balanced acc, AUC 0.731 | 0.429 |
 | Cross-model probe | — | no held-out model clears chance |
 
 Training the text block *on* olympiad labels instead does not rescue it (F-40). There is no version
@@ -435,14 +437,16 @@ directly.
 ### 6.4 Test-time methods are unaffordable, and the signal is in the prompt
 
 **Answer agreement under rewriting (E14).** Hypothesis: a robust model gives the same answer when
-the problem is reworded. Result: balanced accuracy 0.507, AUC 0.497 — chance — at **28,000 generated
+the problem is reworded. Result: AUC 0.458 [0.363, 0.549], and 0.543 within length quintiles — chance
+— at **28,000 generated
 tokens per problem** (F-24). Both halves of that sentence independently disqualify it.
 
 **Reasoning-trace uncertainty (E2f), and what trace states actually did.** The published 14
 uncertainty features are near chance on our data (F-15). Trace *states* (E4) are a more careful
-test, and the result is more interesting than a null: adding them to the text + prompt-state fusion
-moves AUC 0.7230 → 0.7391 and balanced accuracy 0.7173 → 0.7116 (F-18) — a gain on one metric, a
-loss of 0.006 on the other, with overlapping intervals.
+test, and the result is more interesting than a null: adding the trace-state and trace-feature
+blocks to the text + prompt-state fusion moves AUC 0.7305 → 0.7410 and balanced accuracy
+0.6916 → 0.7245 on the 138 instances with every block (`RESULTS.md`, E4 fusion) — a gain on both
+metrics, and neither difference from text is established.
 
 We rejected them on **cost, not on signal**: they need a full generated trace at inference, minutes
 per problem against one forward pass. And within E4 the ordering is diagnostic — `prompt_last`
@@ -585,7 +589,8 @@ therefore rests on its measured balance alone.
 
 ### 7.1 The leaderboard series
 
-Twenty-two submissions, each designed to answer one question rather than to climb.
+Twenty uploads, each designed to answer one question rather than to climb; the constant probes of
+§4.2 come on top.
 
 | Score | | Submission | What it established |
 | --- | --- | --- | --- |
@@ -911,7 +916,8 @@ validity rather than as a feature.
 direct antecedent of §6.1 — a probe's accuracy is uninterpretable without a control for what the
 probe itself can fit. Belinkov's probing survey (2022) catalogues the same failure. Our
 contribution here is an instance rather than a method: the competition's own published baseline
-reports 58.37% where honest nested selection gives 0.5005, and the difference is layer selection.
+reports 58.37% where its own fits average 0.5005 per layer and honest nested selection gives 0.552;
+the difference is layer selection.
 
 **Sparse autoencoders.** Feature-level interpretability via SAEs (Cunningham et al., 2023; Bricken
 et al., 2023; Templeton et al., 2024) is what the Small Models Track was designed to invite. We did
@@ -1044,7 +1050,8 @@ flagged in 274 samples and answered with the unchanged problem's answer in 44% o
 33 to 61, so power ran 14% to 53% and the experiments could not have returned a positive result even
 had their hypotheses been true (§6.7). **We state the converse with equal weight: this does not make
 the observed effects real.** Supporting this: a **correction to the organizers' published baseline**,
-whose 58.37% is a layer-selection artifact that honest nested cross-validation puts at 0.5005 (§6.1).
+whose 58.37% is a layer-selection artifact: its own fits average 0.5005 per layer, and honest nested
+selection gives 0.552 (§6.1).
 
 **3. A measured inversion between offline validation and held-out behaviour.** The candidate with the
 best offline credentials — AUC 0.867, CI [0.728, 0.973], maxT p = 0.0010 — scored 4/14, while the one

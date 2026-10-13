@@ -40,7 +40,7 @@ submission artifacts at the competition's library versions, and matplotlib is no
 | Figure | Section | What it shows |
 | --- | --- | --- |
 | `fig1_layer_curve` | §6.1 | Every layer beats the honestly nested probe. The gap is the selection artifact |
-| `fig2_leaderboard_ladder` | §7.1 | All 22 uploads, with the chance and constants-ceiling lines |
+| `fig2_leaderboard_ladder` | §7.1 | All 20 uploads, with the chance and constants-ceiling lines |
 | `fig3_null_distribution` | §7.2 | Correct counts alone score 8.05; the observed 12 is at p = 0.055 |
 | `fig4_inversion` | §6.8 | Offline AUC against leaderboard score — the relation runs backwards |
 
@@ -49,14 +49,16 @@ contrast), and every series carries a direct label rather than relying on hue al
 
 ## Before this can be submitted
 
-Two things, and the first is the real one.
+Item 1 is done; item 2 is still open.
 
-1. **Audit every number against its generated table.** Nobody has done this end to end. One known
-   mismatch: the generated E10 and E4 fusion tables in `RESULTS.md` were rerun on 138 of 153
-   instances and give text + prompt states **0.6916** balanced accuracy (AUC 0.7305), where the
-   paper uses `PROGRESS.md`'s **0.7173** (AUC 0.7230). That touches §6.2, §6.4 and rows 2 and 7 of
-   the §6 failure table. The citations are done: all 25 references carry identifiers and were
-   checked against arXiv or the publisher in October.
+1. **Number audit: done 14 October.** All 395 numeric tokens were checked for a source, every line
+   holding two or more for a single source paragraph containing them all, and every single-number line
+   for a source sharing its context. Six errors were corrected, none of which changes a conclusion:
+   E14's agreement result (it carried E12's numbers), the E10/E4 fusion figures (now the generated
+   0.6916 / 0.7305 and 0.7245 / 0.7410 on 138 instances, replacing `PROGRESS.md`'s older values), the
+   0.5005 baseline figure (the artifact's own per-layer mean, not nested selection, which gives 0.552),
+   the artifact size (a 3.3 KB ZIP of 6.3 KB source), the longest problem (609-667 tokens by tokenizer,
+   from E23's records) and the upload count (20). Re-audit after any edit that adds a number.
 2. **The author list is incomplete.** One name is filled in. Add co-authors, affiliations, and a
    licence for the repository.
 

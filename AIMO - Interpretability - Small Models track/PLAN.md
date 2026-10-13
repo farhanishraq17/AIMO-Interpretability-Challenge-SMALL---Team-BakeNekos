@@ -841,3 +841,37 @@ the direction of the Skywork tilt (Finding 67): on the deciding family, Skywork 
 answers through the contradiction. The Olmo tilt has no such support: E52b could not sample Olmo at these settings on T4s and was
 stopped on 14 Oct (Finding 78). **Next: the technical report**, with Findings 75-78 as its account of
 what the labels measure and how the small models behave on the family that decides them.
+
+### 12.7 Plan to the end (14 October): the leaderboard, then the prize
+
+Two different targets, and they must not be confused. **The leaderboard** is 14 validation cases
+that decide nothing; another team leads at 13/14. **The prizes** are decided on a new private set of
+problems and variants, from the ZIP each team sends through the organizers' Google Form.
+
+**A. The leaderboard: no fitting to the 14 cases (owner's rule, 14 Oct).** E50 solved the set
+(Finding 75), and a per-case fix of Qwen's swapped pair would show 14/14. It was built and then
+withdrawn: it fits five known cases and says nothing about new problems. **Only methods that
+generalize are built from now on**; the board is read once per candidate, as a sanity check, never to
+choose between variants.
+
+- Suffix NLL with `e27k`'s counts is not worth an upload either: given `e28a`'s recorded 10/14 it can
+  score at most 12 (E50 section of RESULTS).
+- The route with a real chance of beating `e27k` on new problems is labelling the deciding family at
+  the organizers' 100k budget on better compute, gated on reproducing the 34 official labels first
+  (planned with the owner, 14 Oct).
+
+**B. The prize: send `e27k` through the Google Form.** `dist/solution-e27k-tilted-small.zip`,
+SHA-256 `b79addef…`: Docker-tested in the competition image (Findings 65-66), GPU-audited and
+repeatable (Finding 62), one forward pass per problem.
+
+- **Nothing measured beats it on unseen problems.** E49 failed its official-row gate (Finding 74), E52's
+  gate had no positive class (Finding 77), and suffix NLL cannot exceed it (above). Every other
+  candidate failed earlier (PAPER §6).
+- **The one open bet stays as decided:** the Skywork and Olmo tilts (Finding 67). E52 gave Skywork's a
+  mechanism; Olmo's rests on its balance alone (Finding 78).
+- **Runtime, the tie-break, is already near its floor:** loading each model dominates, and the method
+  generates no tokens.
+- **Freeze 27 Oct**; send before 1 Nov, 12:55 UTC; keep the confirmation with the ZIP's SHA-256.
+
+**C. The report:** fill in the author list, and decide whether to mention the public validation-label revision of
+Finding 75 (after telling the organizers).
