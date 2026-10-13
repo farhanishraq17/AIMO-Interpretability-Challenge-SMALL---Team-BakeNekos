@@ -1,6 +1,8 @@
 # E52: do our models notice an impossible premise, and can one forward pass predict which ones?
 
-Status: **pre-registered 13 October 2026, before any E52 record exists.** Code:
+Status: **closed 13 October 2026: gate 3 failed with no robust-like pair** (Qwen detection rate 0.021,
+Skywork 0.000; PROGRESS Finding 77). The §3 audit agreed 30 of 30. `e27k` stays; E53 is not planned.
+Pre-registered 13 October 2026, before any E52 record existed. Code:
 `datagen/perturb/reliablemath_pool.py`, `scripts/e52_gpu_bundle.py`, `train/eval_e52.py` (grader
 checked by `train/test_eval_e52.py`). Any change after the first record is read is an amendment,
 dated and listed in §8.
@@ -102,4 +104,5 @@ becomes: `robust_like` iff rate >= 0.90, `spurious_like` iff rate <= 0.75.
 
 ## 8. Amendments
 
-None yet.
+None. One grader false positive was found after the audit (a Qwen sample that answered 2.4 and
+called the dimensions "physically impossible"); it is reported in Finding 77 and the script is unchanged.

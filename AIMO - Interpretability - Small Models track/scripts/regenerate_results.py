@@ -78,6 +78,8 @@ STEPS = [
     ["train/eval_hidden_state.py"],
     # E51: which perturbation families make a label spurious. CPU, needs the e24b runs.
     ["train/eval_label_mechanics.py"],
+    # E52: contradiction detection. CPU, needs the e52 runs downloaded.
+    ["train/eval_e52.py"],
 ]
 
 

@@ -832,3 +832,10 @@ as the mechanism and its negative result.
 | 16 - 18 Oct | Grader audit, then the three questions; gate 3 decides E53 |
 | 19 - 24 Oct | E53 build, GPU check, Docker test, one leaderboard read |
 | 27 Oct | Freeze; the chosen ZIP goes in the Google Form before 1 Nov |
+
+**E52 outcome (13 Oct): gate 3 failed with no positive class** (Finding 77). Within 16k tokens Skywork
+never flagged a contradiction and answered through 79% of rewrite samples, often with the original
+answer; Qwen ran out of budget on 79%. No one-pass signal can be trained from labels with one class,
+so E53 is not planned and **`e27k` is the submission**. What E52 does add is mechanistic support for
+the direction of the Skywork tilt (Finding 67): on the deciding family, Skywork is the model that
+answers through the contradiction. The Olmo tilt has no such support yet; Olmo was not run.
