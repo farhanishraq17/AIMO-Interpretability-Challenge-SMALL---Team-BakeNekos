@@ -7,6 +7,22 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E52: running since 13 Oct (protocol `protocols/E52_PROTOCOL.md`, committed `1d636c6` before launch)
+
+Do our models notice an impossible premise (Finding 76), and does one forward pass predict which
+problems they miss? ReliableMath AMC 2023, 75 originals and 164 contradiction rewrites, organizers'
+decoding, 16k cap. Analysis: `python train/eval_e52.py` once every output below is downloaded.
+
+| Kernel | Account | Work | Status |
+| --- | --- | --- | --- |
+| `e52-qwen-a` | Mashrafi | Qwen3.5-4B, 38 problems, both phases, one engine per T4 | pushed 13 Oct |
+| `e52-qwen-b` | Nasif | Qwen3.5-4B, the other 37 | pushed 13 Oct |
+| `e52-skywork-a` | Samin | Skywork, 38 problems, TP=2 | pushed 13 Oct |
+| `e52-skywork-b` | DIDHITI | Skywork, the other 37. TASHIN refused (both GPU slots busy); MUBAMAN's session got no GPU (`nvidia-smi` missing, quota) | pushed 13 Oct |
+| `e52-features` | Labib | mean NLL and Stage A states, all four models | pushed 13 Oct |
+
+Download: `python scripts/kaggle_followup.py output e52-<job> --account <alias>`.
+
 ### E49: closed 8 Oct, failed its gate (Finding 74)
 
 E37's frozen budget-path score, re-extracted with batched `transformers` (the path a submission

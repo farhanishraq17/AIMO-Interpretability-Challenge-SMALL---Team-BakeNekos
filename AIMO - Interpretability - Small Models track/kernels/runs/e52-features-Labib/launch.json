@@ -1,0 +1,30 @@
+{
+  "job": "e52-features",
+  "account": "Labib",
+  "ref": "gmnoorlabib/aimo-small-e52-features",
+  "source_sha256": {
+    "datagen/extract_familiarity.py": "b814c0fdf93ec2632d33d9820e1f19908ce3b8923342b07ae409adae0073fcc7",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "datagen/merge_features.py": "4b568facd9b00bb453c16c6678fd55f366dab953261a96df1681ee6b89ef410b",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/ingest_public.py": "3fc2790422b6fcfef9e8d059f46fcb291073fed92779a2e25f56a27309c160bf",
+    "data/reliablemath/instances.parquet": "dfc6ed5c83dcd02c2d9aafb58cd5cb800bf3757d90338c2104702e081eadf5a0",
+    "protocols/E52_PROTOCOL.md": "21d70733a3eacdf8e5f9af3016145646c8371e6635f7d8e622c2c78ade2996dd",
+    "data/probe_system_prompt.txt": "72283c58f504d7c3d32d66066fcb06aecc20d14e93136cd6b1589f7f3ce7b002"
+  },
+  "kernel_sha256": "9c83d0b0d02cbbb758d3a1feafd34362d499bae9b0a99cf1604675032b56e07b",
+  "submitted_at": "2026-10-13T00:07:05.787610+00:00",
+  "metadata": {
+    "id": "gmnoorlabib/aimo-small-e52-features",
+    "title": "aimo-small-e52-features",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}
