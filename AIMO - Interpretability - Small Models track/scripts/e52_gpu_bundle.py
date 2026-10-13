@@ -38,7 +38,8 @@ DECODING = ["--k", "2", "--temperature", "1.0", "--top-p", "0.95", "--top-k", "4
 ENGINE = {"qwen": ["--tensor-parallel", "1", "--text-only", "--max-num-seqs", "64", "--chunk", "16"],
           "skywork": ["--tensor-parallel", "2", "--chunk", "12"],
           # E52b: Olmo keeps a full cache on 8 of 32 layers, so it gets all the memory a T4 pair allows.
-          "olmo": ["--tensor-parallel", "2", "--gpu-memory-utilization", "0.95", "--chunk", "8"]}
+          # Eager mode: CUDA-graph capture reserved 4.72 GiB a GPU and left 1.61 GiB of cache (E52b pilot).
+          "olmo": ["--tensor-parallel", "2", "--gpu-memory-utilization", "0.95", "--enforce-eager", "--chunk", "8"]}
 PER_GPU = {"qwen": True, "skywork": False, "olmo": False}
 # --max-hours per phase; the guard allows half an hour more. E52b bounds Olmo tighter to cap quota.
 HOURS = {"base": 3.5, "variants": 6.0}

@@ -143,3 +143,11 @@ two gate models; gate 3 stays closed.
   E52 value): it does not, and the freeze note records that the Olmo tilt rests on the validation
   balance alone.
 - Anything between is reported as inconclusive.
+
+**Amendment, 14 October, before any Olmo record existed.** The pilot (`e52-olmo-a` on Mashrafi)
+failed at engine start: weights took 6.86 GiB a GPU and vLLM's CUDA-graph memory profiling reserved
+4.72 GiB more, leaving 1.61 GiB of cache, too little for one 16k request ("EngineCore failed to
+start"). Every Olmo kernel therefore adds `--enforce-eager`, which skips graph capture and frees that
+memory. It is an engine setting: decoding, k, cap and grading are unchanged. The cap stays 16k. The
+12k fallback above was written for a cache that cannot hold the cap at all, and lowering the cap
+would not have fixed this failure; it still applies if eager mode cannot start at 16k.
