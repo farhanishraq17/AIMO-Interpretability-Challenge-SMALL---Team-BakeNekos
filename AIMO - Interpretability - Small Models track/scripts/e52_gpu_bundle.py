@@ -36,15 +36,22 @@ SYSTEM_PROMPT = "data/probe_system_prompt.txt"
 # Sampling settings fixed by the protocol: the organizers' decoding, k = 2, 16k cap.
 DECODING = ["--k", "2", "--temperature", "1.0", "--top-p", "0.95", "--top-k", "40", "--max-new-tokens", "16384"]
 ENGINE = {"qwen": ["--tensor-parallel", "1", "--text-only", "--max-num-seqs", "64", "--chunk", "16"],
-          "skywork": ["--tensor-parallel", "2", "--chunk", "12"]}
-PER_GPU = {"qwen": True, "skywork": False}
-HOURS = {"base": 3.5, "variants": 6.0}  # --max-hours per phase; the guard allows half an hour more
-JOBS = [f"{m}-{half}" for m in ENGINE for half in "ab"] + ["features"]
+          "skywork": ["--tensor-parallel", "2", "--chunk", "12"],
+          # E52b: Olmo keeps a full cache on 8 of 32 layers, so it gets all the memory a T4 pair allows.
+          "olmo": ["--tensor-parallel", "2", "--gpu-memory-utilization", "0.95", "--chunk", "8"]}
+PER_GPU = {"qwen": True, "skywork": False, "olmo": False}
+# --max-hours per phase; the guard allows half an hour more. E52b bounds Olmo tighter to cap quota.
+HOURS = {"base": 3.5, "variants": 6.0}
+MODEL_HOURS = {"olmo": {"base": 2.5, "variants": 4.0}}
+# vLLM 0.20 reads Olmo's rope parameters flat; transformers 5.13 nests them (E37 config check).
+TRANSFORMERS = {"olmo": "5.5.3"}
+SPLITS = {"qwen": 2, "skywork": 2, "olmo": 4}  # kernels per model, each a slice of the sorted problem keys
+JOBS = [f"{m}-{part}" for m, n in SPLITS.items() for part in "abcd"[:n]] + ["features"]
 
 
-def half_keys(half: str) -> list[str]:
+def part_keys(model: str, part: str) -> list[str]:
     keys = sorted(pd.read_parquet(ROOT / "data/reliablemath/pool.parquet")["problem_key"])
-    return keys[0::2] if half == "a" else keys[1::2]
+    return keys["abcd".index(part)::SPLITS[model]]
 
 
 def payload(files: tuple[str, ...], extra: dict[str, bytes] | None = None) -> tuple[dict, dict]:
@@ -72,12 +79,13 @@ for name, encoded in json.loads({entries!r}).items():
 def render_sampling(model: str, half: str) -> tuple[str, dict]:
     entries, hashes = payload(SAMPLE_FILES)
     out = f"e52-{model}-{half}"
+    hours = MODEL_HOURS.get(model, HOURS)
     common = ["datagen/perturb/sample.py", "--model-id", MODELS[model], "--backend", "vllm",
               "--pool", "data/reliablemath/pool.parquet", "--variants", "data/reliablemath/variants.parquet",
-              *DECODING, *ENGINE[model], "--out-dir", f"/kaggle/working/{out}", "--problem-keys", *half_keys(half)]
+              *DECODING, *ENGINE[model], "--out-dir", f"/kaggle/working/{out}", "--problem-keys", *part_keys(model, half)]
     phases = {
-        "base": [*common, "--phase", "base", "--max-hours", str(HOURS["base"])],
-        "variants": [*common, "--phase", "variants", "--max-hours", str(HOURS["variants"]),
+        "base": [*common, "--phase", "base", "--max-hours", str(hours["base"])],
+        "variants": [*common, "--phase", "variants", "--max-hours", str(hours["variants"]),
                      "--base-records", f"/kaggle/working/{out}/base/shard_*/records.jsonl"],
     }
     source = HEADER.format(out=out, entries=json.dumps(entries)) + f'''cuda = runpy.run_path(str(root / "scripts/kaggle_cuda_setup.py"))["prepare_cuda_linker"]()
@@ -85,7 +93,7 @@ def render_sampling(model: str, half: str) -> tuple[str, dict]:
 subprocess.run([sys.executable, "-m", "venv", "--without-pip", "/tmp/e52-env"], check=True)
 py = "/tmp/e52-env/bin/python"
 subprocess.run([sys.executable, "-m", "pip", "--python", py, "install", "--no-cache-dir", "-q", "vllm==0.20.0",
-               "transformers==5.13.0", "huggingface-hub==1.22.0", "pandas==3.0.3", "pyarrow==24.0.0"], check=True)
+               "transformers=={TRANSFORMERS.get(model, "5.13.0")}", "huggingface-hub==1.22.0", "pandas==3.0.3", "pyarrow==24.0.0"], check=True)
 freeze = subprocess.run([sys.executable, "-m", "pip", "--python", py, "freeze"], capture_output=True, text=True, check=True)
 (out / "environment.txt").write_text(freeze.stdout)
 guard = runpy.run_path(str(root / "scripts/kaggle_process_guard.py"))["run_guarded"]
@@ -102,8 +110,8 @@ for phase, argv in phases.items():
         cmd = [py, "-c", launcher, py]
     else:
         cmd = [py, *argv]
-    results[phase] = guard(cmd, root, out / f"{{phase}}.log", timeout={HOURS["variants"] * 3600 + 1800}
-                           if phase == "variants" else {HOURS["base"] * 3600 + 1800})
+    results[phase] = guard(cmd, root, out / f"{{phase}}.log", timeout={hours["variants"] * 3600 + 1800}
+                           if phase == "variants" else {hours["base"] * 3600 + 1800})
     (out / "execution.json").write_text(json.dumps({{**results, "end_to_end_seconds": time.time() - started}}, indent=2))
 raise SystemExit(max(r["exit_code"] for r in results.values()))
 '''

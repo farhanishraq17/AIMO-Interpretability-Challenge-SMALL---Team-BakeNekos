@@ -49,7 +49,9 @@ sys.path.insert(0, str(ROOT / "datagen" / "perturb"))
 from answers import extract_answer  # noqa: E402
 from results_io import upsert_section  # noqa: E402
 
-MODELS = {"qwen": "Qwen/Qwen3.5-4B", "skywork": "Skywork/Skywork-OR1-Math-7B"}
+MODELS = {"qwen": "Qwen/Qwen3.5-4B", "skywork": "Skywork/Skywork-OR1-Math-7B"}  # the gate models (Q2, Q3)
+# E52b (protocol section 9) adds Olmo to the descriptive Q1 tables only; the closed gate is not re-read.
+Q1_MODELS = {**MODELS, "olmo": "allenai/Olmo-3-7B-Think"}
 RECORDS = "runs/e52-{short}-*/e52-{short}*/{phase}/shard_*/records.jsonl"
 FEATURES = "runs/e52-features-*/e52-features/{kind}-{short}"
 POOL = ROOT / "data" / "reliablemath" / "pool.parquet"
@@ -82,13 +84,22 @@ def load_records(short: str, phase: str) -> list[dict]:
     return list({r["item_id"]: r for r in rows}.values())  # a resumed shard may repeat an item
 
 
+def run_cap(short: str) -> int:
+    """The --max-new-tokens a model's runs used, so truncation is judged against its own cap."""
+    caps = {json.loads(p.read_text(encoding="utf-8"))["args"]["max_new_tokens"]
+            for p in ROOT.glob(RECORDS.format(short=short, phase="variants").replace("records.jsonl", "metadata.json"))}
+    assert len(caps) == 1, f"{short}: runs disagree on the cap: {caps}"
+    return caps.pop()
+
+
 def pairs(short: str) -> pd.DataFrame:
     """One row per (model, problem): eligibility and rewrite outcomes."""
     base = {r["pool_id"]: r for r in load_records(short, "base")}
+    cap = run_cap(short)
     rows = []
     for record in load_records(short, "variants"):
         for tail, tokens, answer in zip(record["sample_tails"], record["completion_tokens"], record["answers"]):
-            outcome = grade(tail, tokens)
+            outcome = grade(tail, tokens, cap)
             rows.append({"pool_id": record["pool_id"], "outcome": outcome,
                          "kept_original": outcome == "answered" and answer == record["expected_answer"]})
     samples = pd.DataFrame(rows, columns=["pool_id", "outcome", "kept_original"])
@@ -151,7 +162,8 @@ def main() -> None:
     args = parser.parse_args()
 
     pool = pd.read_parquet(POOL).set_index("pool_id")
-    frame = pd.concat([pairs(short) for short in MODELS], ignore_index=True)
+    present = [short for short in Q1_MODELS if load_records(short, "variants")]
+    frame = pd.concat([pairs(short) for short in present], ignore_index=True)
     frame["problem_key"] = frame.pool_id.map(pool.problem_key)
     frame["length"] = frame.pool_id.map(pool.problem.str.len())
     eligible = frame[frame.eligible & (frame.n_rewrite_samples > 0)].copy()
@@ -161,7 +173,7 @@ def main() -> None:
              "| model | problems sampled | eligible | detection rate [95% CI] | without truncated samples | "
              "robust-like | answered the original's answer |", "| --- | --- | --- | --- | --- | --- | --- |"]
     result = {"outcomes": total.astype(int).to_dict(), "models": {}}
-    for short in MODELS:
+    for short in present:
         part = eligible[eligible.model == short]
         if part.empty:
             lines.append(f"| {short} | {int((frame.model == short).sum())} | 0 | - | - | - | - |")
@@ -174,17 +186,18 @@ def main() -> None:
         result["models"][short] = {"eligible": len(part), "rate": part.rate.mean(), "ci": [low, high],
                                    "robust_like": float((part.label == "robust_like").mean())}
     lines += ["", "Rewrite samples by outcome: " + ", ".join(f"{k} {int(v)}" for k, v in total.items()) + ".",
-              "", "Per model, every sample (descriptive; the cap is the protocol's 16k):", "",
-              "| model | base correct | base hit the cap | rewrites answered | truncated | detected | other |",
+              "", "Per model, every sample (descriptive; each against its own run's cap, section 9 for Olmo):", "",
+              "| model | base correct | base hit its cap | rewrites answered | truncated | detected | other |",
               "| --- | --- | --- | --- | --- | --- | --- |"]
-    for short in MODELS:
+    for short in present:
         base = load_records(short, "base")
         n = sum(r["n_samples"] for r in base)
         part = frame[frame.model == short]
         lines.append(f"| {short} | {sum(r['n_correct'] for r in base)} / {n} | {sum(r['n_hit_length'] for r in base)} / {n} | "
                      + " | ".join(str(int(part[c].sum())) for c in ("answered", "truncated", "detected", "other")) + " |")
 
-    wide = eligible.pivot_table(index="pool_id", columns="model", values="rate")
+    gated = eligible[eligible.model.isin(MODELS)]
+    wide = gated.pivot_table(index="pool_id", columns="model", values="rate")
     if set(MODELS) <= set(wide.columns) and len(wide.dropna()) >= 5:
         shared = wide.dropna()
         rho = shared.corr(method="spearman").iloc[0, 1]
@@ -193,7 +206,7 @@ def main() -> None:
                   f"Spearman of detection rates {rho:.3f}, Cohen's kappa of robust-like {kappa:.3f}."]
         result["q2"] = {"n": len(shared), "spearman": rho, "kappa": kappa}
 
-    labelled = eligible[eligible.label != "band"].copy()
+    labelled = gated[gated.label != "band"].copy()
     labelled["y"] = (labelled.label == "robust_like").astype(int)
     lines += ["", f"**Q3: does one forward pass on the original predict it?** {len(labelled)} labelled pairs "
               f"({int(labelled.y.sum())} robust-like). Gate: the probe's pooled AUC has a problem-bootstrap CI lower "

@@ -106,3 +106,40 @@ becomes: `robust_like` iff rate >= 0.90, `spurious_like` iff rate <= 0.75.
 
 None. One grader false positive was found after the audit (a Qwen sample that answered 2.4 and
 called the dimensions "physically impossible"); it is reported in Finding 77 and the script is unchanged.
+
+## 9. E52b: Olmo-3-Think on the same problems, question 1 only
+
+Pre-registered 14 October 2026, after E52 closed and before any Olmo record exists.
+
+**Why.** `e27k` tilts two models: Skywork and Olmo-3-Think each call one fewer problem robust
+(Finding 60). E52 gave the Skywork tilt mechanistic support (Finding 77): on the deciding family,
+Skywork answers through the contradiction. Olmo has no such evidence, and the official split puts
+it at 7 of 9 robust, against the tilt (Finding 67).
+
+**What is the same.** The 75 problems and 164 rewrites, decoding, k, eligibility, the grader, the
+labels and every Q1 statistic (§1-§4). The audit of §3 is not repeated: the grader is a fixed
+function of the ending, and its audit covered the same code.
+
+**What differs, fixed now:**
+
+- Olmo's problems are split four ways (every fourth sorted `problem_key`), one kernel each, because
+  Olmo runs few sequences at once on a T4 pair (Finding 26).
+- Engine: vLLM 0.20.0 with `transformers` 5.5.3, the pin E37's config check verified for Olmo's
+  rope parameters; tensor parallel 2, `--gpu-memory-utilization 0.95`, 8 problems per call.
+- Time guards of 2.5 h (base) and 4 h (rewrites) per kernel bound the quota. Whatever finishes is
+  reported with its count.
+- **Cap:** 16k, as E52. If vLLM cannot allocate the cache for it (Finding 26 measured 12k as the
+  most a T4 pair held under an older vLLM), every Olmo kernel reruns at 12k and the Q1 table states
+  the cap. Truncation is judged against each run's own cap (`eval_e52.run_cap`).
+
+**Analysis.** `train/eval_e52.py` adds Olmo to the Q1 and per-model tables. Q2 and Q3 stay on the
+two gate models; gate 3 stays closed.
+
+**Reading, fixed now.** No gate and no automatic change to the submission:
+
+- **Olmo like Skywork** (detection rate on eligible problems at most 0.05, and at least 60% of
+  rewrite samples answered): the Olmo tilt gains the same mechanistic support as Skywork's.
+- **Olmo like Qwen or better** (detection rate excluding truncated samples at least 0.107, Qwen's
+  E52 value): it does not, and the freeze note records that the Olmo tilt rests on the validation
+  balance alone.
+- Anything between is reported as inconclusive.
