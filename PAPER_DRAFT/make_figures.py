@@ -92,7 +92,7 @@ def fig1_layer_curve() -> None:
 
 
 def fig2_leaderboard_ladder() -> None:
-    """Twenty-two submissions, each answering one question. The ladder is 1/14 per rung."""
+    """Twenty uploads, each answering one question. The ladder is 1/14 per rung."""
     rows = [
         ("e27k  ranking + derived counts", 12, True),
         ("e27m/n/o/p  each count neighbour", 11, False),
