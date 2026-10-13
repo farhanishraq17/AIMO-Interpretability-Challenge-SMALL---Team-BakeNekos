@@ -7,6 +7,27 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E52b: stopped 14 Oct with no rewrite sample (protocol `protocols/E52_PROTOCOL.md` §9, committed `4297317` before launch)
+
+**Outcome:** every Olmo kernel died with vLLM 0.20's `Cannot get 1 free blocks from the pool`. On a T4 pair
+Olmo's cache holds 20,288 tokens; two samples of one problem at a 16k cap need about 33k, and this vLLM
+crashes instead of preempting a sibling. Saved: base records for 16 of 75 problems (a 8, c 8), 0 rewrite
+samples, so section 9's reading cannot be made. About 7.5 session-hours including the failed pilots.
+
+Olmo-3-Think on E52's 75 problems, question 1 only: does it answer through a contradiction like
+Skywork (support for its `e27k` tilt) or reason about it like Qwen? Four kernels, one per quarter
+of the sorted problem keys; vLLM 0.20.0 with `transformers` 5.5.3, TP=2.
+
+| Kernel | Account | Status |
+| --- | --- | --- |
+| `e52-olmo-a` | Mashrafi | v1-v3 failed at engine start (amendments `700e1fa`, `2f29554`, `7ec5390`); v4 sampled at 56 tok/s, saved 8 base records, then died (block pool) |
+| `e52-olmo-b` | Nasif | v2 died in base after 41 min (block pool), 0 records |
+| `e52-olmo-c` | Samin | v2 finished 8 base records, then both engines died (block pool) |
+| `e52-olmo-d` | Labib | v2 died in base after 29 min (block pool), 0 records |
+
+Final Olmo engine: eager, utilisation 0.85, at most 16 sequences, TP=2. vLLM 0.20 sizes Olmo's cache as
+full attention on every layer (20,288 tokens), so only about 1.5 full-length requests fit at once.
+
 ### E52: closed 13 Oct, gate 3 failed with no positive class (Finding 77)
 
 **Result:** within 16k tokens neither model flags a contradiction. Skywork answered 217 of 274 rewrite
@@ -145,6 +166,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E48 | How many labels would each closed lane have needed? | local | Done | **63 to 320 rows; we had 33 to 61.** Power was 14-53%, so the experiments could not have returned a positive result even if their hypotheses were true (Finding 72) |
 | E50 | What exactly is the hidden set, given every score we have? | local | Done | **Solved to two states**, both Qwen 5, DeepSeek 3, Skywork 3, Olmo 3. `e27k` is perfect on the last three; its two misses are one swapped Qwen pair. Ranking null p = 0.048 on that composition. A public pre-withholding `train-main-v2` revision exposes 7 validation labels; unused (Finding 75) |
 | E51 | Which perturbation families make a label spurious? | local | Done | **Different ones per population.** MATH: domain (0.86 of rows drop >= 0.25). Olympiad: `expert_no_solution` (0.43), surface families <= 0.03. MATH-trained models learned the wrong mechanism (Finding 76) |
+| E52b | Does Olmo answer through a contradiction like Skywork? | Kaggle | Stopped | **No data.** vLLM 0.20 cannot hold two 16k Olmo samples in a T4 pair's 20,288-token cache and crashed in every kernel; 16 base records, 0 rewrite samples. Olmo tilt keeps only its leaderboard support (Finding 78) |
 | E52 | Do our models notice an impossible premise, and does one forward pass predict it? | Kaggle | Done, gate failed | **Almost never, so there is nothing to predict.** Skywork 0 of 274 rewrite samples flagged (44% gave the original answer); Qwen 2 of 130, with 79% out of budget. No robust-like pair; `e27k` stays (Finding 77) |
 | **E34a** | Can official-like surface perturbations yield a usable new AIME label set? | Kaggle (`tashintahir`) | **Done — failed gate** | Only 1/52 originals was 4/4 correct; one robust label, no spurious label; E34b closed and no submission |
 | **E35** | Do independently published robustness labels support a source-transferring problem-text model? | local | **Done — failed gate** | Putnam holdout AUC 0.609, CI [0.442, 0.769]; official transfer not opened |
