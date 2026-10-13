@@ -2408,7 +2408,7 @@ on eligible rows (base accuracy 1.0):
 | population | family with the most drops >= 0.25 | surface families (rephrase, rename, typos) |
 | --- | --- | --- |
 | DeepSeek, Hendrycks MATH tables (all our training labels) | **domain 0.86**, distract 0.33 | 0.02 - 0.10 |
-| Organizers' olympiad sample, 8 configurations | **`expert_no_solution` 0.43** | 0.00 - 0.03 |
+| Organizers' olympiad sample, 8 configurations | **`expert_no_solution` 0.43** | 0.03 each |
 | DeepSeek, olympiad sample | **`expert_no_solution` 0.33** | 0.00 |
 
 - **On olympiad problems a model has solved, the five surface families almost never break it.**
