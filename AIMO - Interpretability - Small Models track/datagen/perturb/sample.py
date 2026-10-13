@@ -200,6 +200,7 @@ class VllmBackend:
             n=args.k,
             temperature=args.temperature,
             top_p=args.top_p,
+            **({"top_k": args.top_k} if args.top_k else {}),
             max_tokens=args.max_new_tokens,
             seed=args.seed,
             stop_token_ids=self.stop_ids,
@@ -255,6 +256,7 @@ class HfBackend:
                     do_sample=True,
                     temperature=args.temperature,
                     top_p=args.top_p,
+                    **({"top_k": args.top_k} if args.top_k else {}),
                     max_new_tokens=args.max_new_tokens,
                     num_return_sequences=args.k,
                     eos_token_id=self.stop_ids or None,
@@ -289,6 +291,8 @@ def main() -> None:
     parser.add_argument("--k", type=int, default=8, help="samples per item")
     parser.add_argument("--temperature", type=float, default=0.6)
     parser.add_argument("--top-p", type=float, default=0.95)
+    parser.add_argument("--top-k", type=int, default=None,
+                        help="unset keeps the backend default; the organizers sample with 40 (FAQ)")
     parser.add_argument("--max-new-tokens", type=int, default=8192)
     parser.add_argument("--max-model-len", type=int, default=None, help="default: max-new-tokens + 2048")
     parser.add_argument("--backend", choices=["vllm", "hf"], default="vllm")
@@ -383,6 +387,8 @@ def main() -> None:
                     "n_hit_length": sum(hit for _, _, hit in samples),
                     "completion_tokens": tokens,
                     "sample_tail": samples[0][0][-1500:] if samples else "",
+                    # Every sample's ending, so an abstention can be graded without the full trace (E52).
+                    "sample_tails": [text[-800:] for text, _, _ in samples],
                 }
                 handle.write(json.dumps(record) + "\n")
         elapsed = time.time() - loop_started

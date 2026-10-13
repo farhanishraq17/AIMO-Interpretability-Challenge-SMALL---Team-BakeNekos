@@ -311,7 +311,8 @@ def main() -> None:
                 "problem_key": row["problem_key"],
                 "model_id": row["model_id"],
                 "extracted_model_id": args.model_id,
-                "is_robust": bool(row["is_robust"]),
+                # Unlabelled pools (E52) carry no label; never turn a missing one into False.
+                "is_robust": None if row.get("is_robust") is None else bool(row["is_robust"]),
                 "dataset_id": row["dataset_id"],
                 "n_prompt_tokens": n_tokens,
                 "truncated": n_tokens >= args.max_length,
