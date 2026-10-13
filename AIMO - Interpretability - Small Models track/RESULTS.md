@@ -979,6 +979,8 @@ Labels in familiarity order, most familiar first, and what `e27k` gets right:
 
 Under a ranking with no information and `e27k`'s exact counts on this composition, P(score >= 12) = **0.0481**, P(14) = 0.0037, mean 7.60/14. E40's 0.0552 averaged over 56 compositions; this is the same test on the one composition the scores allow.
 
+**Suffix NLL with `e27k`'s counts.** `e28a` (suffix NLL, median counts) scored 10/14. Over every reordering of the solved labels consistent with that, the same statistic with `e27k`'s counts could score 8, 10, 12 of 14. It cannot beat `e27k`, so it is not worth an upload.
+
 ## E51: what the labels measure
 
 **Organizers' olympiad sample**, all 8 configurations, 7 problems, eligible rows only:
