@@ -197,6 +197,20 @@ def main() -> None:
                      + " | ".join(str(int(part[c].sum())) for c in ("answered", "truncated", "detected", "other")) + " |")
 
     gated = eligible[eligible.model.isin(MODELS)]
+    if "olmo" in result["models"]:
+        part = eligible[eligible.model == "olmo"]
+        answered = part.answered.sum() / part.n_rewrite_samples.sum()
+        if part.rate.mean() <= 0.05 and answered >= 0.60:
+            verdict = "like Skywork: the Olmo tilt gains the same mechanistic support"
+        elif part.rate_finished.mean() >= 0.107:
+            verdict = "like Qwen or better: the Olmo tilt rests on the validation balance alone"
+        else:
+            verdict = "inconclusive"
+        lines += ["", f"**E52b reading (protocol section 9, fixed before any Olmo record):** detection rate "
+                  f"{part.rate.mean():.3f}, {part.rate_finished.mean():.3f} without truncated samples, "
+                  f"{answered:.2f} of rewrite samples answered. Olmo is **{verdict}**."]
+        result["e52b_verdict"] = verdict
+
     wide = gated.pivot_table(index="pool_id", columns="model", values="rate")
     if set(MODELS) <= set(wide.columns) and len(wide.dropna()) >= 5:
         shared = wide.dropna()
