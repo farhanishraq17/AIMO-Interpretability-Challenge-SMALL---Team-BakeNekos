@@ -1077,3 +1077,14 @@ On P1 the per-model constants score accuracy 0.529 (balanced 0.463); the signals
 **Decision (§5): qualifies: S3.**
 
 Thresholds: reference NLL medians qwen 1.269, skywork 2.012, olmo 1.579, deepseek 1.538, Qwen/Qwen3-0.6B 1.768; reference length median 271 characters; budget-path threshold 0.5386.
+
+## E55: one-pass features and per-problem timing
+
+| model | familiarity coverage | Stage A coverage | non-finite | dtype | prompt SHA-1 | seconds per problem (one pass, T4) | familiarity step, load included (s) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 1.000 | 1.000 | 0 | torch.bfloat16 | 9021e9d4 | 0.55 | 441 |
+| `Skywork/Skywork-OR1-Math-7B` | 1.000 | 1.000 | 0 | torch.bfloat16 | 9021e9d4 | 0.89 | 653 |
+| `allenai/Olmo-3-7B-Think` | 1.000 | 1.000 | 0 | torch.bfloat16 | 9021e9d4 | 0.82 | 623 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 1.000 | 1.000 | 0 | torch.bfloat16 | 9021e9d4 | 0.87 | 644 |
+
+**Success criteria (protocol §4): met.** One-pass cost: 60 one-problem calls at the mean T4 rate (0.78 s) and one third of it on the evaluation card come to **0.3 minutes** of compute against 50, before model loading; the budget-path path was decided by E49's record (amendment 1: 496 minutes, E56 not run).

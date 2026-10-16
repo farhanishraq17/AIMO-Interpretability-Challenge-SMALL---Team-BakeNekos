@@ -893,3 +893,10 @@ same way. `e27k`'s ranking and counts cannot act on one problem, so it scores as
 - **Not a route:** choosing per-model constants or thresholds by leaderboard reads (owner's rule, 14
   Oct). The constants' only defensible sources are labelled data the board did not select: the
   self-labels when they exist, otherwise the current values, which are already measured.
+
+**Status, 17 Oct.** E54 (Finding 80): of the held signals only the budget path qualifies as a per-problem
+rule, and E55 (Finding 81) closes it on cost (496 minutes for 60 calls). One-pass features now exist for
+all 548 candidate problems x 4 models, at 0.55-0.89 s a call. **Next:** when the collaborator's
+self-labels pass their gate, train the per-problem probe on these features with problem-grouped CV and
+per-model thresholds fitted on the self-labels only; ship it only if it beats the constants (`e27f`) on
+held-out problems. Until then `e27f` is the submission.

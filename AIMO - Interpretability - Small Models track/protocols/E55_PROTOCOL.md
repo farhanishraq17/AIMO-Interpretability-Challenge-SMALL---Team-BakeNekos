@@ -71,4 +71,15 @@ chosen here: thresholds belong to the predictor trained on the self-labels.
 
 ## 7. Amendments
 
-None yet.
+**1 (17 Oct, before any E55 code or kernel existed): no separate timing kernel; §5 is decided by E49's
+record.** E49 already measured E37's budget-path extraction with batched `transformers` on T4 pairs
+(Finding 74, `kernels/runs/e49-official/result.json`): 734 s per row for Qwen, 859 for Skywork, 2,785
+for DeepSeek and 1,568 for Olmo. Batched rows are faster than one-problem calls, so this is a lower
+bound. Sixty one-problem calls take at least 24.8 h on T4; one third of that is **496 minutes against
+the 50-minute rule**, so **E56 is not run** and the budget-path candidate of Finding 80 cannot ship on
+cost. Re-timing five problems per model would spend about 10 GPU-hours to confirm a tenfold miss.
+
+The one-pass timing of §3 comes from the extraction kernels themselves, which load each model once and
+score problems one at a time, the evaluator's new pattern: `extract_familiarity.py` records seconds per
+problem, and each kernel records every step's wall time (model load included) in `execution.json`.
+`datagen/time_per_problem.py` is not written.

@@ -82,6 +82,8 @@ STEPS = [
     ["train/eval_e52.py"],
     # E54: every held signal as a per-problem rule. CPU; needs the e35, e36, e49 and e52 runs.
     ["train/eval_e54_per_problem.py"],
+    # E55: coverage and one-pass timing of the feature runs. CPU; needs the e55 runs.
+    ["train/report_e55.py"],
 ]
 
 

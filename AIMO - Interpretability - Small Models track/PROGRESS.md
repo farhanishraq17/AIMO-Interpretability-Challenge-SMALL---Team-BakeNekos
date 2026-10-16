@@ -2552,6 +2552,24 @@ constant scores 0.5):
   a fresh read on held-out problems, and E55's timing showing it fits the 1 h 10 min budget. Until
   then the constants (`e27f`) are what ships.
 
+**81. E55: one-pass features exist for 548 problems x 4 models, and a one-pass per-problem predictor
+costs well under a minute of the budget; the budget-path one cannot fit.** (`protocols/E55_PROTOCOL.md`
+with amendment 1; kernels on Mashrafi, Nasif, Samin and Labib, 17 Oct, 1.6 session-hours.
+RESULTS, "E55: one-pass features and per-problem timing".)
+
+- **Coverage is complete.** Mean NLL with the E23 statistics, and Stage A pooled states at every layer,
+  for all 2,192 (model, problem) pairs: the 36 official problems, ReliableMath AIME and AMC, and the
+  olympiad pool. Zero non-finite activations, bf16 throughout, baseline prompt SHA-1 `9021e9d4`.
+- **A one-pass call is cheap.** Each kernel loaded its model once and scored problems one at a time,
+  the evaluator's pattern since 15 Oct: 0.55 s (Qwen) to 0.89 s (Skywork) per problem on T4. Sixty
+  calls at one third of that are about 0.3 minutes of compute. Load time on Kaggle is dominated by the
+  download and does not describe the evaluation card, which loads from a warm cache in about 2 s.
+- **The budget path cannot ship** (amendment 1): E49's batched record puts 60 one-problem calls at
+  496 minutes against the 50-minute rule, so E56 is not run and Finding 80's candidate is closed on cost.
+- **What it is for.** A per-problem predictor trained on the collaborator's self-labels can use these
+  features on the day the labels arrive. Its inputs are one forward pass, so runtime will not decide
+  anything; accuracy against the constants on held-out problems will.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
