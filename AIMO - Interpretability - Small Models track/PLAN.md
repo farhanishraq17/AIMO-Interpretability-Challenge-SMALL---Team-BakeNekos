@@ -875,3 +875,21 @@ repeatable (Finding 62), one forward pass per problem.
 
 **C. The report:** fill in the author list, and decide whether to mention the public validation-label revision of
 Finding 75 (after telling the organizers).
+
+### 12.8 After the per-problem change (16 October)
+
+The organizers now call `are_robust` once per problem (Finding 79), and the final test will run the
+same way. `e27k`'s ranking and counts cannot act on one problem, so it scores as the constants (0.64).
+
+- **Final-submission fallback is now `e27f`, not `e27k`:** identical per-problem predictions, no model
+  loaded, so it wins any runtime tie between the two.
+- **Every new method must make an absolute per-problem call**: a score and a threshold, with per-model
+  prevalence entering only through the threshold. No batch statistic, no rank.
+- **The labelling route (§12.6-12.7) is now the main route, not a side bet.** Its predictor - a one-pass
+  probe whose probability is calibrated on hundreds of self-labelled problems - is per-problem by
+  construction. The brief sent to the collaborator needs the addendum in this section's spirit:
+  single-problem calls, an absolute threshold fitted on the self-labels only, models cached across
+  calls, and a 1 h 10 min budget.
+- **Not a route:** choosing per-model constants or thresholds by leaderboard reads (owner's rule, 14
+  Oct). The constants' only defensible sources are labelled data the board did not select: the
+  self-labels when they exist, otherwise the current values, which are already measured.

@@ -2496,6 +2496,30 @@ Mashrafi, Nasif, Samin and Labib, 14 Oct, about 7.5 session-hours.)
 - **For anyone sampling Olmo-3-Think on T4s with vLLM 0.20:** use `--enforce-eager`, utilisation at
   most 0.85, and either one sequence at a time or k = 1 per request at a 16k cap.
 
+**79. The organizers moved validation to per-problem calls on 15 Oct; `e27k` collapses to its constants
+and scores 0.64, and the final test will be run the same way.** (Organizers on Discord, 9 and 15 Oct;
+live leaderboard data from the website's source, read 16 Oct 12:02 UTC.)
+
+- **What changed.** `are_robust` is now called once per problem, always with a one-item list; the
+  interface is unchanged. The whole-run budget rises to 1 h 10 min to offset repeated model loading, a
+  second identical worker was added, the leaderboard was erased, and top submissions were re-scored
+  automatically. The organizers say this "more closely reflects how we'll run the final test
+  evaluation", and on 9 Oct they called submissions that "rely on the balanced distribution of labels"
+  a sort of overfitting. Batch median splits like ours are what they mean. The public starter kit is
+  unchanged (last commit 16 Sep), so the change lives on the Codabench side only.
+- **What it does to `e27k`.** With one problem a call it calls `ceil(1/2) + tilt` robust: one for Qwen
+  and DeepSeek, none for Skywork and Olmo. That is exactly the per-model constants, which score 9/14
+  (Finding 45), and the re-scored entry (submission 990659) reads **0.64**. The ranking, which Finding
+  75 showed perfect on three models, can no longer act at all.
+- **The constants need no model.** `e27f` returns the same four constants without loading a checkpoint,
+  so under the new protocol it gives identical predictions at almost no runtime. Runtime breaks ties.
+- **The board, 16 Oct.** 33 small-track entries: blacklions 1.00, Vishesh 0.79, seven teams at 0.71,
+  then 0.64 (us and six others). Nothing here says how the leading entries work.
+- **Consequence.** A method now needs an *absolute* per-problem decision: a score with a threshold, not
+  a rank inside a batch. Per-model prevalence enters only through that threshold. The labelling route
+  of PLAN section 12.6-12.7 already produces exactly that: a probe whose probability is calibrated on
+  hundreds of self-labelled problems.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

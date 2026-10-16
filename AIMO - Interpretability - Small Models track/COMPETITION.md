@@ -143,6 +143,12 @@ Scoring details from `components/scoring_program/scoring.py`:
 - A missing, duplicated, or non-bool prediction counts as wrong and lowers `coverage`.
 - The small track runs identical scoring; the track only enforces the `small.txt` marker.
 
+**Per-problem evaluation since 15 Oct 2026** (organizers on Discord; Finding 79): `are_robust` is
+called once per problem with a one-item list, the whole-run budget is **1 h 10 min**, the
+leaderboard was erased and top submissions re-scored, and the final test will be run the same way.
+Batch-relative policies (median splits, per-batch counts) no longer act. Cache loaded models across
+calls: each call is a separate invocation for one problem.
+
 Submission rules from the Codabench API:
 
 - **10 submissions per day and 300 per person in total** in the Competition phase; the 100 recorded earlier was the Warmup limit (re-read from the API 19 Sep, Finding 35).
