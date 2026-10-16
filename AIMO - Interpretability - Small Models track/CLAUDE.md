@@ -6,8 +6,11 @@ Team workspace for the **AIMO Interpretability Challenge (NeurIPS 2026)**, enter
 - **Task:** implement `are_robust(model_id: str, problems: list[str]) -> list[bool]`. For
   each (model, problem) pair, predict whether the model's answer is **robust** (survives
   answer-preserving perturbations) or **spurious**.
-- **What ships today:** `e27k`, **0.86** on the small-track leaderboard (`submission/make_e27.py`
-  rebuilds every candidate ZIP into `dist/`). Read `PLAN.md` §12 first: it is the handover note.
+- **Evaluation is per-problem since 15 Oct 2026:** `are_robust` gets a one-item list per call, 1 h 10 min
+  budget, and the final test runs the same way (Finding 79). Batch rankings and counts no longer act.
+- **What ships today:** `e27k` scored 0.86 under the old batch protocol; per-problem it collapses to the
+  per-model constants and scores **0.64**. `e27f` gives the same predictions without loading a model
+  (`submission/make_e27.py` rebuilds every candidate ZIP into `dist/`). Read `PLAN.md` §12 first.
 - **The Main Track is a separate project** in its own repository, `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-LARGE---Team-BakeNekos`, handled
   separately. Nothing here depends on it; the two only share the Kaggle accounts.
 - **Scoring:** Codabench competition 16180, not Kaggle. Kaggle is only free GPU capacity.
