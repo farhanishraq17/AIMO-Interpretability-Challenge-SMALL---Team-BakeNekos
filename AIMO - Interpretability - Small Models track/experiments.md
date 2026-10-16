@@ -7,7 +7,7 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
-### E55: running since 17 Oct (protocol `protocols/E55_PROTOCOL.md`, amendment 1 at commit before launch)
+### E55: done 17 Oct, every success criterion met (Finding 81)
 
 One-pass features (mean NLL and Stage A) for 548 problems x 4 models: the 36 official problems,
 ReliableMath AIME and AMC, and our olympiad pool, so a per-problem predictor can train the day the
@@ -16,10 +16,10 @@ budget-path runtime puts 60 one-problem calls at 496 minutes against the 50-minu
 
 | Kernel | Account | Status |
 | --- | --- | --- |
-| `e55-features-qwen` | Mashrafi | pushed 17 Oct |
-| `e55-features-skywork` | Nasif | pushed 17 Oct |
-| `e55-features-olmo` | Samin | pushed 17 Oct |
-| `e55-features-deepseek` | Labib | pushed 17 Oct |
+| `e55-features-qwen` | Mashrafi | complete, 17 min |
+| `e55-features-skywork` | Nasif | complete, 25 min |
+| `e55-features-olmo` | Samin | complete, 27 min |
+| `e55-features-deepseek` | Labib | complete, 25 min |
 
 ### E52b: stopped 14 Oct with no rewrite sample (protocol `protocols/E52_PROTOCOL.md` §9, committed `4297317` before launch)
 
@@ -180,6 +180,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E48 | How many labels would each closed lane have needed? | local | Done | **63 to 320 rows; we had 33 to 61.** Power was 14-53%, so the experiments could not have returned a positive result even if their hypotheses were true (Finding 72) |
 | E50 | What exactly is the hidden set, given every score we have? | local | Done | **Solved to two states**, both Qwen 5, DeepSeek 3, Skywork 3, Olmo 3. `e27k` is perfect on the last three; its two misses are one swapped Qwen pair. Ranking null p = 0.048 on that composition. A public pre-withholding `train-main-v2` revision exposes 7 validation labels; unused (Finding 75) |
 | E51 | Which perturbation families make a label spurious? | local | Done | **Different ones per population.** MATH: domain (0.86 of rows drop >= 0.25). Olympiad: `expert_no_solution` (0.43), surface families <= 0.03. MATH-trained models learned the wrong mechanism (Finding 76) |
+| E55 | One-pass features for every candidate problem, and per-problem cost | Kaggle | Done | **Complete**: 548 problems x 4 models, 100% coverage, zero non-finite; one pass is 0.55-0.89 s per problem on T4. Budget path closed on cost (Finding 81) |
 | E54 | Does any held signal beat the constants as a per-problem rule? | local | Done | **Only the budget path, by the rule** (Putnam 0.598, GSM-Plus 0.564), and on the official rows its threshold calls every problem spurious. A candidate needing in-population re-calibration; the constants ship meanwhile (Finding 80) |
 | E52b | Does Olmo answer through a contradiction like Skywork? | Kaggle | Stopped | **No data.** vLLM 0.20 cannot hold two 16k Olmo samples in a T4 pair's 20,288-token cache and crashed in every kernel; 16 base records, 0 rewrite samples. Olmo tilt keeps only its leaderboard support (Finding 78) |
 | E52 | Do our models notice an impossible premise, and does one forward pass predict it? | Kaggle | Done, gate failed | **Almost never, so there is nothing to predict.** Skywork 0 of 274 rewrite samples flagged (44% gave the original answer); Qwen 2 of 130, with 79% out of budget. No robust-like pair; `e27k` stays (Finding 77) |
