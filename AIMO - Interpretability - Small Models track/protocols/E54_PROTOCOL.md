@@ -76,4 +76,11 @@ are reported, not used to select. The 14-case leaderboard is not consulted.
 
 ## 7. Amendments
 
-None yet.
+**1 (16 Oct, after the first run): S3 uses the threshold E36 recorded, 0.5386.** The first run recomputed
+E36's out-of-fold threshold in this environment and got 0.4721; the fitted model is identical (Putnam AUC
+0.7646, as E36 recorded), but fold assignment depends on the library build, so the threshold moved and
+lifted Putnam's balanced accuracy from E36's 0.5975 to 0.6804. The protocol fixes "E36's out-of-fold
+threshold, chosen by E36", which is the recorded value, so the script now reads it from
+`runs/e36-budget-path/result.json` and asserts the model reproduces E36's AUC. This moves the result
+toward the frozen rule, not toward a better number: the recomputed threshold scored higher and is not
+used. Both runs are reported in Finding 80.
