@@ -1053,3 +1053,27 @@ Per model, every sample (descriptive; the cap is the protocol's 16k):
 | --- | --- | --- |
 
 **Gate 3: FAIL.**
+
+## E54: per-problem rules against the constants
+
+Every rule fixed in `protocols/E54_PROTOCOL.md` before this table was computed. Balanced accuracy of the per-problem decisions, 95% problem-bootstrap interval; any constant scores 0.5.
+
+| population | rows | robust | S1 familiarity, NLL below reference median | S2 length below reference median | S3 budget path, P at least E36's threshold |
+| --- | --- | --- | --- | --- | --- |
+| P1 official rows | 34 | 0.71 | 0.458 [0.143, 0.693] | 0.583 [0.350, 0.891] | 0.500 [0.500, 0.500] |
+| P2 DeepSeek MATH | 142 | 0.27 | 0.638 [0.549, 0.726] | 0.486 [0.434, 0.528] | — |
+| P3 Putnam-AXIOM | 48 | 0.48 | 0.501 [0.352, 0.644] | 0.551 [0.429, 0.675] | 0.598 [0.538, 0.659] |
+| P5 MATH-Perturb | 233 | 0.82 | 0.569 [0.486, 0.646] | 0.481 [0.420, 0.542] | — |
+| P4 GSM-Plus | 793 | 0.82 | — | 0.475 [0.403, 0.548] | 0.564 [0.532, 0.601] |
+
+On P1 the per-model constants score accuracy 0.529 (balanced 0.463); the signals there score accuracy S1 0.441, S2 0.618, S3 0.294.
+
+| signal | populations with interval above 0.5 | lowest point | qualifies |
+| --- | --- | --- | --- |
+| S1 | 1 (P2) | 0.458 | **no** |
+| S2 | 0 (none) | 0.475 | **no** |
+| S3 | 2 (P3, P4) | 0.500 | **yes** |
+
+**Decision (§5): qualifies: S3.**
+
+Thresholds: reference NLL medians qwen 1.269, skywork 2.012, olmo 1.579, deepseek 1.538, Qwen/Qwen3-0.6B 1.768; reference length median 271 characters; budget-path threshold 0.5386.

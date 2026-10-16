@@ -2520,6 +2520,38 @@ live leaderboard data from the website's source, read 16 Oct 12:02 UTC.)
   of PLAN section 12.6-12.7 already produces exactly that: a probe whose probability is calibrated on
   hundreds of self-labelled problems.
 
+**80. E54: as a per-problem rule only the budget-path predictor qualifies, and on the competition's own
+rows its threshold calls every problem spurious.** (`protocols/E54_PROTOCOL.md`, pre-registered at
+`77c7905`; `train/eval_e54_per_problem.py`, 16 Oct, CPU. RESULTS, "E54: per-problem rules against the
+constants".)
+
+Per-problem evaluation (Finding 79) needs an absolute decision. Three held signals, each with a
+threshold fixed from unlabelled data or its own training data, scored by balanced accuracy (any
+constant scores 0.5):
+
+| population | familiarity | length | budget path |
+| --- | --- | --- | --- |
+| official rows (34) | 0.458 | 0.583 | 0.500, every row called spurious |
+| DeepSeek MATH (142) | **0.638** [0.549, 0.726] | 0.486 | - |
+| Putnam-AXIOM | 0.501 | 0.551 | **0.598** [0.538, 0.659] |
+| MATH-Perturb (233) | 0.569 | 0.481 | - (its training set) |
+| GSM-Plus (793) | - | 0.475 | **0.564** [0.532, 0.601] |
+
+- **By the pre-registered rule the budget path qualifies**, with intervals above 0.5 on two
+  independent populations and no point below 0.5. Familiarity and length do not.
+- **On the official rows it is a constant.** Its MATH-Perturb threshold puts all 34 below the line, so
+  balanced accuracy is exactly 0.5 and accuracy 0.294, against 0.529 for the per-model constants. The
+  predictor ranks well elsewhere, but its probabilities sit lower on olympiad problems, so the
+  threshold does not transfer.
+- **Amendment 1, reported in full.** The first run recomputed E36's out-of-fold threshold and got 0.4721
+  instead of E36's recorded 0.5386; the fitted model is identical (Putnam AUC 0.7646 both times). The
+  recomputed value scored higher on Putnam (0.680 against 0.598) and is not used: the protocol froze
+  E36's own value.
+- **Decision (protocol §5).** The budget path is a per-problem candidate, not a submission. It can ship
+  only with a threshold re-fitted per model on in-population labels (the collaborator's self-labels),
+  a fresh read on held-out problems, and E55's timing showing it fits the 1 h 10 min budget. Until
+  then the constants (`e27f`) are what ships.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

@@ -80,6 +80,8 @@ STEPS = [
     ["train/eval_label_mechanics.py"],
     # E52: contradiction detection. CPU, needs the e52 runs downloaded.
     ["train/eval_e52.py"],
+    # E54: every held signal as a per-problem rule. CPU; needs the e35, e36, e49 and e52 runs.
+    ["train/eval_e54_per_problem.py"],
 ]
 
 
