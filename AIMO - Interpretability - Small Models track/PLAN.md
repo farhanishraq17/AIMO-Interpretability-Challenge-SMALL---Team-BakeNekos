@@ -900,3 +900,7 @@ all 548 candidate problems x 4 models, at 0.55-0.89 s a call. **Next:** when the
 self-labels pass their gate, train the per-problem probe on these features with problem-grouped CV and
 per-model thresholds fitted on the self-labels only; ship it only if it beats the constants (`e27f`) on
 held-out problems. Until then `e27f` is the submission.
+
+E57 (`protocols/E57_PROTOCOL.md`) fixes that probe and its ship rule now; its pipeline,
+`train/train_e57_probe.py`, passed its plumbing test on random labels (both ship rules refuse to ship
+noise). E55's features are in the private Kaggle dataset `farhanishraqq/aimo-small-e55-features`.

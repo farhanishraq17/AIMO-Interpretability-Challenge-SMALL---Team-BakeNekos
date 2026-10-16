@@ -9,6 +9,11 @@ Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (
 
 ### E55: done 17 Oct, every success criterion met (Finding 81)
 
+**Outputs are shared as a private Kaggle dataset, `farhanishraqq/aimo-small-e55-features`** (1.23 GB, 26 files, no
+labels): per model `familiarity/`, `stagea/features.npz` + `records.parquet` + `metadata.json`, `execution.json`; plus
+`instances.parquet`. Local copies live under `runs/e55-features-*`. Collaborators need to be added on the dataset's
+Kaggle page (Settings -> Sharing).
+
 One-pass features (mean NLL and Stage A) for 548 problems x 4 models: the 36 official problems,
 ReliableMath AIME and AMC, and our olympiad pool, so a per-problem predictor can train the day the
 collaborator's self-labels arrive. No labels read. Amendment 1: E56 is not run - E49's recorded
