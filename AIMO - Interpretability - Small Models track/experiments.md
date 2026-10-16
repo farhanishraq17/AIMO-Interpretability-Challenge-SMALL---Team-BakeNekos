@@ -7,6 +7,20 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E55: running since 17 Oct (protocol `protocols/E55_PROTOCOL.md`, amendment 1 at commit before launch)
+
+One-pass features (mean NLL and Stage A) for 548 problems x 4 models: the 36 official problems,
+ReliableMath AIME and AMC, and our olympiad pool, so a per-problem predictor can train the day the
+collaborator's self-labels arrive. No labels read. Amendment 1: E56 is not run - E49's recorded
+budget-path runtime puts 60 one-problem calls at 496 minutes against the 50-minute rule.
+
+| Kernel | Account | Status |
+| --- | --- | --- |
+| `e55-features-qwen` | Mashrafi | pushed 17 Oct |
+| `e55-features-skywork` | Nasif | pushed 17 Oct |
+| `e55-features-olmo` | Samin | pushed 17 Oct |
+| `e55-features-deepseek` | Labib | pushed 17 Oct |
+
 ### E52b: stopped 14 Oct with no rewrite sample (protocol `protocols/E52_PROTOCOL.md` §9, committed `4297317` before launch)
 
 **Outcome:** every Olmo kernel died with vLLM 0.20's `Cannot get 1 free blocks from the pool`. On a T4 pair

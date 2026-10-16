@@ -1,0 +1,30 @@
+{
+  "job": "e55-features-olmo",
+  "account": "Samin",
+  "ref": "saminrayed/aimo-small-e55-features-olmo",
+  "source_sha256": {
+    "datagen/extract_familiarity.py": "b814c0fdf93ec2632d33d9820e1f19908ce3b8923342b07ae409adae0073fcc7",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "datagen/merge_features.py": "4b568facd9b00bb453c16c6678fd55f366dab953261a96df1681ee6b89ef410b",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/ingest_public.py": "3fc2790422b6fcfef9e8d059f46fcb291073fed92779a2e25f56a27309c160bf",
+    "protocols/E55_PROTOCOL.md": "ed9a6746368bd0eff9eb1f4fb0222e033f4a2f11341133a760fb15087e49980e",
+    "data/probe_system_prompt.txt": "72283c58f504d7c3d32d66066fcb06aecc20d14e93136cd6b1589f7f3ce7b002",
+    "data/e55/instances_model.parquet": "ad4cec97706cff5daba15df7e69d3964db20967134fe4141cd5f110a7e6720be"
+  },
+  "kernel_sha256": "c0aab20a9f4ef201bd0e2392db66430fc53b5e77e096615023c32b200f335e45",
+  "submitted_at": "2026-10-16T21:34:30.821224+00:00",
+  "metadata": {
+    "id": "saminrayed/aimo-small-e55-features-olmo",
+    "title": "aimo-small-e55-features-olmo",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}
