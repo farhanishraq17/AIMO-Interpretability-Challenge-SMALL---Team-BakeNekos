@@ -29,6 +29,10 @@ All 17 kernels pushed 18 Oct (`kernels/runs/e58-*/launch.json`):
 | `e58-skywork-a`, `e58-olmo-h` | Nasif | Skywork 32k; Olmo 16k | 2; 1 |
 | `e58-skywork-b` | MUBAMAN | Skywork 32k | 1 |
 
+`e58-skywork-b` failed at once on MUBAMAN: the session had no GPU (`nvidia-smi` missing), the same symptom as
+before (CLAUDE.md, Kaggle fleet). It is relaunched unchanged on the first account with a free slot; every
+other account had two E58 kernels when it was retried, and Kaggle refused a third.
+
 ### E55: done 17 Oct, every success criterion met (Finding 81)
 
 **Outputs are shared as a private Kaggle dataset, `farhanishraqq/aimo-small-e55-features`** (1.23 GB, 26 files, no
