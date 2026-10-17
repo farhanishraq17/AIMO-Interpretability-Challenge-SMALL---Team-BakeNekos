@@ -25,6 +25,7 @@ from kaggle_launch import READ_ONLY_ACCOUNTS, load_accounts  # noqa: E402
 from e49_gpu_bundle import JOBS as E49_JOBS  # noqa: E402
 from e52_gpu_bundle import JOBS as E52_JOBS  # noqa: E402
 from e55_gpu_bundle import JOBS as E55_JOBS  # noqa: E402
+from e57_gpu_bundle import JOBS as E57_JOBS  # noqa: E402
 
 FILES = (
     "train/eval_e36_budget_path.py", "train/eval_e37_gsm_confirmation.py",
@@ -61,6 +62,9 @@ def render(job: str) -> tuple[str, dict]:
     if job.startswith("e49-"):
         from e49_gpu_bundle import render as render_e49
         return render_e49(job.removeprefix("e49-"))
+    if job.startswith("e57-"):
+        from e57_gpu_bundle import render as render_e57
+        return render_e57(job.removeprefix("e57-"))
     if job.startswith("e55-"):
         from e55_gpu_bundle import render as render_e55
         return render_e55(job.removeprefix("e55-"))
@@ -112,7 +116,7 @@ def main() -> None:
     parser.add_argument("job", choices=["capability-check", "cuda-link-check", "e37-confirmation", "e37-official-qwen",
                                        "e37-official-skywork", "e37-official-olmo", "e37-official-deepseek", "e38-prefix-audit",
                                        "e37-retry-qwen", "e37-retry-skywork", "e37-retry-olmo", "e37-retry-deepseek",
-                                       *(f"e49-{job}" for job in E49_JOBS), *(f"e52-{job}" for job in E52_JOBS), *(f"e55-{job}" for job in E55_JOBS)])
+                                       *(f"e49-{job}" for job in E49_JOBS), *(f"e52-{job}" for job in E52_JOBS), *(f"e55-{job}" for job in E55_JOBS), *(f"e57-{job}" for job in E57_JOBS)])
     parser.add_argument("--account", required=True, choices=sorted(load_accounts()))
     args = parser.parse_args()
     if args.command == "push" and args.account in READ_ONLY_ACCOUNTS:
