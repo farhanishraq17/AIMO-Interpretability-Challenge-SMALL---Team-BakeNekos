@@ -1,0 +1,172 @@
+"""E58: does a full-budget answer-property labeller reproduce the official labels on the official rows?
+
+`protocols/E58_PROTOCOL.md` fixed everything here before any E58 record existed: the variants
+(`datagen/perturb/e58_variants.py`), the grading, the label rule and the gate.
+
+**Grading.** A base or consistent-premise sample is correct iff it finished within the cap and its
+answer is the reference answer. A contradiction sample is correct iff E52's grader calls it `detected`
+(finished, no integer, an ending that says there is no valid answer; audited 30 of 30 in E52).
+
+**Per (model, problem).** Eligible iff all base samples are correct. Each family's accuracy pools its
+two variants. `max_drop = 1 - min(family accuracies)`, and the official rule labels the row robust iff
+<= 0.10, spurious iff >= 0.25, band between. A row is labelled iff eligible, every family has at least
+`MIN_FAMILY_SAMPLES` graded samples, and it is not band.
+
+**Gate.** At least `MIN_LABELLED` labelled rows, and Cohen's kappa against the official labels at least
+`MIN_KAPPA` with a problem-bootstrap 95% interval above 0. The official labels are read here and only here.
+
+Writes the `E58: self-labelling gate on the official rows` section of RESULTS.md and
+runs/e58-analysis/result.json.
+
+Run:  python train/eval_e58.py
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import cohen_kappa_score
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "train"))
+
+from eval_e52 import grade, problem_bootstrap  # noqa: E402
+from results_io import upsert_section  # noqa: E402
+
+MODELS = {"qwen": "Qwen/Qwen3.5-4B", "deepseek": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+          "skywork": "Skywork/Skywork-OR1-Math-7B", "olmo": "allenai/Olmo-3-7B-Think"}
+CONSTANTS = {"qwen": True, "deepseek": True, "skywork": False, "olmo": False}  # e27f
+RECORDS = "runs/e58-{short}-*/e58-{short}-*/{phase}/shard_*/records.jsonl"
+OUT = ROOT / "runs" / "e58-analysis"
+ROBUST, SPURIOUS = 0.10, 0.25  # the official max_drop rule
+MIN_FAMILY_SAMPLES = 4
+MIN_LABELLED, MIN_KAPPA, SEED = 18, 0.30, 58
+
+
+def family(category: str) -> str:
+    return "no_solution" if category.startswith("contradict") else "consistent"
+
+
+def correct(record: dict, cap: int) -> list[bool]:
+    return [a == record["expected_answer"] and t < cap for a, t in zip(record["answers"], record["completion_tokens"])]
+
+
+def label_row(base: dict | None, variants: list[dict], cap: int) -> dict:
+    """One (model, problem) row from its base record and variant records (see the module docstring)."""
+    row = {"status": "not_sampled", "label": None, "max_drop": None, "deciding": None}
+    if base is None:
+        return row
+    row["eligible"] = bool(base["n_samples"]) and all(correct(base, cap))
+    samples = {"no_solution": [], "consistent": []}
+    outcomes = []
+    for record in variants:
+        if family(record["category"]) == "consistent":
+            samples["consistent"] += correct(record, cap)
+            continue
+        for tail, tokens, answer in zip(record["sample_tails"], record["completion_tokens"], record["answers"]):
+            outcome = grade(tail, tokens, cap)
+            samples["no_solution"].append(outcome == "detected")
+            outcomes.append("kept_original" if outcome == "answered" and answer == record["expected_answer"] else outcome)
+    row.update({f"n_{f}": len(s) for f, s in samples.items()}, **{o: outcomes.count(o) for o in
+               ("detected", "answered", "kept_original", "truncated", "other")})
+    if not row["eligible"]:
+        row["status"] = "ineligible"
+    elif min(len(s) for s in samples.values()) < MIN_FAMILY_SAMPLES:
+        row["status"] = "incomplete"
+    else:
+        accuracy = {f: float(np.mean(s)) for f, s in samples.items()}
+        row.update({f"acc_{f}": a for f, a in accuracy.items()}, max_drop=1 - min(accuracy.values()),
+                   deciding=min(accuracy, key=accuracy.get))
+        row["label"] = "robust" if row["max_drop"] <= ROBUST + 1e-9 else "spurious" if row["max_drop"] >= SPURIOUS - 1e-9 else "band"
+        row["status"] = "labelled" if row["label"] != "band" else "band"
+    return row
+
+
+def load(short: str, phase: str) -> list[dict]:
+    paths = sorted(ROOT.glob(RECORDS.format(short=short, phase=phase)))
+    rows = [json.loads(line) for p in paths for line in p.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return list({r["item_id"]: r for r in rows}.values())  # a resumed shard may repeat an item
+
+
+def run_cap(short: str) -> int:
+    paths = ROOT.glob(RECORDS.format(short=short, phase="base").replace("records.jsonl", "metadata.json"))
+    caps = {json.loads(p.read_text(encoding="utf-8"))["args"]["max_new_tokens"] for p in paths}
+    assert len(caps) == 1, f"{short}: runs disagree on the cap: {caps}"
+    return caps.pop()
+
+
+def kappa(frame: pd.DataFrame) -> float:
+    if frame.official.nunique() == 1 and frame.self_robust.nunique() == 1:
+        raise ValueError("kappa undefined: one class in both")
+    return float(cohen_kappa_score(frame.official, frame.self_robust))
+
+
+def main() -> None:
+    targets = pd.read_parquet(ROOT / "data" / "e58" / "rows.parquet")
+    official = pd.read_parquet(ROOT / "data" / "official_check" / "official_labels.parquet")
+    rows = []
+    for short, model_id in MODELS.items():
+        base = {r["pool_id"]: r for r in load(short, "base")}
+        if not base:
+            raise SystemExit(f"no E58 base records for {short}; download every e58 kernel first")
+        cap = run_cap(short)
+        variants = load(short, "variants")
+        for target in targets[targets.model_id == model_id].itertuples(index=False):
+            row = label_row(base.get(target.pool_id), [v for v in variants if v["pool_id"] == target.pool_id], cap)
+            rows.append({"model": short, "pool_id": target.pool_id, "problem_key": target.problem_key, "cap": cap, **row})
+    frame = pd.DataFrame(rows).merge(official.rename(columns={"is_robust": "official"})[["model_id", "problem_key", "official"]]
+                                     .assign(model=lambda d: d.model_id.map({v: k for k, v in MODELS.items()})),
+                                     on=["model", "problem_key"], how="left", validate="one_to_one")
+    assert frame.official.notna().all(), "an E58 row has no official label"
+    labelled = frame[frame.status == "labelled"].assign(self_robust=lambda d: d.label == "robust",
+                                                       constant=lambda d: d.model.map(CONSTANTS))
+    try:
+        k = kappa(labelled)
+        low, high = problem_bootstrap(labelled, kappa, seed=SEED)
+    except ValueError:
+        k, low, high = float("nan"), float("nan"), float("nan")
+    passes = bool(len(labelled) >= MIN_LABELLED and k >= MIN_KAPPA and low > 0)
+
+    per_model = frame.groupby("model", sort=False).agg(
+        rows=("pool_id", "size"), sampled=("status", lambda s: int((s != "not_sampled").sum())),
+        eligible=("eligible", lambda s: int(s.fillna(False).sum())), labelled=("status", lambda s: int((s == "labelled").sum())),
+        self_robust=("label", lambda s: int((s == "robust").sum())), self_spurious=("label", lambda s: int((s == "spurious").sum())),
+        band=("label", lambda s: int((s == "band").sum())), official_robust=("official", "sum"),
+        detected=("detected", "sum"), answered=("answered", "sum"), kept_original=("kept_original", "sum"),
+        truncated=("truncated", "sum"), other=("other", "sum"), cap=("cap", "first")).reset_index()
+    agreement = lambda column: float((labelled[column] == labelled.official).mean()) if len(labelled) else float("nan")  # noqa: E731
+    result = {"rows": len(frame), "labelled": len(labelled), "kappa": k, "kappa_ci": [low, high], "passes": passes,
+              "self_label_accuracy": agreement("self_robust"), "constants_accuracy_same_rows": agreement("constant"),
+              "deciding_family": labelled.deciding.value_counts().to_dict(),
+              "confusion": pd.crosstab(labelled.official, labelled.self_robust).to_dict() if len(labelled) else {},
+              "per_model": per_model.to_dict("records"), "per_row": frame.drop(columns="model_id").to_dict("records")}
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / "result.json").write_text(json.dumps(result, indent=2, default=float), encoding="utf-8")
+
+    table = ["| model | cap | rows | sampled | eligible | labelled | self robust / spurious / band | official robust "
+             "| contradiction samples: detected / answered (kept original) / truncated / other |",
+             "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for m in per_model.itertuples(index=False):
+        table.append(f"| {m.model} | {m.cap:,} | {m.rows} | {m.sampled} | {m.eligible} | {m.labelled} | {m.self_robust} / "
+                     f"{m.self_spurious} / {m.band} | {int(m.official_robust)} | {int(m.detected)} / {int(m.answered + m.kept_original)} "
+                     f"({int(m.kept_original)}) / {int(m.truncated)} / {int(m.other)} |")
+    body = "\n".join([
+        "Answer-property variants (`datagen/perturb/e58_variants.py`) on the 27 official rows with a reference answer, "
+        "sampled with the organizers' decoding at each model's T4 cap (`protocols/E58_PROTOCOL.md`).", "", *table, "",
+        f"**Gate: {'passes' if passes else 'fails'}.** {len(labelled)} of {len(frame)} rows labelled (needs {MIN_LABELLED}); "
+        f"Cohen's kappa against the official labels {k:.3f}, 95% problem-bootstrap CI [{low:.3f}, {high:.3f}] "
+        f"(needs >= {MIN_KAPPA} with the lower bound above 0).", "",
+        f"On the labelled rows, self-labels agree with the official labels on {result['self_label_accuracy']:.3f}; "
+        f"`e27f`'s constants agree on {result['constants_accuracy_same_rows']:.3f}. "
+        f"Family that set `max_drop`: {result['deciding_family']}.",
+    ])
+    upsert_section(ROOT / "RESULTS.md", "E58: self-labelling gate on the official rows", body)
+    print(body)
+
+
+if __name__ == "__main__":
+    main()
