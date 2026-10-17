@@ -1,0 +1,60 @@
+{
+  "models": {
+    "Qwen/Qwen3.5-4B": {
+      "download_seconds": 90.3,
+      "load_seconds": 34.0,
+      "parity_max_abs_diff": [
+        0.0,
+        0.0
+      ],
+      "seconds_per_call": 0.6800211071968079,
+      "max_call_seconds": 1.1013195514678955,
+      "native_bools": true,
+      "n_calls": 20,
+      "robust_calls": 18
+    },
+    "Skywork/Skywork-OR1-Math-7B": {
+      "download_seconds": 102.1,
+      "load_seconds": 37.1,
+      "parity_max_abs_diff": [
+        0.0,
+        0.0
+      ],
+      "seconds_per_call": 1.1036936163902282,
+      "max_call_seconds": 1.7910218238830566,
+      "native_bools": true,
+      "n_calls": 20,
+      "robust_calls": 20
+    },
+    "allenai/Olmo-3-7B-Think": {
+      "download_seconds": 99.7,
+      "load_seconds": 16.4,
+      "parity_max_abs_diff": [
+        0.0,
+        0.0
+      ],
+      "seconds_per_call": 1.3431890964508058,
+      "max_call_seconds": 2.0154125690460205,
+      "native_bools": true,
+      "n_calls": 20,
+      "robust_calls": 0
+    },
+    "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": {
+      "download_seconds": 89.4,
+      "load_seconds": 40.7,
+      "parity_max_abs_diff": [
+        0.0,
+        0.0
+      ],
+      "seconds_per_call": 1.434145414829254,
+      "max_call_seconds": 2.5023157596588135,
+      "native_bools": true,
+      "n_calls": 20,
+      "robust_calls": 3
+    }
+  },
+  "unknown_model": [
+    false
+  ],
+  "end_to_end_seconds": 640.9228796958923
+}

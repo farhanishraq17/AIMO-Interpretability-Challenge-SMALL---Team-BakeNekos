@@ -2570,6 +2570,27 @@ RESULTS, "E55: one-pass features and per-problem timing".)
   features on the day the labels arrive. Its inputs are one forward pass, so runtime will not decide
   anything; accuracy against the constants on held-out problems will.
 
+**82. The per-problem E57 template runs on all four real checkpoints, reproduces E55's training
+features exactly, and costs 0.7-1.4 s a call on a T4.** (`scripts/e57_gpu_bundle.py`, version 3 on Nasif,
+17 Oct, 11 minutes; `kernels/runs/e57-gpu-check-Nasif/result.json`.)
+
+| model | parity with E55 (max abs diff) | warm load, T4 | one-problem call, T4 |
+| --- | --- | --- | --- |
+| Qwen3.5-4B | 0.0 | 34 s | 0.68 s |
+| Skywork-OR1-Math-7B | 0.0 | 37 s | 1.10 s |
+| Olmo-3-7B-Think | 0.0 | 16 s | 1.34 s |
+| DeepSeek-R1-0528-Qwen3-8B | 0.0 | 41 s | 1.43 s |
+
+- **The features a probe would be trained on are the features the submission computes**, to the bit,
+  on the real models (three layers of two problems each, against E55's stored arrays), extending the
+  tiny-model parity test of `submission/test_e57_parity.py`.
+- **Every one-problem call returned a native bool** with a random probe in place (its predictions mean
+  nothing), and an unknown model id returned the constants.
+- **Two harness bugs, none in the template.** Version 1 found no cached weights because the template
+  loads offline, as the evaluator does; version 2 ran out of memory because the harness itself held the
+  previous model. Each is fixed in the harness and recorded in its commit.
+- **Runtime is not a constraint:** sixty one-problem calls are about a minute of compute on a T4 pair.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

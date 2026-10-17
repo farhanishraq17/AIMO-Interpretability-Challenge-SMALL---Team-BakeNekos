@@ -1,0 +1,28 @@
+{
+  "job": "e57-gpu-check",
+  "account": "Nasif",
+  "ref": "nasifol/aimo-small-e57-gpu-check",
+  "source_sha256": {
+    "submission/e57-probe/solution.py": "b1bba1933650f9d8670c82d6fe0410efe05fe4efd3a9234ee7444fd0220c59de",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "submission/e57-probe/system_prompt.txt": "72283c58f504d7c3d32d66066fcb06aecc20d14e93136cd6b1589f7f3ce7b002",
+    "submission/e57-probe/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "reference.npz": "fd449d68883ec6f00be2e117641adf135aa857f07dd7db54daada887aab6ef3a",
+    "problems.json": "60abd9ff8e5d5df7fd225739c4270c2b1e41a05795cde7b4442f381e968f78fb"
+  },
+  "kernel_sha256": "e8badbfadec92df391f9f07c531c6c8e86c8ec3195a89e30e06e479cb70a533b",
+  "submitted_at": "2026-10-17T00:33:48.249335+00:00",
+  "metadata": {
+    "id": "nasifol/aimo-small-e57-gpu-check",
+    "title": "aimo-small-e57-gpu-check",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}
