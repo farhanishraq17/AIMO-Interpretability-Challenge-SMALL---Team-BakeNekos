@@ -36,7 +36,8 @@ other account had two E58 kernels when it was retried, and Kaggle refused a thir
 Progress, 18 Oct: `e58-skywork-a` complete (54 min). `e58-olmo-e` complete with no rewrite phase: 3 of 4 base
 samples correct and one hit the 16k cap, so its row is ineligible (unlabelled, as the protocol counts it).
 Olmo at one sequence a time ran about 10 tokens/s (86 min for 4 base samples), so an eligible Olmo kernel needs
-5-6 h for its 16 variant samples, inside the 7 h guard.
+5-6 h for its 16 variant samples, inside the 7 h guard. Later on 18 Oct: `e58-deepseek-a` (3.3 h), `e58-deepseek-d` (2.5 h) and `e58-skywork-b` (43 min) complete,
+every phase exit 0; 5 of 17 kernels done.
 
 ### E55: done 17 Oct, every success criterion met (Finding 81)
 
