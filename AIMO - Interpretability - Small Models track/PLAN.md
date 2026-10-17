@@ -904,3 +904,8 @@ held-out problems. Until then `e27f` is the submission.
 E57 (`protocols/E57_PROTOCOL.md`) fixes that probe and its ship rule now; its pipeline,
 `train/train_e57_probe.py`, passed its plumbing test on random labels (both ship rules refuse to ship
 noise). E55's features are in the private Kaggle dataset `farhanishraqq/aimo-small-e55-features`.
+
+**18 Oct: E58** (`protocols/E58_PROTOCOL.md`) tests a labeller on the fleet while the collaborator's run is
+pending: automatic answer-property contradictions and consistent premises on the 27 official rows with a
+known answer, at each model's T4 cap, gated like E24b on kappa against the official labels. Predicted in
+advance to fail. If it passes, E57's precondition is amended to accept it and E59 labels E55's 548 problems.

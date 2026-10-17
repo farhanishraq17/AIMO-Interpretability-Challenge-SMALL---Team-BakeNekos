@@ -1,0 +1,31 @@
+{
+  "job": "e58-olmo-h",
+  "account": "Nasif",
+  "ref": "nasifol/aimo-small-e58-olmo-h",
+  "source_sha256": {
+    "datagen/perturb/sample.py": "b29aac2414d301024e4ae9cf0b9d7ca16ac9c36666c915f944cdf76cb991ea14",
+    "datagen/perturb/answers.py": "10d240d3db4d6b13863b43559b907b8dc4c3d9bc8a87e97d3fd1311db0946b05",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "data/e58/pool.parquet": "9b498581214ce5f31b973927d8d2d55450e3ae6ab316d17aca246af61c03b646",
+    "data/e58/variants.parquet": "792faa4b1cb47d04adf14f0d121cb4a29b2f16fd386a75208bca473d132f1340",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be",
+    "protocols/E58_PROTOCOL.md": "d05e32302bde008e0150ed64b5e23f4c32573fe86c25f60305d469b4d9db9b08"
+  },
+  "kernel_sha256": "4f49822dd9289fbe5d6cbc4263ef3e8b09a24fd102a15793193184b088c9b3e7",
+  "submitted_at": "2026-10-17T20:13:34.443230+00:00",
+  "metadata": {
+    "id": "nasifol/aimo-small-e58-olmo-h",
+    "title": "aimo-small-e58-olmo-h",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

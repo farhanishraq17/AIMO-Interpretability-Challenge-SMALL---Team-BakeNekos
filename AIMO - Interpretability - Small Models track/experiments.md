@@ -7,6 +7,28 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E58: running since 18 Oct (protocol `protocols/E58_PROTOCOL.md`, committed `da7e18d` before launch)
+
+Does an automatic, full-budget labeller reproduce the official labels? Four variants per official problem,
+built from its reference answer alone: two contradictions (wrong parity; "greater than 2N + 10") and two
+consistent premises. k = 4 on the 27 official rows with a known answer, organizers' decoding, at each
+model's T4 cap. Gate: at least 18 rows labelled and Cohen's kappa >= 0.30 with a bootstrap lower bound
+above 0 (E24b's gate plus coverage). **Predicted in advance: fails** (protocol §6).
+
+All 17 kernels pushed 18 Oct (`kernels/runs/e58-*/launch.json`):
+
+| Kernels | Account | Model, cap | Problems |
+| --- | --- | --- | --- |
+| `e58-qwen-a`, `e58-olmo-a` | ISHRAQ | Qwen 64k; Olmo 16k | 3; 1 |
+| `e58-qwen-b`, `e58-olmo-b` | DIDHITI | Qwen 64k; Olmo 16k | 3; 1 |
+| `e58-qwen-c`, `e58-olmo-c` | TASHIN | Qwen 64k; Olmo 16k | 3; 1 |
+| `e58-deepseek-a`, `e58-olmo-d` | SALAM | DeepSeek 32k; Olmo 16k | 2; 1 |
+| `e58-deepseek-b`, `e58-olmo-e` | Labib | DeepSeek 32k; Olmo 16k | 2; 1 |
+| `e58-deepseek-c`, `e58-olmo-f` | Mashrafi | DeepSeek 32k; Olmo 16k | 2; 1 |
+| `e58-deepseek-d`, `e58-olmo-g` | Samin | DeepSeek 32k; Olmo 16k | 1; 1 |
+| `e58-skywork-a`, `e58-olmo-h` | Nasif | Skywork 32k; Olmo 16k | 2; 1 |
+| `e58-skywork-b` | MUBAMAN | Skywork 32k | 1 |
+
 ### E55: done 17 Oct, every success criterion met (Finding 81)
 
 **Outputs are shared as a private Kaggle dataset, `farhanishraqq/aimo-small-e55-features`** (1.23 GB, 26 files, no
