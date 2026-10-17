@@ -18,12 +18,15 @@ Fifteen sections, a verified reference list and two appendices. They answer diff
   worked), §13 (what we would do differently). That is the manual.
 - **Want the evidence?** §6 is the failures, one subsection per lane, each with the test that
   killed it. It is the longest section on purpose — the writeup prize is awarded partly on negative
-  results, and we have sixteen.
+  results, and we have seventeen.
+- **Want what changed on 15 October?** §7.4: per-problem scoring turned our 12/14 into the constants'
+  9/14, and the per-problem probe that is ready for the collaborator's labels.
 - **Want the explanation?** §6.2 and §6.9: our training labels and the competition's are decided
   by different perturbation families, and on the competition's the models answer through an
   impossible premise.
 - **Want the method?** §4.2 is the one piece of real formalism: the per-model robust count in
-  closed form, `t = (d − 1)/2`, derived from a measured class balance rather than tuned.
+  closed form, `t = (d − 1)/2`, derived from a measured class balance rather than tuned. It acts only inside a batch,
+  so the per-problem protocol removes it (§7.4).
 - **Judging it?** §9 generalization, §10 efficiency, §15 contributions.
 
 ## Figures

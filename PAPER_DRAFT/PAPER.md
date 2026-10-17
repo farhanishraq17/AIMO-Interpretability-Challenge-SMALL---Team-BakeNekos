@@ -7,7 +7,7 @@
 ¹ Correspondence: farhanishraq2003@gmail.com · Code:
 <https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-SMALL---Team-BakeNekos>
 
-**Draft — 14 October 2026.** Every number here is regenerable from the repository; the
+**Draft — 18 October 2026.** Every number here is regenerable from the repository; the
 commands are in §14. Findings are cited as `F-n` (`PROGRESS.md`). Where this draft and a
 `RESULTS.md` table disagree, the table is right.
 
@@ -19,19 +19,21 @@ The AIMO Interpretability Challenge asks a question that sounds like classificat
 given a model and a problem, will that model's answer survive perturbations that leave the
 mathematics unchanged? We ran more than forty experiments over seven weeks, spending well over 300
 GPU-hours on a shared free-tier fleet. **Almost all of them failed**, and
-the failures are the substance of this report: sixteen rejected hypotheses over twelve distinct signals — hidden-state probes,
+the failures are the substance of this report: seventeen rejected hypotheses over twelve distinct signals — hidden-state probes,
 reasoning-trace uncertainty, answer agreement under rewriting, self-generated perturbation labels,
 activation geometry, contamination statistics — either sat at chance or reversed sign when moved
 to an independent population.
 
-We make four claims. **First**, what survived has **no learned parameters at all**: one forward
-pass per problem, rank the batch by the scoring model's own mean token negative log-likelihood,
-call the more familiar half robust, with the count per model fixed by a closed-form identity rather
-than fitted. The ranking is a property of the problem rather than of the model scoring it — four
-checkpoints from four families agree at Spearman 0.82 — so the only model-specific quantity in the
-method is four integers measured from the evaluation distribution. It scores **12/14 = 0.857** on
-the hidden validation set, above the 0.79 that led the board when we started; solved exactly from
-our own submissions, its only two misses are one swapped pair inside one model's batch. **Second**,
+We make four claims. **First**, the method that topped our leaderboard series has **no learned
+parameters at all**: one forward pass per problem, rank the batch by the scoring model's own mean
+token negative log-likelihood, call the more familiar half robust, with each model's count fixed by a
+closed-form identity in its measured class balance. It scored **12/14 = 0.857** on the hidden
+validation set; solved exactly from our own submissions, its only misses were one swapped pair inside
+one model's batch. **It did not survive the protocol the prizes use.** On 15 October the organizers
+began scoring one problem per call, as the final test will, and called policies that rely on a batch's
+balanced labels "a sort of overfitting". With one problem a call the ranking and the counts cannot act,
+the method reduces to its per-model constants, and it scores **0.64**; no signal we hold beats those
+constants as a per-problem rule on independent data (§7.4). **Second**,
 nothing transferred from our labelled MATH data to the olympiad distribution the competition scores,
 and we can say why twice over. In mechanism: the two label sources are decided by different
 perturbation families — domain rewording on MATH, where it breaks 86% of solved rows, and on
@@ -135,6 +137,9 @@ said in advance that the final ordering *"will depend on a new set of problems a
 (`getting-started` issue #7), and the website labels the live board "not final results". §7.2 shows
 exactly which two of our fourteen calls are wrong.
 
+Three days later the board itself changed: the organizers erased it and re-scored submissions one
+problem per call, and our 12/14 became 9/14 (§7.4).
+
 When a public board saturates, three things decide the outcome, and none of them is leaderboard
 position:
 
@@ -147,7 +152,7 @@ position:
 
 That is the argument for the rest of this report. A method with no fitted parameters cannot fail to
 transfer in the way a fitted one can (§9); a method that never generates a token is hard to beat on
-runtime (§10); and sixteen documented negative results are worth more in a writeup than one more
+runtime (§10); and seventeen documented negative results are worth more in a writeup than one more
 case on a board the prizes do not use.
 
 We therefore state what we claim up front:
@@ -155,7 +160,7 @@ We therefore state what we claim up front:
 1. **A training-free predictor.** One forward pass per problem, no fitted estimator, no training
    data, and per-model counts derived in closed form from a measured class balance rather than
    tuned. Its only model-specific quantity is four integers. §4, §9.
-2. **Nothing transfers, and we can say why.** Sixteen rejected hypotheses, several with
+2. **Nothing transfers, and we can say why.** Seventeen rejected hypotheses, several with
    independent-population confirmations; a mechanism — the MATH and olympiad labels are decided by
    different perturbation families, and on the olympiad one the models answer through an impossible
    premise; and a power analysis saying the nulls are substantially measuring sample size, stated
@@ -251,8 +256,10 @@ first `c_m` problems robust:
 
 ### 4.2 The count, in closed form
 
-This is the part that is derived rather than tuned, and it is the paper's main methodological
-claim.
+This is the part that is derived rather than tuned. It is also the part the per-problem protocol of
+15 October removes: with one problem per call there is no batch to count in, and the organizers named
+reliance on a batch's label balance as overfitting (§7.4). We keep the derivation because it is
+correct and because it explains the 12/14; it is not a method for the final test.
 
 For model `m` on the hidden set, let `r_m` and `q_m` be its robust and spurious case counts,
 `n_m = r_m + q_m` its batch size, and `d_m = r_m − q_m` its **class balance**. Constant-prediction
@@ -360,6 +367,7 @@ reporting things that never worked.
 | 14 | The reversal survives a sharper instrument | Spearman **+0.247**, sign consistent in every model | Every CI spans zero | `eval_maxdrop_continuous.py` | 6.7 |
 | 15 | Budget-path score, re-extracted on the evaluation path, ranks the official rows | Problem AUC **0.659**, passing its gate | Half-rank balanced accuracy **0.521** against a pre-registered > 0.55 | `eval_e49_official.py` | 6.6 |
 | 16 | One forward pass predicts which problems a model answers an impossible premise on | — | **No positive class**: Qwen flagged 2 of 130 rewrite samples, Skywork 0 of 274 | `eval_e52.py` | 6.9 |
+| 17 | A signal we hold beats the constants as an absolute per-problem rule | Budget path qualifies by rule: Putnam 0.598, GSM-Plus 0.564 | Calls every official row spurious, and 60 calls need at least 496 min against 50 | `eval_e54_per_problem.py` | 7.4 |
 
 Entries 13 and 14 are the last two attempts on the reversal, and §6.7 reports why they could
 not have succeeded. Entry 12 is the one we cannot explain at all, and §6.8 treats it separately.
@@ -676,6 +684,45 @@ prompt is load-bearing** — scoring the chat template instead is a different po
 leaderboard evidence, and it would move several cases. Tidying that "inconsistency" before the
 freeze would have been a mistake.
 
+### 7.4 The per-problem change, and what survives it
+
+On 15 October the organizers changed how validation is scored, and said the final test will be run
+the same way (F-79). `are_robust` is now called once per problem, always with a one-item list; the
+budget rose to 1 h 10 min to absorb repeated model loading; the board was erased and top submissions
+re-scored. A week earlier they had warned that submissions relying "on the balanced distribution of
+labels" were "a sort of overfitting". Our counts are exactly that, and so is every batch median split.
+
+**What happens to `e27k`.** With one problem a call it calls `ceil(1/2) + t` problems robust: one for
+Qwen and DeepSeek, none for Skywork and Olmo, which are the per-model constants. Its re-scored entry
+reads **0.64**, the constants' 9/14. `e27f`, the constants alone, makes identical per-problem predictions
+without loading a model, so it is what we submit now.
+
+**Does anything we hold work per problem?** E54 (F-80) scored every held signal as an absolute rule,
+with thresholds fixed from unlabelled data or the signal's own training data, against five labelled
+populations (balanced accuracy; any constant scores 0.5):
+
+| population | familiarity | length | budget path |
+| --- | --- | --- | --- |
+| official rows (34) | 0.458 | 0.583 | 0.500, every row called spurious |
+| DeepSeek MATH (142) | **0.638** | 0.486 | — |
+| Putnam-AXIOM | 0.501 | 0.551 | **0.598** |
+| MATH-Perturb (233) | 0.569 | 0.481 | — (its training set) |
+| GSM-Plus (793) | — | 0.475 | **0.564** |
+
+Only the budget path qualified under the pre-registered rule, and on the competition's own rows its
+threshold, learned on MATH-Perturb, called every problem spurious. It is also unaffordable: E49's
+measured T4 generation rates put sixty one-problem calls at no less than 496 minutes even on a card
+three times faster, against a 50-minute allowance (F-81). The first run of E54 recomputed that predictor's threshold and scored 0.680 on Putnam;
+the protocol fixed E36's recorded threshold instead (0.598), and the higher number is not used.
+
+**What is ready instead.** The labels that decide this task are about noticing an impossible premise at
+a 100k-token budget (§6.2, §6.9), which our hardware cannot generate; a collaborator with more compute
+is generating them. A per-problem probe for that day is pre-registered (E57) and built: E55 extracted
+one-pass features for 548 candidate problems on all four models (F-81), and the submission template
+reproduces those features **bit for bit** on all four real checkpoints at 0.7-1.4 s a call on a T4
+(F-82). It ships only if it beats the constants on held-out problems and does not reverse on the
+official rows; otherwise the constants stay.
+
 ---
 
 ## 8. Methodological protocol
@@ -715,6 +762,11 @@ four uploads to diagnose (F-21).
 ## 9. Generalization
 
 The competition rewards generalization explicitly. Our claim is narrow and, we think, defensible.
+
+**A correction first.** This section was written while validation was scored in batches. Under the
+per-problem protocol the final test uses (§7.4), the counts it defends cannot act, and the organizers
+judged that kind of reliance on batch label balance to be overfitting. What follows about the
+*ranking* still holds; what it says about the *counts* describes a policy that no longer runs.
 
 **The shipped method has nothing to overfit.** It contains no fitted estimator and no training
 data. Its inputs are the scoring model's own likelihoods — available for any autoregressive model,
@@ -773,9 +825,9 @@ olympiad labels, Skywork never flagged the contradiction in 274 samples while Qw
 about it
 (§6.9, F-77) — the same ordering the validation balances give, reached on a different population by
 a different measurement. The Olmo half has no such evidence; the attempt to measure it could not run
-on our hardware (F-78). We ship `e27k` because the balances are the only measurement anyone has, and
-measured beats assumed; `e27e` is the prior-free alternative and the right choice for anyone who
-weights the official split more heavily than the validation set.
+on our hardware (F-78). Under the batch protocol we shipped `e27k`, because the balances were the only
+measurement anyone had. Under the per-problem protocol both `e27k` and `e27e` reduce to constants, and
+we submit `e27f`, the constants themselves (§7.4).
 
 ---
 
@@ -789,6 +841,8 @@ Ties break on average runtime over three repeated trials, so this is a scored ax
 | Trace uncertainty (E2f) | greedy generation, 4,096 tokens | ~3.3× slower in bf16 than fp16 on T4 |
 | Answer agreement (E14) | k rewrites × full generation | **28,000 tokens/problem**; at chance |
 | Budget-path features (E36/E37) | 4 token budgets per problem | **5,293 s for one model** — failed its gate |
+| Budget path, one problem per call (E54/E55) | 4 token budgets per call | at least **496 min** for 60 calls on a card 3× a T4 (F-81) |
+| Per-problem probe template (E57) | 1 forward pass per call, model cached | **0.68-1.43 s per call** on T4, all four models (F-82) |
 
 Three orders of magnitude separate the top and bottom rows. The shipped method never generates a
 token: it reads the problem once and returns a number. The dominant cost is loading the checkpoint,
@@ -962,6 +1016,10 @@ way to read a model.
    and used a public table that was available from the first day. It shows that our training labels
    and the competition's are decided by different perturbations, which explains weeks of transfer
    failures in one line — and it is the last analysis we ran rather than the first.
+7. **Never let a method depend on how the harness groups its calls.** Our best result came from
+   counting inside the batch the evaluator happened to pass. The interface allowed it, the organizers
+   called it overfitting, and one change to the harness turned 12/14 into 9/14. A per-problem decision
+   would have been robust to that change by construction.
 
 ---
 
@@ -978,6 +1036,12 @@ python train/eval_hidden_state.py
 # What decides a label (§6.2), and the deciding family on our models (§6.9)
 python train/eval_label_mechanics.py
 python train/eval_e52.py              # needs the e52 runs; protocol in protocols/E52_PROTOCOL.md
+
+# The per-problem audit (§7.4), E55's coverage and timing, and the E57 probe pipeline
+python train/eval_e54_per_problem.py
+python train/report_e55.py
+python train/train_e57_probe.py --synthetic   # plumbing; real labels: --labels <file>
+python submission/test_e57_parity.py          # the submission's features equal the training features
 
 # Rebuild every submission ZIP, deterministically
 python submission/make_e27.py     # 13 candidates incl. the incumbent
@@ -1027,11 +1091,14 @@ were identical across two machines.
 
 Four claims, in the order the report makes them.
 
-**1. A training-free robustness predictor, with its only free parameters derived rather than tuned.**
-It scores 12/14 on the hidden validation set by ranking a batch on the scoring model's own
-likelihoods and fixing each model's robust count by a closed-form identity in the measured class
+**1. A training-free robustness predictor, with its only free parameters derived rather than tuned, and
+the record of how it stopped working.** It scored 12/14 on the hidden validation set by ranking a
+batch on the scoring model's own likelihoods and fixing each model's robust count by a closed-form identity in the measured class
 balance (§4.2). The rule calls the exactly correct count in 56 of 56 batch compositions consistent
-with the measurement, where the plain median split does so in 0 of 56. Supporting this:
+with the measurement, where the plain median split does so in 0 of 56. Under the per-problem protocol
+the organizers adopted on 15 October, which the final test uses, it reduces to its per-model constants
+and scores 0.64 (§7.4): the counts measured the validation set's batch balance, the reliance the
+organizers judged a form of overfitting. Supporting this:
 
 - a **leaderboard-arithmetic method** for extracting the evaluation distribution's per-model class
   balance from constant submissions, and for testing whether an observed score exceeds what those
@@ -1040,7 +1107,7 @@ with the measurement, where the plain median split does so in 0 of 56. Supportin
   the (model, problem) pair (§1.2); and the familiarity *signal* is a problem property too, so the
   only model-specific quantity in the method is four measured integers (§9).
 
-**2. Sixteen documented negative results, the mechanism behind them, and the power analysis that says
+**2. Seventeen documented negative results, the mechanism behind them, and the power analysis that says
 what they do and do not establish.** Several carry independent-population confirmations, and several
 reached AUC 0.73–0.87 before the test that rejected them (§6). The mechanism is that our training
 labels and the competition's are decided by different perturbation families: domain rewording on
@@ -1159,7 +1226,7 @@ dropped. Where the arXiv preprint and the peer-reviewed venue fall in different 
 ## Appendix A — Experiment index
 
 `experiments.md` carries the full registry with configuration and outcome for every experiment.
-`PROGRESS.md` carries findings F-1…F-78 with the evidence for each. `RESULTS.md` carries 40
+`PROGRESS.md` carries findings F-1…F-82 with the evidence for each. `RESULTS.md` carries 42
 generated metric tables, all covered by `scripts/regenerate_results.py`.
 
 ## Appendix B — Open questions
