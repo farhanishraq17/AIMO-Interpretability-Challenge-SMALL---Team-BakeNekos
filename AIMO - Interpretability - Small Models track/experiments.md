@@ -31,7 +31,12 @@ All 17 kernels pushed 18 Oct (`kernels/runs/e58-*/launch.json`):
 
 `e58-skywork-b` failed at once on MUBAMAN: the session had no GPU (`nvidia-smi` missing), the same symptom as
 before (CLAUDE.md, Kaggle fleet). It is relaunched unchanged on the first account with a free slot; every
-other account had two E58 kernels when it was retried, and Kaggle refused a third.
+other account had two E58 kernels when it was retried, and Kaggle refused a third. Relaunched on Nasif (18 Oct) once `e58-skywork-a` finished there.
+
+Progress, 18 Oct: `e58-skywork-a` complete (54 min). `e58-olmo-e` complete with no rewrite phase: 3 of 4 base
+samples correct and one hit the 16k cap, so its row is ineligible (unlabelled, as the protocol counts it).
+Olmo at one sequence a time ran about 10 tokens/s (86 min for 4 base samples), so an eligible Olmo kernel needs
+5-6 h for its 16 variant samples, inside the 7 h guard.
 
 ### E55: done 17 Oct, every success criterion met (Finding 81)
 
