@@ -72,8 +72,13 @@ problems = json.loads((root / "problems.json").read_text())
 system_prompt = (here / "system_prompt.txt").read_text(encoding="utf-8")
 result, probe = {{"models": {{}}}}, {{}}
 rng = np.random.default_rng(57)
+from huggingface_hub import snapshot_download
 for model_id, short in solution.SHORT.items():
     entry = {{}}
+    # The evaluator serves weights from a warm, offline cache; download first, then load offline as it does.
+    began = time.time()
+    snapshot_download(model_id)
+    entry["download_seconds"] = round(time.time() - began, 1)
     began = time.time()
     tokenizer, model = solution._load(model_id)
     entry["load_seconds"] = round(time.time() - began, 1)
@@ -97,6 +102,8 @@ for model_id, short in solution.SHORT.items():
                  native_bools=all(type(o) is bool for o in outputs), n_calls=len(calls), robust_calls=int(sum(outputs)))
     result["models"][model_id] = entry
     print(model_id, entry, flush=True)
+    solution._cache.clear()  # free the GPU, then the disk: four checkpoints do not fit together
+    shutil.rmtree(Path(os.environ["HF_HOME"]) / "hub", ignore_errors=True)
 result["unknown_model"] = solution.are_robust("example/unknown-model", ["1 + 1 = ?"])
 result["end_to_end_seconds"] = time.time() - started
 (out / "result.json").write_text(json.dumps(result, indent=2))
