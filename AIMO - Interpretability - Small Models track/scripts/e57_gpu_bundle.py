@@ -102,7 +102,13 @@ for model_id, short in solution.SHORT.items():
                  native_bools=all(type(o) is bool for o in outputs), n_calls=len(calls), robust_calls=int(sum(outputs)))
     result["models"][model_id] = entry
     print(model_id, entry, flush=True)
-    solution._cache.clear()  # free the GPU, then the disk: four checkpoints do not fit together
+    # Free the GPU, then the disk: four checkpoints do not fit together. This harness's own references
+    # must go too, or the template's eviction cannot release the model (version 2 ran out of memory).
+    del tokenizer, model, ours
+    solution._cache.clear()
+    import gc, torch
+    gc.collect()
+    torch.cuda.empty_cache()
     shutil.rmtree(Path(os.environ["HF_HOME"]) / "hub", ignore_errors=True)
 result["unknown_model"] = solution.are_robust("example/unknown-model", ["1 + 1 = ?"])
 result["end_to_end_seconds"] = time.time() - started
