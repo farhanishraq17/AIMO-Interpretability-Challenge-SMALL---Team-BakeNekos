@@ -1,0 +1,39 @@
+{
+  "job": "e58-qwen-c-resume",
+  "account": "TASHIN",
+  "ref": "tashintahir/aimo-small-e58-qwen-c-resume",
+  "source_sha256": {
+    "datagen/perturb/sample.py": "b29aac2414d301024e4ae9cf0b9d7ca16ac9c36666c915f944cdf76cb991ea14",
+    "datagen/perturb/answers.py": "10d240d3db4d6b13863b43559b907b8dc4c3d9bc8a87e97d3fd1311db0946b05",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "data/e58/pool.parquet": "9b498581214ce5f31b973927d8d2d55450e3ae6ab316d17aca246af61c03b646",
+    "data/e58/variants.parquet": "792faa4b1cb47d04adf14f0d121cb4a29b2f16fd386a75208bca473d132f1340",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be",
+    "protocols/E58_PROTOCOL.md": "e441f7973285faf6b24a7d37e8d20f5da05ba5c5ee304672a1fbc24c72d31976",
+    "resume/base/shard_00_of_02/metadata.json": "09b0cea63995e17ab5746d5b01b9829235711082b2c67079a206046593701bb8",
+    "resume/base/shard_00_of_02/records.jsonl": "5b2ddf5ccc9a95ef29be2503601f479f4919f7a9a5d1f22a88dc1ce4a055810e",
+    "resume/base/shard_01_of_02/metadata.json": "5e822f2eb1124107074c02d703ccf786cd648ce417c61ef07907257927b7c0a6",
+    "resume/base/shard_01_of_02/records.jsonl": "52afab5b80ea9570f9614b3dc7a1f88c931eb45a6ee7bffca38423ced1886d76",
+    "resume/variants/shard_00_of_02/metadata.json": "a0458c541f1659b24e2fcc404c47fd7007f6d4678c89e51fc18022bc1974a1d9",
+    "resume/variants/shard_00_of_02/records.jsonl": "9123d41c442162a2516574fbbd6cebb3f5758cea79eb1007c7e63d584cc63af6",
+    "resume/variants/shard_01_of_02/metadata.json": "1a631be785cae1cbe5a8416f8913f98ac2909dd21322ae05834a195b60f1d3fc",
+    "resume/variants/shard_01_of_02/records.jsonl": "2f9de21ccc7a4cc300d9ea0637dde2bdddc25d3c2e75ab398371861d357b7635"
+  },
+  "kernel_sha256": "e185ecdcc400e1bbd6d1d5285b9195719627a9a4978a4ddbda9d9c12778fbf7a",
+  "submitted_at": "2026-10-18T10:55:51.758560+00:00",
+  "metadata": {
+    "id": "tashintahir/aimo-small-e58-qwen-c-resume",
+    "title": "aimo-small-e58-qwen-c-resume",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

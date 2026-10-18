@@ -42,6 +42,10 @@ the first Olmo kernel with a complete variant phase, so one sequence at a time d
 (Finding 78) at 16k; the TCPStore warning in its log comes after the run finished. Then `e58-olmo-c` (4.7 h) and `e58-olmo-f`
 (4.4 h), both with a full variant phase: 9 of 17 done. Qwen at 64k runs about 43 min per variant item per GPU.
 
+**All 17 ended by 18 Oct, 10:50 UTC.** 16 finished every phase with exit 0. `e58-qwen-c`'s variant phase was
+stopped by its 7.5 h guard with 8 of 12 items; amendment 1 (protocol §9) samples the 4 missing items in
+`e58-qwen-c-resume` on TASHIN from the kernel's own records, decided before any outcome was read.
+
 ### E55: done 17 Oct, every success criterion met (Finding 81)
 
 **Outputs are shared as a private Kaggle dataset, `farhanishraqq/aimo-small-e55-features`** (1.23 GB, 26 files, no
