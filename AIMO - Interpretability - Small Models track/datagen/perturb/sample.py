@@ -63,6 +63,9 @@ DEFAULT_POOL = ROOT / "data" / "olympiad_pool" / "pool.parquet"
 DEFAULT_VARIANTS = ROOT / "data" / "perturbations" / "variants.parquet"
 # DeepSeek's recommended instruction for R1-family math prompts.
 PROMPT_SUFFIX = "\n\nPlease reason step by step, and put your final answer within \\boxed{}."
+# E59 (`--allow-no-solution`): the same request with a way to decline. The organizers grade `expert_no_solution`
+# on detection, so their prompt must accept a no-solution answer; ours offered none (Finding 83).
+NO_SOLUTION_SUFFIX = PROMPT_SUFFIX + " If the problem has no solution, put \\boxed{\\text{no solution}} instead."
 
 
 def load_records(pattern: str) -> dict[str, dict]:
@@ -145,15 +148,15 @@ def build_items(args: argparse.Namespace) -> tuple[list[dict], dict]:
     return items, info
 
 
-def encode_prompt(tokenizer, problem: str) -> list[int]:
+def encode_prompt(tokenizer, problem: str, suffix: str = PROMPT_SUFFIX) -> list[int]:
     """Chat-templated prompt ids. The template already carries BOS, so add no special tokens."""
-    message = [{"role": "user", "content": problem + PROMPT_SUFFIX}]
+    message = [{"role": "user", "content": problem + suffix}]
     try:
         text = tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
         return tokenizer(text, add_special_tokens=False)["input_ids"]
     except (AttributeError, TypeError, ValueError):
         # Tokenizers without a chat template (smoke tests).
-        return tokenizer(problem + PROMPT_SUFFIX)["input_ids"]
+        return tokenizer(problem + suffix)["input_ids"]
 
 
 def stop_token_ids(tokenizer, model_id: str, local_files_only: bool) -> list[int]:
@@ -307,6 +310,7 @@ def main() -> None:
     parser.add_argument("--local-files-only", action="store_true")
     parser.add_argument("--allow-lossy-tokenizer", action="store_true", help="debug only; see tokenizer_check.py")
     parser.add_argument("--chunk", type=int, default=32, help="items per generate call; also the flush interval")
+    parser.add_argument("--allow-no-solution", action="store_true", help="E59: let the prompt accept a no-solution answer")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--num-shards", type=int, default=1)
     parser.add_argument("--shard-index", type=int, default=0)
@@ -318,6 +322,7 @@ def main() -> None:
         raise SystemExit("--shard-index must satisfy 0 <= index < --num-shards")
 
     items, info = build_items(args)
+    suffix = NO_SOLUTION_SUFFIX if args.allow_no_solution else PROMPT_SUFFIX
     assignment = assign_shards([i["item_id"] for i in items], args.num_shards, "roundrobin")
     # Hash order mixes tiers and sources, so a run stopped by --max-hours is still a fair sample.
     shard = sorted(
@@ -352,7 +357,7 @@ def main() -> None:
         "args": {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
         "backend": backend.name,
         "backend_version": backend.version,
-        "prompt_suffix": PROMPT_SUFFIX,
+        "prompt_suffix": suffix,
         "stop_token_ids": backend.stop_ids,
         **tokenizer_info,
         "selection": info,
@@ -370,7 +375,7 @@ def main() -> None:
             print(f"time budget of {args.max_hours} h reached; stopping (resumable)", flush=True)
             break
         chunk = todo[start : start + args.chunk]
-        completions = backend.generate([encode_prompt(tokenizer, item["problem"]) for item in chunk])
+        completions = backend.generate([encode_prompt(tokenizer, item["problem"], suffix) for item in chunk])
         with records_path.open("a", encoding="utf-8") as handle:
             for item, samples in zip(chunk, completions):
                 answers = [extract_answer(text) for text, _, _ in samples]

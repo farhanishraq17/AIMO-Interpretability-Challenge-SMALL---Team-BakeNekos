@@ -22,11 +22,15 @@ family's accuracy follows the original's (`exploratory`).
 Writes the `E58: self-labelling gate on the official rows` section of RESULTS.md and
 runs/e58-analysis/result.json.
 
-Run:  python train/eval_e58.py
+E59 (`protocols/E59_PROTOCOL.md`) is the same labeller with a prompt that can decline; `--experiment e59`
+grades and gates its runs with this same code and writes its own section and runs/e59-analysis/.
+
+Run:  python train/eval_e58.py   (or --experiment e59)
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -45,8 +49,10 @@ from results_io import upsert_section  # noqa: E402
 MODELS = {"qwen": "Qwen/Qwen3.5-4B", "deepseek": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
           "skywork": "Skywork/Skywork-OR1-Math-7B", "olmo": "allenai/Olmo-3-7B-Think"}
 CONSTANTS = {"qwen": True, "deepseek": True, "skywork": False, "olmo": False}  # e27f
-RECORDS = "runs/e58-{short}-*/e58-{short}-*/{phase}/shard_*/records.jsonl"
-OUT = ROOT / "runs" / "e58-analysis"
+RECORDS = "runs/{experiment}-{short}-*/{experiment}-{short}-*/{phase}/shard_*/records.jsonl"
+EXPERIMENT = "e58"  # set by --experiment
+HEADINGS = {"e58": "E58: self-labelling gate on the official rows",
+            "e59": "E59: the same gate with a prompt that can decline"}
 ROBUST, SPURIOUS = 0.10, 0.25  # the official max_drop rule
 MIN_FAMILY_SAMPLES = 4
 MIN_LABELLED, MIN_KAPPA, SEED = 18, 0.30, 58
@@ -92,13 +98,13 @@ def label_row(base: dict | None, variants: list[dict], cap: int) -> dict:
 
 
 def load(short: str, phase: str) -> list[dict]:
-    paths = sorted(ROOT.glob(RECORDS.format(short=short, phase=phase)))
+    paths = sorted(ROOT.glob(RECORDS.format(experiment=EXPERIMENT, short=short, phase=phase)))
     rows = [json.loads(line) for p in paths for line in p.read_text(encoding="utf-8").splitlines() if line.strip()]
     return list({r["item_id"]: r for r in rows}.values())  # a resumed shard may repeat an item
 
 
 def run_cap(short: str) -> int:
-    paths = ROOT.glob(RECORDS.format(short=short, phase="base").replace("records.jsonl", "metadata.json"))
+    paths = ROOT.glob(RECORDS.format(experiment=EXPERIMENT, short=short, phase="base").replace("records.jsonl", "metadata.json"))
     caps = {json.loads(p.read_text(encoding="utf-8"))["args"]["max_new_tokens"] for p in paths}
     assert len(caps) == 1, f"{short}: runs disagree on the cap: {caps}"
     return caps.pop()
@@ -137,6 +143,8 @@ def exploratory() -> tuple[list[str], dict]:
                     counts[outcome][1] += bool(NOTICE.search(tail))
         notice[short] = counts
         lines.append(f"| {short} | {counts['answered'][1]} of {counts['answered'][0]} | {counts['truncated'][1]} of {counts['truncated'][0]} |")
+    if EXPERIMENT != "e58":  # the organizers' sample is read once, in E58's section
+        return lines, {"notice": notice}
     sample = pd.read_parquet(hf_hub_download(SAMPLE[0], SAMPLE[1], repo_type="dataset", revision=SAMPLE[2]))
     lines += ["", "Organizers' public sample: how closely variant accuracy follows the original's, per family "
               "(an answer-preserving family should follow it closely; one graded on detection need not):", "",
@@ -157,13 +165,18 @@ def exploratory() -> tuple[list[str], dict]:
 
 
 def main() -> None:
+    global EXPERIMENT
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--experiment", choices=sorted(HEADINGS), default="e58")
+    EXPERIMENT = parser.parse_args().experiment
+    out_dir = ROOT / "runs" / f"{EXPERIMENT}-analysis"
     targets = pd.read_parquet(ROOT / "data" / "e58" / "rows.parquet")
     official = pd.read_parquet(ROOT / "data" / "official_check" / "official_labels.parquet")
     rows = []
     for short, model_id in MODELS.items():
         base = {r["pool_id"]: r for r in load(short, "base")}
         if not base:
-            raise SystemExit(f"no E58 base records for {short}; download every e58 kernel first")
+            raise SystemExit(f"no {EXPERIMENT} base records for {short}; download every {EXPERIMENT} kernel first")
         cap = run_cap(short)
         variants = load(short, "variants")
         for target in targets[targets.model_id == model_id].itertuples(index=False):
@@ -196,8 +209,8 @@ def main() -> None:
               "confusion": pd.crosstab(labelled.official, labelled.self_robust).to_dict() if len(labelled) else {},
               "per_model": per_model.to_dict("records"), "per_row": frame.drop(columns="model_id").to_dict("records")}
     explore_lines, result["exploratory"] = exploratory()
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "result.json").write_text(json.dumps(result, indent=2, default=float), encoding="utf-8")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "result.json").write_text(json.dumps(result, indent=2, default=float), encoding="utf-8")
 
     table = ["| model | cap | rows | sampled | eligible | labelled | self robust / spurious / band | official robust "
              "| contradiction samples: detected / answered (kept original) / truncated / other |",
@@ -208,7 +221,9 @@ def main() -> None:
                      f"({int(m.kept_original)}) / {int(m.truncated)} / {int(m.other)} |")
     body = "\n".join([
         "Answer-property variants (`datagen/perturb/e58_variants.py`) on the 27 official rows with a reference answer, "
-        "sampled with the organizers' decoding at each model's T4 cap (`protocols/E58_PROTOCOL.md`).", "", *table, "",
+        "sampled with the organizers' decoding at each model's T4 cap "
+        f"(`protocols/{EXPERIMENT.upper()}_PROTOCOL.md`" + ("; the prompt can decline" if EXPERIMENT == "e59" else "") + ").",
+        "", *table, "",
         f"**Gate: {'passes' if passes else 'fails'}.** {len(labelled)} of {len(frame)} rows labelled (needs {MIN_LABELLED}); "
         f"Cohen's kappa against the official labels {k:.3f}, 95% problem-bootstrap CI [{low:.3f}, {high:.3f}] "
         f"(needs >= {MIN_KAPPA} with the lower bound above 0).", "",
@@ -216,7 +231,7 @@ def main() -> None:
         f"`e27f`'s constants agree on {result['constants_accuracy_same_rows']:.3f}. "
         f"Family that set `max_drop`: {result['deciding_family']}.", "", *explore_lines,
     ])
-    upsert_section(ROOT / "RESULTS.md", "E58: self-labelling gate on the official rows", body)
+    upsert_section(ROOT / "RESULTS.md", HEADINGS[EXPERIMENT], body)
     print(body)
 
 

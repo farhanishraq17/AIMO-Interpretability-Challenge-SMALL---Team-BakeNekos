@@ -7,7 +7,10 @@ and runs both phases, so eligibility and variants live in one session. Olmo-3-Th
 a time, the only setting under which vLLM 0.20 sampled it at 16k without dying (Finding 78), so it gets
 one kernel per problem.
 
-Run via:  python scripts/kaggle_followup.py push e58-qwen-a --account <ALIAS>
+E59 (`protocols/E59_PROTOCOL.md`) reruns the same kernels with one change, `--allow-no-solution`, so the prompt
+offers a way to decline; Qwen gets five kernels instead of three, since `e58-qwen-c` hit its guard.
+
+Run via:  python scripts/kaggle_followup.py push e58-qwen-a --account <ALIAS>   (or e59-qwen-a)
 """
 
 import json
@@ -22,7 +25,7 @@ from e52_gpu_bundle import HEADER, MODELS, TRANSFORMERS, payload  # noqa: E402
 
 FILES = ("datagen/perturb/sample.py", "datagen/perturb/answers.py", "datagen/tokenizer_check.py",
          "datagen/extract_features.py", "data/e58/pool.parquet", "data/e58/variants.parquet",
-         "scripts/kaggle_cuda_setup.py", "scripts/kaggle_process_guard.py", "protocols/E58_PROTOCOL.md")
+         "scripts/kaggle_cuda_setup.py", "scripts/kaggle_process_guard.py")
 DECODING = ["--k", "4", "--temperature", "1.0", "--top-p", "0.95", "--top-k", "40"]
 CAP = {"qwen": 65536, "deepseek": 32768, "skywork": 32768, "olmo": 16384}
 ENGINE = {"qwen": ["--tensor-parallel", "1", "--text-only", "--max-num-seqs", "64", "--chunk", "4"],
@@ -34,31 +37,34 @@ ENGINE = {"qwen": ["--tensor-parallel", "1", "--text-only", "--max-num-seqs", "6
                    "--max-num-seqs", "1", "--chunk", "1"]}
 PER_GPU = {"qwen": True, "deepseek": False, "skywork": False, "olmo": False}
 HOURS = {"base": 2.5, "variants": 7.0}  # --max-hours per phase; the guard allows half an hour more
-SPLITS = {"qwen": 3, "deepseek": 4, "skywork": 2, "olmo": 8}
+SPLITS = {"e58": {"qwen": 3, "deepseek": 4, "skywork": 2, "olmo": 8},
+          "e59": {"qwen": 5, "deepseek": 4, "skywork": 1, "olmo": 8}}
+FLAGS = {"e58": [], "e59": ["--allow-no-solution"]}
 # Amendment 1: a kernel stopped by its guard resumes from its own downloaded records, so the sampler skips
 # every item already recorded and base eligibility is not re-drawn.
 RESUME = {"qwen-c": "runs/e58-qwen-c-TASHIN/e58-qwen-c"}
-JOBS = [f"{m}-{part}" for m, n in SPLITS.items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME]
+JOBS = [f"{m}-{part}" for m, n in SPLITS["e58"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME]
+E59_JOBS = [f"{m}-{part}" for m, n in SPLITS["e59"].items() for part in "abcdefgh"[:n]]
 
 
-def part_keys(model: str, part: str) -> list[str]:
+def part_keys(model: str, part: str, experiment: str = "e58") -> list[str]:
     rows = pd.read_parquet(ROOT / "data/e58/rows.parquet")
     keys = sorted(rows.loc[rows.model_id == MODELS[model], "problem_key"])
-    return keys["abcdefgh".index(part)::SPLITS[model]]
+    return keys["abcdefgh".index(part)::SPLITS[experiment][model]]
 
 
-def render(job: str) -> tuple[str, dict]:
+def render(job: str, experiment: str = "e58") -> tuple[str, dict]:
     kernel = job.removesuffix("-resume")
     model, part = kernel.rsplit("-", 1)
     previous = ROOT / RESUME[kernel] if job.endswith("-resume") else None
     extra = {f"resume/{f.relative_to(previous).as_posix()}": f.read_bytes()
              for f in previous.glob("*/shard_*/*") if f.name in ("records.jsonl", "metadata.json")} if previous else {}
-    entries, hashes = payload(FILES, extra)
-    out = f"e58-{model}-{part}"
+    entries, hashes = payload((*FILES, f"protocols/{experiment.upper()}_PROTOCOL.md"), extra)
+    out = f"{experiment}-{model}-{part}"
     common = ["datagen/perturb/sample.py", "--model-id", MODELS[model], "--backend", "vllm",
               "--pool", "data/e58/pool.parquet", "--variants", "data/e58/variants.parquet",
-              *DECODING, "--max-new-tokens", str(CAP[model]), *ENGINE[model],
-              "--out-dir", f"/kaggle/working/{out}", "--problem-keys", *part_keys(model, part)]
+              *DECODING, "--max-new-tokens", str(CAP[model]), *ENGINE[model], *FLAGS[experiment],
+              "--out-dir", f"/kaggle/working/{out}", "--problem-keys", *part_keys(model, part, experiment)]
     phases = {
         "base": [*common, "--phase", "base", "--max-hours", str(HOURS["base"])],
         "variants": [*common, "--phase", "variants", "--max-hours", str(HOURS["variants"]),
