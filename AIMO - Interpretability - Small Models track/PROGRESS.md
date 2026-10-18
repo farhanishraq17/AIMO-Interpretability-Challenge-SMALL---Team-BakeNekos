@@ -2591,6 +2591,52 @@ features exactly, and costs 0.7-1.4 s a call on a T4.** (`scripts/e57_gpu_bundle
   previous model. Each is fixed in the harness and recorded in its commit.
 - **Runtime is not a constraint:** sixty one-problem calls are about a minute of compute on a T4 pair.
 
+**83. E58: at 16k-64k tokens no model ever declares an answer-property contradiction unsolvable, so the
+labeller calls every row spurious and fails its gate (kappa 0.000). The models do notice the clash; they
+treat it as a typo and answer anyway. The organizers' sample says their family is graded on detection,
+which an 8B model reaches 56% of the time there.** (`protocols/E58_PROTOCOL.md` with amendment 1,
+`train/eval_e58.py`; 17 kernels plus one resume on nine accounts, 18 Oct, 86.8 session-hours. RESULTS,
+"E58: self-labelling gate on the official rows".)
+
+The 27 official rows with a reference answer got two contradictions built from the answer ("the answer is
+odd" for an even answer; "greater than 2N + 10") and two true premises, k = 4 each, at Qwen 64k, DeepSeek
+and Skywork 32k, Olmo 16k.
+
+| | Qwen3.5-4B | DeepSeek-R1-Qwen3-8B | Skywork-OR1-Math-7B | Olmo-3-7B-Think |
+| --- | --- | --- | --- | --- |
+| eligible / labelled rows | 9 / 9 | 5 / 5 (2 not 4/4 at 32k) | 3 / 3 | 7 / 7 (1 not 4/4 at 16k) |
+| contradiction samples flagged | **0 of 72** | **0 of 40** | **0 of 24** | **0 of 56** |
+| answered (with the original answer) | 34 (24) | 13 (7) | 24 (21) | 3 (2) |
+| ran out of budget | 38 | 27 | 0 | 53 |
+| consistent-premise accuracy | 0.99 | 0.98 | 1.00 | 0.96 |
+
+- **The gate fails exactly as pre-registered (§6).** Coverage passes (24 of 27 rows labelled), but every
+  labelled row is spurious while 19 of the 24 are officially robust: kappa 0.000, agreement 0.21 against
+  the constants' 0.54 on the same rows. The answer-property labeller is closed; `e27f` stays, and E57 still
+  waits for the collaborator's gate.
+- **The consistent premises cost nothing** (0.96-1.00), so the contradiction family alone sets every label,
+  as Finding 76 found for the organizers' own olympiad rows.
+- **The models notice; they do not abstain** (exploratory, after the read). Over half of Qwen's and
+  DeepSeek's answered contradiction samples name the clash in their final 800 characters, then box the
+  computed answer anyway: "The answer is even, but the problem specifies that the answer is odd ... The
+  'odd' requirement may be a mistake". One DeepSeek sample went the other way and bent its arithmetic to
+  fit the false claim (77 against the true 70). Skywork almost never mentions it (1 of 24) and keeps the
+  original answer 21 times; Olmo is still deliberating at 16k in 53 of 56 samples.
+- **The organizers grade `expert_no_solution` on detection, and an 8B model detects their variants often.**
+  In their public sample, every answer-preserving family's accuracy tracks the original's (Spearman
+  0.88-0.92; 0.01-0.04 accuracy where the original is at most 0.2). `expert_no_solution` does not (0.38;
+  0.17 where the original fails), so its target is not the original answer, which matches the competition's
+  description of the family ("tests unsolvability detection"). `qwen3-8b:low` scores 0.56 on it, 0.89-0.90
+  on two problems. Our models flag 0 of 192 here and 2 of 404 in E52.
+- **So the gap is in how the question is put, not in model size.** Two differences are untested and
+  confounded: our prompt (the DeepSeek suffix, "put your final answer within \boxed{}") offers no way to
+  say "no solution", while the organizers' grader must accept one; and a claim about the answer reads as a
+  wrong hint, where their premises contradict the problem's own objects. The models' own words favour the
+  first: they call the claim a mistake and pick the computed value. The organizers' prompt is not public.
+- **Cost:** 86.8 session-hours for 27 rows, about 3.2 a row on T4s; Olmo one sequence at a time at about
+  10 tokens/s, Qwen at 64k about 40-100 minutes per item and GPU. Labelling E55's 548 problems this way on
+  the fleet was never within reach before the freeze.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

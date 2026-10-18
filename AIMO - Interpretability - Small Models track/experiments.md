@@ -7,7 +7,9 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
-### E58: running since 18 Oct (protocol `protocols/E58_PROTOCOL.md`, committed `da7e18d` before launch)
+### E58: closed 18 Oct, gate failed as predicted (Finding 83; protocol `protocols/E58_PROTOCOL.md`, committed `da7e18d` before launch)
+
+**Outcome:** 0 of 192 contradiction samples flagged on any model; every one of the 24 labelled rows spurious, kappa 0.000. The models name the clash and answer anyway. The organizers' sample grades the family on detection, which `qwen3-8b` reaches 56% of the time there. 86.8 session-hours.
 
 Does an automatic, full-budget labeller reproduce the official labels? Four variants per official problem,
 built from its reference answer alone: two contradictions (wrong parity; "greater than 2N + 10") and two
@@ -224,6 +226,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E48 | How many labels would each closed lane have needed? | local | Done | **63 to 320 rows; we had 33 to 61.** Power was 14-53%, so the experiments could not have returned a positive result even if their hypotheses were true (Finding 72) |
 | E50 | What exactly is the hidden set, given every score we have? | local | Done | **Solved to two states**, both Qwen 5, DeepSeek 3, Skywork 3, Olmo 3. `e27k` is perfect on the last three; its two misses are one swapped Qwen pair. Ranking null p = 0.048 on that composition. A public pre-withholding `train-main-v2` revision exposes 7 validation labels; unused (Finding 75) |
 | E51 | Which perturbation families make a label spurious? | local | Done | **Different ones per population.** MATH: domain (0.86 of rows drop >= 0.25). Olympiad: `expert_no_solution` (0.43), surface families <= 0.03. MATH-trained models learned the wrong mechanism (Finding 76) |
+| E58 | Does an automatic labeller (answer-property contradictions, T4-maximal budgets) reproduce the official labels? | Kaggle | Done, gate failed | **No.** 0 of 192 contradiction samples flagged; every row spurious, kappa 0.000. The models notice the clash, call it a typo and answer anyway (Finding 83) |
 | E57 GPU check | Does the per-problem template run on the real models and match its training features? | Kaggle | Done | **Yes:** exact parity with E55 on all four models, native bools, 0.68-1.43 s a call on T4 (Finding 82) |
 | E55 | One-pass features for every candidate problem, and per-problem cost | Kaggle | Done | **Complete**: 548 problems x 4 models, 100% coverage, zero non-finite; one pass is 0.55-0.89 s per problem on T4. Budget path closed on cost (Finding 81) |
 | E54 | Does any held signal beat the constants as a per-problem rule? | local | Done | **Only the budget path, by the rule** (Putnam 0.598, GSM-Plus 0.564), and on the official rows its threshold calls every problem spurious. A candidate needing in-population re-calibration; the constants ship meanwhile (Finding 80) |

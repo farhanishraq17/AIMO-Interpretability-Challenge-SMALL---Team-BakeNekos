@@ -1,6 +1,7 @@
 # E58: does a full-budget answer-property labeller reproduce the official labels on the official rows?
 
-Status: **pre-registered 18 October 2026, before any E58 record existed.** Code:
+Status: **closed 18 October 2026: the gate failed as predicted** (kappa 0.000; every labelled row spurious, 0 of 192 contradiction samples flagged; PROGRESS Finding 83). `e27f` stays.
+Pre-registered 18 October 2026, before any E58 record existed. Code:
 `datagen/perturb/e58_variants.py` (variants), `scripts/e58_gpu_bundle.py` (kernels), `train/eval_e58.py`
 (grading, labels, gate; checked by `train/test_eval_e58.py`). Any change after the first record is read
 is an amendment, dated in §9.

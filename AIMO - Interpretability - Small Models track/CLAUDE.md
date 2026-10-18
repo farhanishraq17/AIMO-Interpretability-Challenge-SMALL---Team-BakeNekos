@@ -300,9 +300,10 @@ Six accounts, each with about 30 GPU-hours a week and 12-hour sessions. Roles ar
 `Secrets.env` currently holds eleven aliases: ISHRAQ, DIDHITI, TASHIN, SALAM, MUBAMAN, RSD,
 Labib, Eshad, Mashrafi, Samin and Nasif. Three caveats a new owner will hit:
 
-- **Eshad has no GPU.** Its first kernel ran on a CPU machine (`nvidia-smi` missing); the account
-  needs phone verification on Kaggle before `machine_shape` is honoured. MUBAMAN had the same
-  symptom for the Large track (LF-5).
+- **Eshad has GPUs since its phone verification (18 Oct):** the capability check got 2x T4.
+  **MUBAMAN (`sadmanmubasshirkhan`) still gets a CPU session with no internet** after the owner's
+  verification on 18 Oct (`e58-skywork-b` died at `nvidia-smi`, and so did a fresh capability check).
+  Re-test with `kaggle_followup.py push capability-check --account MUBAMAN` before giving it work.
 - **SALAM and DIDHITI are shared with another project.** On 22 Sep both had their two GPU slots
   filled by that project's kernels, and a push is refused when either the session or the weekly
   limit is reached. Same for any account running five `kagri-*` kernels.

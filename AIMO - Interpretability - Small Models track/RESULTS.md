@@ -1088,3 +1088,42 @@ Thresholds: reference NLL medians qwen 1.269, skywork 2.012, olmo 1.579, deepsee
 | `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 1.000 | 1.000 | 0 | torch.bfloat16 | 9021e9d4 | 0.87 | 644 |
 
 **Success criteria (protocol §4): met.** One-pass cost: 60 one-problem calls at the mean T4 rate (0.78 s) and one third of it on the evaluation card come to **0.3 minutes** of compute against 50, before model loading; the budget-path path was decided by E49's record (amendment 1: 496 minutes, E56 not run).
+
+## E58: self-labelling gate on the official rows
+
+Answer-property variants (`datagen/perturb/e58_variants.py`) on the 27 official rows with a reference answer, sampled with the organizers' decoding at each model's T4 cap (`protocols/E58_PROTOCOL.md`).
+
+| model | cap | rows | sampled | eligible | labelled | self robust / spurious / band | official robust | contradiction samples: detected / answered (kept original) / truncated / other |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| qwen | 65,536 | 9 | 9 | 9 | 9 | 0 / 9 / 0 | 7 | 0 / 34 (24) / 38 / 0 |
+| deepseek | 32,768 | 7 | 7 | 5 | 5 | 0 / 5 / 0 | 5 | 0 / 13 (7) / 27 / 0 |
+| skywork | 32,768 | 3 | 3 | 3 | 3 | 0 / 3 / 0 | 2 | 0 / 24 (21) / 0 / 0 |
+| olmo | 16,384 | 8 | 8 | 7 | 7 | 0 / 7 / 0 | 7 | 0 / 3 (2) / 53 / 0 |
+
+**Gate: fails.** 24 of 27 rows labelled (needs 18); Cohen's kappa against the official labels 0.000, 95% problem-bootstrap CI [0.000, 0.000] (needs >= 0.3 with the lower bound above 0).
+
+On the labelled rows, self-labels agree with the official labels on 0.208; `e27f`'s constants agree on 0.542. Family that set `max_drop`: {'no_solution': 24}.
+
+**Exploratory (after the gate was read).** Contradiction samples whose stored ending mentions the clash:
+
+| model | answered: mention the clash | truncated: mention the clash |
+| --- | --- | --- |
+| qwen | 18 of 34 | 10 of 38 |
+| deepseek | 7 of 13 | 5 of 27 |
+| skywork | 1 of 24 | 0 of 0 |
+| olmo | 0 of 3 | 20 of 53 |
+
+Organizers' public sample: how closely variant accuracy follows the original's, per family (an answer-preserving family should follow it closely; one graded on detection need not):
+
+| family | rows | Spearman(base, variant) | variant accuracy where base <= 0.2 |
+| --- | --- | --- | --- |
+| distract | 90 | +0.91 | 0.01 (n = 21) |
+| domain | 90 | +0.90 | 0.01 (n = 21) |
+| expert_no_solution | 49 | +0.38 | 0.17 (n = 6) |
+| expert_perturbations | 49 | +0.76 | 0.02 (n = 6) |
+| paraphrase | 10 | +0.92 | 0.04 (n = 6) |
+| rename | 90 | +0.92 | 0.01 (n = 21) |
+| rephrase | 90 | +0.89 | 0.02 (n = 21) |
+| typos | 90 | +0.88 | 0.02 (n = 21) |
+
+`expert_no_solution` accuracy by configuration in that sample: gemini-3.1-pro-preview:low 0.50, Qwen/Qwen3.5-397B-A17B-FP8:low 0.51, qwen3-8b:low 0.56, huikang-gpt-oss-120b-aimo3:low 0.59, gpt-oss-120b:low 0.63, gpt-5.2-2025-12-11:low 0.84, lukealonso/GLM-5.1-NVFP4:low 0.87.

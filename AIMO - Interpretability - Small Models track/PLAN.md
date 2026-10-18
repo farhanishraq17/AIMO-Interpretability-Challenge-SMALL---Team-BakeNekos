@@ -909,3 +909,5 @@ noise). E55's features are in the private Kaggle dataset `farhanishraqq/aimo-sma
 pending: automatic answer-property contradictions and consistent premises on the 27 official rows with a
 known answer, at each model's T4 cap, gated like E24b on kappa against the official labels. Predicted in
 advance to fail. If it passes, E57's precondition is amended to accept it and E59 labels E55's 548 problems.
+
+**E58 closed the same day: the gate failed as predicted** (Finding 83). No model flagged one of 192 contradictions; they named the clash and answered anyway. The organizers' sample grades the family on detection, and an 8B model detects their variants 56% of the time, so what separates the two is how the question is put (a prompt with no way to say "no solution", a claim about the answer that reads as a typo), not model size. `e27f` stays; E57 waits for the collaborator's gate.

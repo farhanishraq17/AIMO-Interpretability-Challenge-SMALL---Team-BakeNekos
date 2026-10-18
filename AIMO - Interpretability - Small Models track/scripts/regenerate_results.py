@@ -84,6 +84,8 @@ STEPS = [
     ["train/eval_e54_per_problem.py"],
     # E55: coverage and one-pass timing of the feature runs. CPU; needs the e55 runs.
     ["train/report_e55.py"],
+    # E58: the answer-property labeller against the official rows. CPU; needs the e58 runs and the network.
+    ["train/eval_e58.py"],
 ]
 
 

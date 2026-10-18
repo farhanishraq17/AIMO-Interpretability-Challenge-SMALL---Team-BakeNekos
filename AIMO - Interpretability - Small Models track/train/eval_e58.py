@@ -15,6 +15,10 @@ two variants. `max_drop = 1 - min(family accuracies)`, and the official rule lab
 **Gate.** At least `MIN_LABELLED` labelled rows, and Cohen's kappa against the official labels at least
 `MIN_KAPPA` with a problem-bootstrap 95% interval above 0. The official labels are read here and only here.
 
+**Exploratory, added after the gate was read (18 Oct) and never part of it:** how many contradiction
+samples mention the clash in their stored ending, and, in the organizers' public sample, how closely each
+family's accuracy follows the original's (`exploratory`).
+
 Writes the `E58: self-labelling gate on the official rows` section of RESULTS.md and
 runs/e58-analysis/result.json.
 
@@ -24,6 +28,7 @@ Run:  python train/eval_e58.py
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -105,6 +110,52 @@ def kappa(frame: pd.DataFrame) -> float:
     return float(cohen_kappa_score(frame.official, frame.self_robust))
 
 
+# Exploratory: the ending names the clash (the added premise, a contradiction, a suspected error).
+NOTICE = re.compile(r"contradict|inconsisten|impossible|not (?:odd|even)|isn.t (?:odd|even)|but (?:the|it) "
+                    r"(?:says|states|problem says)|which is even|which is odd|typo|mistake in the problem|"
+                    r"cannot be (?:odd|even|greater)", re.IGNORECASE)
+
+
+def exploratory() -> tuple[list[str], dict]:
+    """Post-hoc reading of the failed gate; see the module docstring."""
+    from scipy.stats import spearmanr
+    from eval_label_mechanics import SAMPLE
+    from huggingface_hub import hf_hub_download
+
+    lines = ["**Exploratory (after the gate was read).** Contradiction samples whose stored ending mentions the clash:", "",
+             "| model | answered: mention the clash | truncated: mention the clash |", "| --- | --- | --- |"]
+    notice = {}
+    for short in MODELS:
+        cap, counts = run_cap(short), {"answered": [0, 0], "truncated": [0, 0]}
+        for record in load(short, "variants"):
+            if family(record["category"]) != "no_solution":
+                continue
+            for tail, tokens in zip(record["sample_tails"], record["completion_tokens"]):
+                outcome = grade(tail, tokens, cap)
+                if outcome in counts:
+                    counts[outcome][0] += 1
+                    counts[outcome][1] += bool(NOTICE.search(tail))
+        notice[short] = counts
+        lines.append(f"| {short} | {counts['answered'][1]} of {counts['answered'][0]} | {counts['truncated'][1]} of {counts['truncated'][0]} |")
+    sample = pd.read_parquet(hf_hub_download(SAMPLE[0], SAMPLE[1], repo_type="dataset", revision=SAMPLE[2]))
+    lines += ["", "Organizers' public sample: how closely variant accuracy follows the original's, per family "
+              "(an answer-preserving family should follow it closely; one graded on detection need not):", "",
+              "| family | rows | Spearman(base, variant) | variant accuracy where base <= 0.2 |", "| --- | --- | --- | --- |"]
+    coupling = {}
+    for name, group in sample.groupby("permutation_type"):
+        if len(group) < 10:
+            continue
+        low = group[group.base_accuracy <= 0.2]
+        coupling[name] = {"rows": len(group), "spearman": float(spearmanr(group.base_accuracy, group.permuted_accuracy).statistic),
+                          "low_base_rows": len(low), "low_base_variant_accuracy": float(low.permuted_accuracy.mean())}
+        c = coupling[name]
+        lines.append(f"| {name} | {c['rows']} | {c['spearman']:+.2f} | {c['low_base_variant_accuracy']:.2f} (n = {c['low_base_rows']}) |")
+    no_solution = sample[sample.permutation_type == "expert_no_solution"].groupby("model_id").permuted_accuracy.mean()
+    lines += ["", "`expert_no_solution` accuracy by configuration in that sample: " +
+              ", ".join(f"{m} {a:.2f}" for m, a in no_solution.sort_values().items()) + "."]
+    return lines, {"notice": notice, "coupling": coupling, "no_solution_accuracy": no_solution.to_dict()}
+
+
 def main() -> None:
     targets = pd.read_parquet(ROOT / "data" / "e58" / "rows.parquet")
     official = pd.read_parquet(ROOT / "data" / "official_check" / "official_labels.parquet")
@@ -144,6 +195,7 @@ def main() -> None:
               "deciding_family": labelled.deciding.value_counts().to_dict(),
               "confusion": pd.crosstab(labelled.official, labelled.self_robust).to_dict() if len(labelled) else {},
               "per_model": per_model.to_dict("records"), "per_row": frame.drop(columns="model_id").to_dict("records")}
+    explore_lines, result["exploratory"] = exploratory()
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "result.json").write_text(json.dumps(result, indent=2, default=float), encoding="utf-8")
 
@@ -162,7 +214,7 @@ def main() -> None:
         f"(needs >= {MIN_KAPPA} with the lower bound above 0).", "",
         f"On the labelled rows, self-labels agree with the official labels on {result['self_label_accuracy']:.3f}; "
         f"`e27f`'s constants agree on {result['constants_accuracy_same_rows']:.3f}. "
-        f"Family that set `max_drop`: {result['deciding_family']}.",
+        f"Family that set `max_drop`: {result['deciding_family']}.", "", *explore_lines,
     ])
     upsert_section(ROOT / "RESULTS.md", "E58: self-labelling gate on the official rows", body)
     print(body)
