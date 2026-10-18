@@ -35,7 +35,10 @@ ENGINE = {"qwen": ["--tensor-parallel", "1", "--text-only", "--max-num-seqs", "6
 PER_GPU = {"qwen": True, "deepseek": False, "skywork": False, "olmo": False}
 HOURS = {"base": 2.5, "variants": 7.0}  # --max-hours per phase; the guard allows half an hour more
 SPLITS = {"qwen": 3, "deepseek": 4, "skywork": 2, "olmo": 8}
-JOBS = [f"{m}-{part}" for m, n in SPLITS.items() for part in "abcdefgh"[:n]]
+# Amendment 1: a kernel stopped by its guard resumes from its own downloaded records, so the sampler skips
+# every item already recorded and base eligibility is not re-drawn.
+RESUME = {"qwen-c": "runs/e58-qwen-c-TASHIN/e58-qwen-c"}
+JOBS = [f"{m}-{part}" for m, n in SPLITS.items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME]
 
 
 def part_keys(model: str, part: str) -> list[str]:
@@ -45,8 +48,12 @@ def part_keys(model: str, part: str) -> list[str]:
 
 
 def render(job: str) -> tuple[str, dict]:
-    model, part = job.rsplit("-", 1)
-    entries, hashes = payload(FILES)
+    kernel = job.removesuffix("-resume")
+    model, part = kernel.rsplit("-", 1)
+    previous = ROOT / RESUME[kernel] if job.endswith("-resume") else None
+    extra = {f"resume/{f.relative_to(previous).as_posix()}": f.read_bytes()
+             for f in previous.glob("*/shard_*/*") if f.name in ("records.jsonl", "metadata.json")} if previous else {}
+    entries, hashes = payload(FILES, extra)
     out = f"e58-{model}-{part}"
     common = ["datagen/perturb/sample.py", "--model-id", MODELS[model], "--backend", "vllm",
               "--pool", "data/e58/pool.parquet", "--variants", "data/e58/variants.parquet",
@@ -66,6 +73,8 @@ subprocess.run([sys.executable, "-m", "pip", "--python", py, "install", "--no-ca
 freeze = subprocess.run([sys.executable, "-m", "pip", "--python", py, "freeze"], capture_output=True, text=True, check=True)
 (out / "environment.txt").write_text(freeze.stdout)
 guard = runpy.run_path(str(root / "scripts/kaggle_process_guard.py"))["run_guarded"]
+if (root / "resume").is_dir():
+    shutil.copytree(root / "resume", out, dirs_exist_ok=True)
 phases = {phases!r}
 results = {{}}
 for phase, argv in phases.items():

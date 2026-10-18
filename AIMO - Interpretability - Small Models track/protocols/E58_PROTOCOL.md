@@ -121,4 +121,12 @@ ran out of budget deciding.
 
 ## 9. Amendments
 
-None yet.
+**1, 18 October, after every kernel ended and before any E58 record's outcome was read.** `e58-qwen-c`'s
+variant phase was stopped by its process guard at 7.5 h (`wall_time_limit`) with 8 of its 12 variant items
+sampled; the other 16 kernels finished every phase. Two Qwen rows each lack one variant per family. They would
+still be labelled under §4 (4 samples per family), but on half the samples of every other row. The four missing
+items are therefore sampled by `e58-qwen-c-resume`: the same settings, the sampler's own resume path (it skips
+items already recorded), and the kernel's own base records, so eligibility is not re-drawn. Only item ids and
+exit codes were looked at to decide this. Decoding, k, caps, grading and the gate are unchanged. If the resume
+kernel also fails, the rows are read as they stand under §4. `e58-skywork-b` moved from MUBAMAN, which had no
+GPU, to Nasif before it ran (§8).
