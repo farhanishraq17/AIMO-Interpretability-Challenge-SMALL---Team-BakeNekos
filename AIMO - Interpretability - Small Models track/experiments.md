@@ -7,6 +7,27 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E59: launched 19 Oct (protocol `protocols/E59_PROTOCOL.md`, committed `c66fc17` before launch)
+
+E58 with one change: every prompt may answer `\boxed{\text{no solution}}` (`sample.py --allow-no-solution`).
+Same rows, variants, decoding, k, caps, grader and gate; Qwen in five kernels. Question: is the missing way to
+decline what kept our models from flagging contradictions? Predicted: detection rises for Qwen and DeepSeek,
+not for Skywork; the gate most likely still fails.
+
+| Kernels | Account |
+| --- | --- |
+| `e59-qwen-a`, `e59-olmo-a` | Eshad |
+| `e59-qwen-b`, `e59-olmo-b` | Labib |
+| `e59-qwen-c`, `e59-olmo-c` | Samin |
+| `e59-qwen-d`, `e59-olmo-d` | SALAM |
+| `e59-qwen-e`, `e59-olmo-e` | ISHRAQ |
+| `e59-deepseek-a`, `e59-olmo-f` | Mashrafi |
+| `e59-deepseek-b`, `e59-olmo-g` | DIDHITI |
+| `e59-deepseek-c`, `e59-olmo-h` | Nasif |
+| `e59-deepseek-d`, `e59-skywork-a` | TASHIN |
+
+Accounts were matched to jobs by quota already used this week, the heaviest pair going to Eshad (fresh). 17 of 18 pushed 19 Oct; `e59-olmo-h` was refused on Nasif (both GPU slots busy, one with E58's unused resume copy) and is to be pushed unchanged to the first account with a free slot.
+
 ### E58: closed 18 Oct, gate failed as predicted (Finding 83; protocol `protocols/E58_PROTOCOL.md`, committed `da7e18d` before launch)
 
 **Outcome:** 0 of 192 contradiction samples flagged on any model; every one of the 24 labelled rows spurious, kappa 0.000. The models name the clash and answer anyway. The organizers' sample grades the family on detection, which `qwen3-8b` reaches 56% of the time there. 86.8 session-hours.
