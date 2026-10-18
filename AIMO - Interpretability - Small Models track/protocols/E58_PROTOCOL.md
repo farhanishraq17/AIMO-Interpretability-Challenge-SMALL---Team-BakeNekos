@@ -128,5 +128,7 @@ still be labelled under §4 (4 samples per family), but on half the samples of e
 items are therefore sampled by `e58-qwen-c-resume`: the same settings, the sampler's own resume path (it skips
 items already recorded), and the kernel's own base records, so eligibility is not re-drawn. Only item ids and
 exit codes were looked at to decide this. Decoding, k, caps, grading and the gate are unchanged. If the resume
-kernel also fails, the rows are read as they stand under §4. `e58-skywork-b` moved from MUBAMAN, which had no
+kernel also fails, the rows are read as they stand under §4. The TASHIN copy was still queued after 2 h, so
+the identical kernel was also pushed to Nasif (18 October, 13:00 UTC): whichever copy completes first is used,
+and the other's output is not downloaded. `e58-skywork-b` moved from MUBAMAN, which had no
 GPU, to Nasif before it ran (§8).
