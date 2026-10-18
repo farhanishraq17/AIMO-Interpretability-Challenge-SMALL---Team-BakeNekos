@@ -39,7 +39,8 @@ Olmo at one sequence a time ran about 10 tokens/s (86 min for 4 base samples), s
 5-6 h for its 16 variant samples, inside the 7 h guard. Later on 18 Oct: `e58-deepseek-a` (3.3 h), `e58-deepseek-d` (2.5 h) and `e58-skywork-b` (43 min) complete,
 every phase exit 0; 5 of 17 kernels done. Then `e58-olmo-a` (4.4 h) and `e58-deepseek-b` (4.1 h): 7 of 17 done. `e58-olmo-a` is
 the first Olmo kernel with a complete variant phase, so one sequence at a time does avoid E52b's block-pool crash
-(Finding 78) at 16k; the TCPStore warning in its log comes after the run finished.
+(Finding 78) at 16k; the TCPStore warning in its log comes after the run finished. Then `e58-olmo-c` (4.7 h) and `e58-olmo-f`
+(4.4 h), both with a full variant phase: 9 of 17 done. Qwen at 64k runs about 43 min per variant item per GPU.
 
 ### E55: done 17 Oct, every success criterion met (Finding 81)
 
