@@ -42,9 +42,12 @@ SPLITS = {"e58": {"qwen": 3, "deepseek": 4, "skywork": 2, "olmo": 8},
 FLAGS = {"e58": [], "e59": ["--allow-no-solution"]}
 # Amendment 1: a kernel stopped by its guard resumes from its own downloaded records, so the sampler skips
 # every item already recorded and base eligibility is not re-drawn.
-RESUME = {"qwen-c": "runs/e58-qwen-c-TASHIN/e58-qwen-c"}
-JOBS = [f"{m}-{part}" for m, n in SPLITS["e58"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME]
-E59_JOBS = [f"{m}-{part}" for m, n in SPLITS["e59"].items() for part in "abcdefgh"[:n]]
+# E59 amendment 1: e59-deepseek-b's first chunk of four items took 6.9 h, so its resume saves each item as it
+# finishes (`--chunk 1`, an engine setting) instead of risking the guard with nothing flushed.
+RESUME = {"e58": {"qwen-c": ("runs/e58-qwen-c-TASHIN/e58-qwen-c", None)},
+          "e59": {"deepseek-b": ("runs/e59-deepseek-b-DIDHITI/e59-deepseek-b", "1")}}
+JOBS = [f"{m}-{part}" for m, n in SPLITS["e58"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e58"]]
+E59_JOBS = [f"{m}-{part}" for m, n in SPLITS["e59"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e59"]]
 
 
 def part_keys(model: str, part: str, experiment: str = "e58") -> list[str]:
@@ -56,7 +59,8 @@ def part_keys(model: str, part: str, experiment: str = "e58") -> list[str]:
 def render(job: str, experiment: str = "e58") -> tuple[str, dict]:
     kernel = job.removesuffix("-resume")
     model, part = kernel.rsplit("-", 1)
-    previous = ROOT / RESUME[kernel] if job.endswith("-resume") else None
+    previous, chunk = RESUME[experiment][kernel] if job.endswith("-resume") else (None, None)
+    previous = previous and ROOT / previous
     extra = {f"resume/{f.relative_to(previous).as_posix()}": f.read_bytes()
              for f in previous.glob("*/shard_*/*") if f.name in ("records.jsonl", "metadata.json")} if previous else {}
     entries, hashes = payload((*FILES, f"protocols/{experiment.upper()}_PROTOCOL.md"), extra)
@@ -64,6 +68,7 @@ def render(job: str, experiment: str = "e58") -> tuple[str, dict]:
     common = ["datagen/perturb/sample.py", "--model-id", MODELS[model], "--backend", "vllm",
               "--pool", "data/e58/pool.parquet", "--variants", "data/e58/variants.parquet",
               *DECODING, "--max-new-tokens", str(CAP[model]), *ENGINE[model], *FLAGS[experiment],
+              *(["--chunk", chunk] if chunk else []),
               "--out-dir", f"/kaggle/working/{out}", "--problem-keys", *part_keys(model, part, experiment)]
     phases = {
         "base": [*common, "--phase", "base", "--max-hours", str(HOURS["base"])],

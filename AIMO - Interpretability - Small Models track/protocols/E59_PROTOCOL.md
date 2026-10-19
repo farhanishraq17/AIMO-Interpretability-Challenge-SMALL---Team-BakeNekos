@@ -88,4 +88,10 @@ it, and any pass is reported with that count beside it.
 
 ## 8. Amendments
 
-None yet.
+**1, 19 October, before any E59 record's outcome was read.** `e59-deepseek-b`'s variant phase was stopped by
+its 7.5 h guard (`wall_time_limit`) with 4 of its 8 variant items sampled; its first chunk of four items alone
+took 6.9 h. As §7 allows, `e59-deepseek-b-resume` samples the other four from the kernel's own records
+(E58's amendment 1 mechanism). One engine setting changes: `--chunk 1`, so each item is saved as it finishes
+instead of risking the guard again with nothing flushed. Decoding, k, the cap, grading and the gate are
+unchanged. Only exit codes and record counts were looked at to decide this. `e59-olmo-h` ran on TASHIN after
+Nasif refused it for want of a slot.
