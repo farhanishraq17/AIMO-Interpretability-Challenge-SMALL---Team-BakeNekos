@@ -304,6 +304,8 @@ Labib, Eshad, Mashrafi, Samin and Nasif. Three caveats a new owner will hit:
   **MUBAMAN (`sadmanmubasshirkhan`) still gets a CPU session with no internet** after the owner's
   verification on 18 Oct (`e58-skywork-b` died at `nvidia-smi`, and so did a fresh capability check).
   Re-test with `kaggle_followup.py push capability-check --account MUBAMAN` before giving it work.
+  Its quota shows 30 h allowed and none used, so the account is eligible; a second test on 20 Oct still
+  got a CPU and no internet, the sign of a phone verification that has not registered on this username.
 - **SALAM and DIDHITI are shared with another project.** On 22 Sep both had their two GPU slots
   filled by that project's kernels, and a push is refused when either the session or the weekly
   limit is reached. Same for any account running five `kagri-*` kernels.
@@ -384,7 +386,9 @@ step needs another repo file, add it to `BUNDLE_FILES`. Kernels are private
 - Keep model weights out of `/kaggle/working`: it is capped at 20 GB and saved as output.
 - `kaggle kernels output` downloads **one page** per call (max 200 files). Merge on Kaggle and
   skip per-instance vectors; the launcher already does both.
-- `kaggle quota` crashes in CLI 2.2.2 ("not enough values to unpack"). Check quota on the website.
+- `kaggle quota` crashes in CLI 2.2.2 ("not enough values to unpack"), and so does the SDK call under it.
+  `python scripts/kaggle_quota.py` reads the same endpoint directly: used, running and remaining GPU
+  hours for every alias, and when the weekly window resets (Saturday 00:00 UTC).
 - `kaggle datasets list` has no `--page-size`; `kernels list --mine` does.
 
 ## Code conventions
