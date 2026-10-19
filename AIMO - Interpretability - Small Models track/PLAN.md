@@ -911,3 +911,8 @@ known answer, at each model's T4 cap, gated like E24b on kappa against the offic
 advance to fail. If it passes, E57's precondition is amended to accept it and E59 labels E55's 548 problems.
 
 **E58 closed the same day: the gate failed as predicted** (Finding 83). No model flagged one of 192 contradictions; they named the clash and answered anyway. The organizers' sample grades the family on detection, and an 8B model detects their variants 56% of the time, so what separates the two is how the question is put (a prompt with no way to say "no solution", a claim about the answer that reads as a typo), not model size. `e27f` stays; E57 waits for the collaborator's gate.
+
+**E59 (19 Oct) tested the prompt and it was not the barrier** (Finding 84): with permission to answer "no solution",
+contradictions flagged rose only from 0 of 192 to 6 of 216, and the gate failed the same way. Self-labelling on our
+compute is closed. What is left untested is premise-level contradictions at the organizers' 100k budget, which only
+the collaborator's compute can run. **The submission is `e27f`** unless their gate passes before the 27 Oct freeze.

@@ -1,6 +1,8 @@
 # E59: E58's labeller with one change, a prompt that can decline
 
-Status: **pre-registered 19 October 2026, after E58 closed and before any E59 record existed.** Code: E58's,
+Status: **closed 19 October 2026: the gate failed** (kappa 0.000, every row spurious; contradictions flagged 0 of 192
+-> 6 of 216 with the prompt change; PROGRESS Finding 84). The §5 prediction for Qwen and DeepSeek failed. `e27f` stays.
+Pre-registered 19 October 2026, after E58 closed and before any E59 record existed. Code: E58's,
 with `datagen/perturb/sample.py --allow-no-solution`, `scripts/e58_gpu_bundle.py` (the `e59-*` jobs) and
 `train/eval_e58.py --experiment e59`. Any change after the first E59 record is read is an amendment, dated in §8.
 

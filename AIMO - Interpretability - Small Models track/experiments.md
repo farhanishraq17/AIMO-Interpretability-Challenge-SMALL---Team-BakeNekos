@@ -7,7 +7,11 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
-### E59: launched 19 Oct (protocol `protocols/E59_PROTOCOL.md`, committed `c66fc17` before launch)
+### E59: closed 19 Oct, gate failed (Finding 84; protocol `protocols/E59_PROTOCOL.md`, committed `c66fc17` before launch)
+
+**Outcome:** permission to answer "no solution" moved contradictions flagged from 0 of 192 to 6 of 216; every one of
+the 27 rows labelled spurious, kappa 0.000. No false abstention (0 of 108 originals). Most samples are still
+deliberating at the cap. Self-labelling on our compute is closed. 99.7 session-hours.
 
 E58 with one change: every prompt may answer `\boxed{\text{no solution}}` (`sample.py --allow-no-solution`).
 Same rows, variants, decoding, k, caps, grader and gate; Qwen in five kernels. Question: is the missing way to
@@ -247,6 +251,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E48 | How many labels would each closed lane have needed? | local | Done | **63 to 320 rows; we had 33 to 61.** Power was 14-53%, so the experiments could not have returned a positive result even if their hypotheses were true (Finding 72) |
 | E50 | What exactly is the hidden set, given every score we have? | local | Done | **Solved to two states**, both Qwen 5, DeepSeek 3, Skywork 3, Olmo 3. `e27k` is perfect on the last three; its two misses are one swapped Qwen pair. Ranking null p = 0.048 on that composition. A public pre-withholding `train-main-v2` revision exposes 7 validation labels; unused (Finding 75) |
 | E51 | Which perturbation families make a label spurious? | local | Done | **Different ones per population.** MATH: domain (0.86 of rows drop >= 0.25). Olympiad: `expert_no_solution` (0.43), surface families <= 0.03. MATH-trained models learned the wrong mechanism (Finding 76) |
+| E59 | Does letting the prompt answer "no solution" make the E58 labeller work? | Kaggle | Done, gate failed | **No.** Flagged contradictions 0 of 192 -> 6 of 216; every row still spurious, kappa 0.000; no false abstention. The barrier is the variant or the budget, not the prompt (Finding 84) |
 | E58 | Does an automatic labeller (answer-property contradictions, T4-maximal budgets) reproduce the official labels? | Kaggle | Done, gate failed | **No.** 0 of 192 contradiction samples flagged; every row spurious, kappa 0.000. The models notice the clash, call it a typo and answer anyway (Finding 83) |
 | E57 GPU check | Does the per-problem template run on the real models and match its training features? | Kaggle | Done | **Yes:** exact parity with E55 on all four models, native bools, 0.68-1.43 s a call on T4 (Finding 82) |
 | E55 | One-pass features for every candidate problem, and per-problem cost | Kaggle | Done | **Complete**: 548 problems x 4 models, 100% coverage, zero non-finite; one pass is 0.55-0.89 s per problem on T4. Budget path closed on cost (Finding 81) |

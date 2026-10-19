@@ -2637,6 +2637,47 @@ and Skywork 32k, Olmo 16k.
   10 tokens/s, Qwen at 64k about 40-100 minutes per item and GPU. Labelling E55's 548 problems this way on
   the fleet was never within reach before the freeze.
 
+**84. E59: letting the prompt answer "no solution" barely moves detection (0 of 192 flagged to 6 of 216),
+so the gate fails again (kappa 0.000). The missing way to decline was not the barrier. What remains is the
+variant and the budget: most samples are still deliberating at the cap.** (`protocols/E59_PROTOCOL.md` with
+amendment 1, `train/eval_e58.py --experiment e59`; 18 kernels plus one resume on nine accounts, 19 Oct,
+99.7 session-hours. RESULTS, "E59: the same gate with a prompt that can decline".)
+
+E58 repeated with one change: every prompt ends "If the problem has no solution, put
+\boxed{\text{no solution}} instead." Same 27 rows, variants, decoding, k, caps, grader and gate.
+
+| | Qwen3.5-4B | DeepSeek-R1-Qwen3-8B | Skywork-OR1-Math-7B | Olmo-3-7B-Think |
+| --- | --- | --- | --- | --- |
+| contradictions flagged, E58 -> E59 | 0 of 72 -> **4 of 72** | 0 of 40 -> **1 of 56** | 0 of 24 -> **0 of 24** | 0 of 56 -> **1 of 64** |
+| E59: answered (with the original answer) | 27 (18) | 19 (7) | 24 (21) | 3 (2) |
+| E59: ran out of budget | 41 | 36 | 0 | 60 |
+| originals / consistent premises declined | 0 of 36 / 1 of 72 | 0 of 28 / 0 of 56 | 0 of 12 / 0 of 24 | 0 of 32 / 0 of 64 |
+| labelled rows: self robust / official robust | 0 of 9 / 7 | 0 of 7 / 5 | 0 of 3 / 2 | 0 of 8 / 7 |
+
+- **The pre-registered prediction failed.** It expected Qwen and DeepSeek to flag at least a quarter of
+  their contradiction samples once allowed to; they flagged 6% and 2%. Permission to decline is not what
+  E58 was missing. The gate fails with every one of the 27 rows labelled and all of them spurious, so the
+  self-labelling route is closed on our compute (protocol §6), and `e27f` is the submission.
+- **Permission did not cause false abstention either:** 0 of 108 originals and 1 of 216 consistent
+  premises were declined. The prompt change is harmless and nearly inert.
+- **What the models do instead is unchanged.** DeepSeek names the clash in 13 of its 19 answered samples
+  and still boxes a number; Skywork answers through it 21 times in 24 with the original answer and almost
+  never mentions it; Qwen, DeepSeek and Olmo are still deliberating at the cap in 41 of 72, 36 of 56 and 60
+  of 64 samples.
+- **Two differences from the organizers' setting remain, and our compute can test neither.**
+  - The variant: a claim about the answer reads as a wrong hint, where their premises contradict the
+    problem's own objects. E52 measured the premise kind at 16k and found the same near-zero rate, but at
+    16k, where most Qwen samples truncated.
+  - The budget: 100k tokens against our 16k-64k, with most samples still undecided at the cap.
+
+  The organizers' `qwen3-8b` reaches 0.56 on their family at *low* reasoning effort (Finding 83), so long
+  deliberation is not what detection needs either. That points at the variant more than the budget, but it
+  is not a measurement.
+- **Three labellers have now failed against the same 27 official rows** (E24b `answer_modulus`, E58, E59),
+  and the two contradiction labellers failed identically, with no row labelled robust. The collaborator's
+  run is the one place left to measure premise-level contradictions at 100k tokens; the prompt and the
+  grader to use are in `datagen/perturb/sample.py` (`--allow-no-solution`) and `train/eval_e52.py`.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

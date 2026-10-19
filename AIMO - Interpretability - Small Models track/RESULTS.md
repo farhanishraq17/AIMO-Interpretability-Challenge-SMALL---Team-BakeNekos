@@ -1127,3 +1127,36 @@ Organizers' public sample: how closely variant accuracy follows the original's, 
 | typos | 90 | +0.88 | 0.02 (n = 21) |
 
 `expert_no_solution` accuracy by configuration in that sample: gemini-3.1-pro-preview:low 0.50, Qwen/Qwen3.5-397B-A17B-FP8:low 0.51, qwen3-8b:low 0.56, huikang-gpt-oss-120b-aimo3:low 0.59, gpt-oss-120b:low 0.63, gpt-5.2-2025-12-11:low 0.84, lukealonso/GLM-5.1-NVFP4:low 0.87.
+
+## E59: the same gate with a prompt that can decline
+
+Answer-property variants (`datagen/perturb/e58_variants.py`) on the 27 official rows with a reference answer, sampled with the organizers' decoding at each model's T4 cap (`protocols/E59_PROTOCOL.md`; the prompt can decline).
+
+| model | cap | rows | sampled | eligible | labelled | self robust / spurious / band | official robust | contradiction samples: detected / answered (kept original) / truncated / other |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| qwen | 65,536 | 9 | 9 | 9 | 9 | 0 / 9 / 0 | 7 | 4 / 27 (18) / 41 / 0 |
+| deepseek | 32,768 | 7 | 7 | 7 | 7 | 0 / 7 / 0 | 5 | 1 / 19 (7) / 36 / 0 |
+| skywork | 32,768 | 3 | 3 | 3 | 3 | 0 / 3 / 0 | 2 | 0 / 24 (21) / 0 / 0 |
+| olmo | 16,384 | 8 | 8 | 8 | 8 | 0 / 8 / 0 | 7 | 1 / 3 (2) / 60 / 0 |
+
+**Gate: fails.** 27 of 27 rows labelled (needs 18); Cohen's kappa against the official labels 0.000, 95% problem-bootstrap CI [0.000, 0.000] (needs >= 0.3 with the lower bound above 0).
+
+On the labelled rows, self-labels agree with the official labels on 0.222; `e27f`'s constants agree on 0.519. Family that set `max_drop`: {'no_solution': 27}.
+
+**Exploratory (after the gate was read).** Contradiction samples whose stored ending mentions the clash:
+
+| model | answered: mention the clash | truncated: mention the clash |
+| --- | --- | --- |
+| qwen | 11 of 27 | 8 of 41 |
+| deepseek | 13 of 19 | 6 of 36 |
+| skywork | 1 of 24 | 0 of 0 |
+| olmo | 0 of 3 | 22 of 60 |
+
+**Reported (E59 protocol §3).** Contradiction samples flagged, and samples that answered "no solution" where an answer exists:
+
+| model | flagged, E58 | flagged, E59 | originals declined | consistent premises declined |
+| --- | --- | --- | --- | --- |
+| qwen | 0 of 72 | 4 of 72 | 0 of 36 | 1 of 72 |
+| deepseek | 0 of 40 | 1 of 56 | 0 of 28 | 0 of 56 |
+| skywork | 0 of 24 | 0 of 24 | 0 of 12 | 0 of 24 |
+| olmo | 0 of 56 | 1 of 64 | 0 of 32 | 0 of 64 |

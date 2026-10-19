@@ -122,7 +122,7 @@ NOTICE = re.compile(r"contradict|inconsisten|impossible|not (?:odd|even)|isn.t (
                     r"cannot be (?:odd|even|greater)", re.IGNORECASE)
 
 
-def exploratory() -> tuple[list[str], dict]:
+def exploratory(per_model: pd.DataFrame) -> tuple[list[str], dict]:
     """Post-hoc reading of the failed gate; see the module docstring."""
     from scipy.stats import spearmanr
     from eval_label_mechanics import SAMPLE
@@ -144,7 +144,7 @@ def exploratory() -> tuple[list[str], dict]:
         notice[short] = counts
         lines.append(f"| {short} | {counts['answered'][1]} of {counts['answered'][0]} | {counts['truncated'][1]} of {counts['truncated'][0]} |")
     if EXPERIMENT != "e58":  # the organizers' sample is read once, in E58's section
-        return lines, {"notice": notice}
+        return lines + reported_e59(per_model), {"notice": notice}
     sample = pd.read_parquet(hf_hub_download(SAMPLE[0], SAMPLE[1], repo_type="dataset", revision=SAMPLE[2]))
     lines += ["", "Organizers' public sample: how closely variant accuracy follows the original's, per family "
               "(an answer-preserving family should follow it closely; one graded on detection need not):", "",
@@ -162,6 +162,30 @@ def exploratory() -> tuple[list[str], dict]:
     lines += ["", "`expert_no_solution` accuracy by configuration in that sample: " +
               ", ".join(f"{m} {a:.2f}" for m, a in no_solution.sort_values().items()) + "."]
     return lines, {"notice": notice, "coupling": coupling, "no_solution_accuracy": no_solution.to_dict()}
+
+
+def reported_e59(per_model: pd.DataFrame) -> list[str]:
+    """E59 protocol §3: contradictions flagged against E58, and abstention where there is an answer."""
+    e58 = {m["model"]: m for m in json.loads((ROOT / "runs" / "e58-analysis" / "result.json").read_text())["per_model"]}
+    lines = ["", "**Reported (E59 protocol §3).** Contradiction samples flagged, and samples that answered "
+             "\"no solution\" where an answer exists:", "",
+             "| model | flagged, E58 | flagged, E59 | originals declined | consistent premises declined |",
+             "| --- | --- | --- | --- | --- |"]
+    total = lambda m: int(m["detected"] + m["answered"] + m["kept_original"] + m["truncated"] + m["other"])  # noqa: E731
+    for short in MODELS:
+        cap, declined = run_cap(short), {"base": [0, 0], "consistent": [0, 0]}
+        for phase in ("base", "variants"):
+            for record in load(short, phase):
+                kind = "base" if phase == "base" else family(record["category"])
+                if kind not in declined:
+                    continue
+                for tail, tokens in zip(record["sample_tails"], record["completion_tokens"]):
+                    declined[kind][0] += 1
+                    declined[kind][1] += grade(tail, tokens, cap) == "detected"
+        now = per_model.set_index("model").loc[short]
+        lines.append(f"| {short} | {int(e58[short]['detected'])} of {total(e58[short])} | {int(now['detected'])} of {total(now)} "
+                     f"| {declined['base'][1]} of {declined['base'][0]} | {declined['consistent'][1]} of {declined['consistent'][0]} |")
+    return lines
 
 
 def main() -> None:
@@ -208,7 +232,7 @@ def main() -> None:
               "deciding_family": labelled.deciding.value_counts().to_dict(),
               "confusion": pd.crosstab(labelled.official, labelled.self_robust).to_dict() if len(labelled) else {},
               "per_model": per_model.to_dict("records"), "per_row": frame.drop(columns="model_id").to_dict("records")}
-    explore_lines, result["exploratory"] = exploratory()
+    explore_lines, result["exploratory"] = exploratory(per_model)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "result.json").write_text(json.dumps(result, indent=2, default=float), encoding="utf-8")
 

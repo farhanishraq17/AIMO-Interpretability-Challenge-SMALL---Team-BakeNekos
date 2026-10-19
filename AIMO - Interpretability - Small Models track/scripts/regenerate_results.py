@@ -86,6 +86,8 @@ STEPS = [
     ["train/report_e55.py"],
     # E58: the answer-property labeller against the official rows. CPU; needs the e58 runs and the network.
     ["train/eval_e58.py"],
+    # E59: the same labeller with a prompt that can decline. Needs the e59 runs; reads E58's result, so after it.
+    ["train/eval_e58.py", "--experiment", "e59"],
 ]
 
 
