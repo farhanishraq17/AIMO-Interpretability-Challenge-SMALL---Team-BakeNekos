@@ -83,20 +83,26 @@ Problem:
 {problem}"""
 
 
-def api_key() -> str:
+def api_keys() -> list[str]:
+    """Every OpenRouter key in Secrets.env (`omarapi` first); each account has its own free daily quota."""
+    keys = []
     for line in (ROOT / "Secrets.env").read_text(encoding="utf-8-sig").splitlines():
         name, _, value = line.partition("=")
-        if name.strip().lower() == "omarapi":
-            return value.strip().strip("\"'")
-    raise SystemExit("no `omarapi` key in Secrets.env")
+        value = value.strip().strip("\"'")
+        if value.startswith("sk-or-"):
+            keys.insert(0, value) if name.strip().lower() == "omarapi" else keys.append(value)
+    if not keys:
+        raise SystemExit("no OpenRouter key in Secrets.env")
+    return keys
 
 
-def chat(key: str, model: str, prompt: str, temperature: float, log) -> str:
-    """One OpenRouter completion; the request and response are logged without the key."""
+def chat(keys: list[str], model: str, prompt: str, temperature: float, log) -> str:
+    """One OpenRouter completion on the first key with quota left; logged without the key."""
     body = {"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": temperature,
             "max_tokens": 32000}
     for attempt in range(6):
         time.sleep(PACE_SECONDS)
+        key = keys[0]
         request = urllib.request.Request(URL, data=json.dumps(body).encode(),
                                          headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
         try:
@@ -109,7 +115,11 @@ def chat(key: str, model: str, prompt: str, temperature: float, log) -> str:
         except urllib.error.HTTPError as exc:
             message = exc.read().decode(errors="replace").replace(key, "[REDACTED]")
             if exc.code == 429 and "per-day" in message.lower():
-                raise DailyLimit(message[:200]) from None
+                keys.pop(0)  # this account's free quota is spent for today; move to the next
+                if not keys:
+                    raise DailyLimit(message[:200]) from None
+                print(f"  daily limit on one key; {len(keys)} left", flush=True)
+                continue
             print(f"  {model}: HTTP {exc.code} {message[:160]}; retry {attempt + 1}", flush=True)
             time.sleep(30 * (attempt + 1))
         except (urllib.error.URLError, KeyError, IndexError, TimeoutError, json.JSONDecodeError) as exc:
@@ -157,7 +167,7 @@ def main() -> None:
     parser.add_argument("--per-problem", type=int, default=2)
     args = parser.parse_args()
 
-    key = api_key()
+    keys = api_keys()
     pool = pd.read_parquet(args.pool)
     (args.out_dir / "raw").mkdir(parents=True, exist_ok=True)
     # One line per finished problem, so a run stopped by the daily limit resumes where it stopped.
@@ -172,13 +182,13 @@ def main() -> None:
             for row in pool.itertuples(index=False):
                 if row.pool_id in done:
                     continue
-                original = verdict(chat(key, CHECKER, CHECK_PROMPT.format(problem=row.problem), 0.0, check_log))
+                original = verdict(chat(keys, CHECKER, CHECK_PROMPT.format(problem=row.problem), 0.0, check_log))
                 mine, audit = [], []
                 for round_ in (1, 2):
-                    text = chat(key, GENERATOR, GENERATION_PROMPT.format(problem=row.problem, answer=int(row.answer)), 1.0, gen_log)
+                    text = chat(keys, GENERATOR, GENERATION_PROMPT.format(problem=row.problem, answer=int(row.answer)), 1.0, gen_log)
                     for condition in parse_conditions(text):
                         variant = insert(row.problem, condition["sentence"])
-                        said = verdict(chat(key, CHECKER, CHECK_PROMPT.format(problem=variant), 0.0, check_log))
+                        said = verdict(chat(keys, CHECKER, CHECK_PROMPT.format(problem=variant), 0.0, check_log))
                         ok = said == "CONTRADICTORY" and original == "SOLVABLE"
                         audit.append({"pool_id": row.pool_id, "round": round_, "sentence": condition["sentence"],
                                       "why_impossible": condition.get("why_impossible", ""), "checker_variant": said,
