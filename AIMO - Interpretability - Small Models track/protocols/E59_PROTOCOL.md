@@ -93,5 +93,6 @@ its 7.5 h guard (`wall_time_limit`) with 4 of its 8 variant items sampled; its f
 took 6.9 h. As §7 allows, `e59-deepseek-b-resume` samples the other four from the kernel's own records
 (E58's amendment 1 mechanism). One engine setting changes: `--chunk 1`, so each item is saved as it finishes
 instead of risking the guard again with nothing flushed. Decoding, k, the cap, grading and the gate are
-unchanged. Only exit codes and record counts were looked at to decide this. `e59-olmo-h` ran on TASHIN after
-Nasif refused it for want of a slot.
+unchanged. Only exit codes and record counts were looked at to decide this. `e59-olmo-h` went to TASHIN after
+Nasif refused it for want of a slot; still queued there after 3 h, an identical copy was pushed to Eshad
+(19 October, 11:45 UTC). Whichever copy completes first is used and the other's output is not downloaded.
