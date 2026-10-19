@@ -38,8 +38,14 @@ ENGINE = {"qwen": ["--tensor-parallel", "1", "--text-only", "--max-num-seqs", "6
 PER_GPU = {"qwen": True, "deepseek": False, "skywork": False, "olmo": False}
 HOURS = {"base": 2.5, "variants": 7.0}  # --max-hours per phase; the guard allows half an hour more
 SPLITS = {"e58": {"qwen": 3, "deepseek": 4, "skywork": 2, "olmo": 8},
-          "e59": {"qwen": 5, "deepseek": 4, "skywork": 1, "olmo": 8}}
-FLAGS = {"e58": [], "e59": ["--allow-no-solution"]}
+          "e59": {"qwen": 5, "deepseek": 4, "skywork": 1, "olmo": 8},
+          "e60": {"qwen": 5, "deepseek": 4, "skywork": 1, "olmo": 8}}
+FLAGS = {"e58": [], "e59": ["--allow-no-solution"],
+         # E60 §3: E59's prompt; DeepSeek saves each item as it finishes (E59 amendment 1's lesson).
+         "e60": ["--allow-no-solution"]}
+VARIANTS = {"e58": "data/e58/variants.parquet", "e59": "data/e58/variants.parquet", "e60": "data/e60/variants.parquet"}
+# E60 samples only its contradictions; eligibility comes from each model's E59 base records, bundled.
+E59_BASE = "runs/e59-{model}-*/e59-{model}-*/base/shard_*/records.jsonl"
 # Amendment 1: a kernel stopped by its guard resumes from its own downloaded records, so the sampler skips
 # every item already recorded and base eligibility is not re-drawn.
 # E59 amendment 1: e59-deepseek-b's first chunk of four items took 6.9 h, so its resume saves each item as it
@@ -48,6 +54,7 @@ RESUME = {"e58": {"qwen-c": ("runs/e58-qwen-c-TASHIN/e58-qwen-c", None)},
           "e59": {"deepseek-b": ("runs/e59-deepseek-b-DIDHITI/e59-deepseek-b", "1")}}
 JOBS = [f"{m}-{part}" for m, n in SPLITS["e58"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e58"]]
 E59_JOBS = [f"{m}-{part}" for m, n in SPLITS["e59"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e59"]]
+E60_JOBS = [f"{m}-{part}" for m, n in SPLITS["e60"].items() for part in "abcdefgh"[:n]]
 
 
 def part_keys(model: str, part: str, experiment: str = "e58") -> list[str]:
@@ -63,18 +70,27 @@ def render(job: str, experiment: str = "e58") -> tuple[str, dict]:
     previous = previous and ROOT / previous
     extra = {f"resume/{f.relative_to(previous).as_posix()}": f.read_bytes()
              for f in previous.glob("*/shard_*/*") if f.name in ("records.jsonl", "metadata.json")} if previous else {}
-    entries, hashes = payload((*FILES, f"protocols/{experiment.upper()}_PROTOCOL.md"), extra)
+    if experiment == "e60":
+        records = {json.loads(line)["item_id"]: line for path in sorted(ROOT.glob(E59_BASE.format(model=model)))
+                   for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
+        extra["e59_base/records.jsonl"] = ("\n".join(records.values()) + "\n").encode()
+    files = tuple(f for f in FILES if f != "data/e58/variants.parquet") + (VARIANTS[experiment],)
+    entries, hashes = payload((*files, f"protocols/{experiment.upper()}_PROTOCOL.md"), extra)
     out = f"{experiment}-{model}-{part}"
     common = ["datagen/perturb/sample.py", "--model-id", MODELS[model], "--backend", "vllm",
-              "--pool", "data/e58/pool.parquet", "--variants", "data/e58/variants.parquet",
+              "--pool", "data/e58/pool.parquet", "--variants", VARIANTS[experiment],
               *DECODING, "--max-new-tokens", str(CAP[model]), *ENGINE[model], *FLAGS[experiment],
               *(["--chunk", chunk] if chunk else []),
+              *(["--chunk", "1"] if experiment == "e60" and model == "deepseek" else []),
               "--out-dir", f"/kaggle/working/{out}", "--problem-keys", *part_keys(model, part, experiment)]
     phases = {
         "base": [*common, "--phase", "base", "--max-hours", str(HOURS["base"])],
         "variants": [*common, "--phase", "variants", "--max-hours", str(HOURS["variants"]),
                      "--base-records", f"/kaggle/working/{out}/base/shard_*/records.jsonl"],
     }
+    if experiment == "e60":
+        phases = {"variants": [*common, "--phase", "variants", "--max-hours", str(HOURS["variants"]),
+                               "--base-records", "/tmp/aimo-e52/e59_base/records.jsonl"]}
     source = HEADER.format(out=out, entries=json.dumps(entries)) + f'''cuda = runpy.run_path(str(root / "scripts/kaggle_cuda_setup.py"))["prepare_cuda_linker"]()
 (out / "cuda-link-check.json").write_text(json.dumps(cuda, indent=2))
 subprocess.run([sys.executable, "-m", "venv", "--without-pip", "/tmp/e52-env"], check=True)

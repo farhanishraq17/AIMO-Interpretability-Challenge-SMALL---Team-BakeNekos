@@ -51,7 +51,8 @@ MODELS = {"qwen": "Qwen/Qwen3.5-4B", "deepseek": "deepseek-ai/DeepSeek-R1-0528-Q
 CONSTANTS = {"qwen": True, "deepseek": True, "skywork": False, "olmo": False}  # e27f
 RECORDS = "runs/{experiment}-{short}-*/{experiment}-{short}-*/{phase}/shard_*/records.jsonl"
 EXPERIMENT = "e58"  # set by --experiment
-HEADINGS = {"e58": "E58: self-labelling gate on the official rows",
+HEADINGS = {"e60": "E60: premise-level contradictions on the same gate",
+            "e58": "E58: self-labelling gate on the official rows",
             "e59": "E59: the same gate with a prompt that can decline"}
 ROBUST, SPURIOUS = 0.10, 0.25  # the official max_drop rule
 MIN_FAMILY_SAMPLES = 4
@@ -97,15 +98,28 @@ def label_row(base: dict | None, variants: list[dict], cap: int) -> dict:
     return row
 
 
-def load(short: str, phase: str) -> list[dict]:
-    paths = sorted(ROOT.glob(RECORDS.format(experiment=EXPERIMENT, short=short, phase=phase)))
+def _records(experiment: str, short: str, phase: str) -> list[dict]:
+    paths = sorted(ROOT.glob(RECORDS.format(experiment=experiment, short=short, phase=phase)))
     rows = [json.loads(line) for p in paths for line in p.read_text(encoding="utf-8").splitlines() if line.strip()]
     return list({r["item_id"]: r for r in rows}.values())  # a resumed shard may repeat an item
 
 
+def load(short: str, phase: str) -> list[dict]:
+    """E60 samples only its contradictions: base records and consistent premises are E59's (E60 §3)."""
+    if EXPERIMENT != "e60":
+        return _records(EXPERIMENT, short, phase)
+    if phase == "base":
+        return _records("e59", short, "base")
+    return ([r for r in _records("e60", short, "variants") if family(r["category"]) == "no_solution"]
+            + [r for r in _records("e59", short, "variants") if family(r["category"]) == "consistent"])
+
+
 def run_cap(short: str) -> int:
-    paths = ROOT.glob(RECORDS.format(experiment=EXPERIMENT, short=short, phase="base").replace("records.jsonl", "metadata.json"))
+    paths = [p for phase in ("base", "variants") for p in ROOT.glob(
+        RECORDS.format(experiment=EXPERIMENT, short=short, phase=phase).replace("records.jsonl", "metadata.json"))]
     caps = {json.loads(p.read_text(encoding="utf-8"))["args"]["max_new_tokens"] for p in paths}
+    if not caps:
+        raise SystemExit(f"no {EXPERIMENT} records for {short}; download every {EXPERIMENT} kernel first")
     assert len(caps) == 1, f"{short}: runs disagree on the cap: {caps}"
     return caps.pop()
 
@@ -144,7 +158,7 @@ def exploratory(per_model: pd.DataFrame) -> tuple[list[str], dict]:
         notice[short] = counts
         lines.append(f"| {short} | {counts['answered'][1]} of {counts['answered'][0]} | {counts['truncated'][1]} of {counts['truncated'][0]} |")
     if EXPERIMENT != "e58":  # the organizers' sample is read once, in E58's section
-        return lines + reported_e59(per_model), {"notice": notice}
+        return lines + (reported_e59(per_model) if EXPERIMENT == "e59" else reported_e60(per_model)), {"notice": notice}
     sample = pd.read_parquet(hf_hub_download(SAMPLE[0], SAMPLE[1], repo_type="dataset", revision=SAMPLE[2]))
     lines += ["", "Organizers' public sample: how closely variant accuracy follows the original's, per family "
               "(an answer-preserving family should follow it closely; one graded on detection need not):", "",
@@ -162,6 +176,21 @@ def exploratory(per_model: pd.DataFrame) -> tuple[list[str], dict]:
     lines += ["", "`expert_no_solution` accuracy by configuration in that sample: " +
               ", ".join(f"{m} {a:.2f}" for m, a in no_solution.sort_values().items()) + "."]
     return lines, {"notice": notice, "coupling": coupling, "no_solution_accuracy": no_solution.to_dict()}
+
+
+def reported_e60(per_model: pd.DataFrame) -> list[str]:
+    """E60 protocol §5: the generator's yield, and contradictions flagged against E59's answer-property ones."""
+    audit = pd.read_parquet(ROOT / "data" / "e60" / "audit.parquet")
+    e59 = {m["model"]: m for m in json.loads((ROOT / "runs" / "e59-analysis" / "result.json").read_text())["per_model"]}
+    total = lambda m: int(m["detected"] + m["answered"] + m["kept_original"] + m["truncated"] + m["other"])  # noqa: E731
+    lines = ["", "**Reported (E60 protocol §5).** Generator yield: " + ", ".join(
+        f"round {r}: {int(g.kept.sum())} kept of {len(g)} checked" for r, g in audit.groupby("round")) +
+        f"; {audit.pool_id[audit.kept].nunique()} of {audit.pool_id.nunique()} problems have a kept variant.", "",
+        "| model | flagged, E59 (answer-property) | flagged, E60 (premise) |", "| --- | --- | --- |"]
+    for short in MODELS:
+        now = per_model.set_index("model").loc[short]
+        lines.append(f"| {short} | {int(e59[short]['detected'])} of {total(e59[short])} | {int(now['detected'])} of {total(now)} |")
+    return lines
 
 
 def reported_e59(per_model: pd.DataFrame) -> list[str]:
