@@ -26,7 +26,7 @@ not for Skywork; the gate most likely still fails.
 | `e59-deepseek-c`, `e59-olmo-h` | Nasif |
 | `e59-deepseek-d`, `e59-skywork-a` | TASHIN |
 
-Accounts were matched to jobs by quota already used this week, the heaviest pair going to Eshad (fresh). 17 of 18 pushed 19 Oct; `e59-olmo-h` was refused on Nasif (both GPU slots busy, one with E58's unused resume copy) and is to be pushed unchanged to the first account with a free slot.
+Accounts were matched to jobs by quota already used this week, the heaviest pair going to Eshad (fresh). 17 of 18 pushed 19 Oct; `e59-olmo-h` was refused on Nasif (both GPU slots busy, one with E58's unused resume copy) and went unchanged to TASHIN when its slot freed (19 Oct): all 18 launched.
 
 ### E58: closed 18 Oct, gate failed as predicted (Finding 83; protocol `protocols/E58_PROTOCOL.md`, committed `da7e18d` before launch)
 
