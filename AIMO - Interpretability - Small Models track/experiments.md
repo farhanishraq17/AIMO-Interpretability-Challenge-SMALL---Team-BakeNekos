@@ -26,7 +26,7 @@ not for Skywork; the gate most likely still fails.
 | `e59-deepseek-c`, `e59-olmo-h` | Nasif |
 | `e59-deepseek-d`, `e59-skywork-a` | TASHIN |
 
-Accounts were matched to jobs by quota already used this week, the heaviest pair going to Eshad (fresh). 17 of 18 pushed 19 Oct; `e59-olmo-h` was refused on Nasif (both GPU slots busy, one with E58's unused resume copy) and went unchanged to TASHIN when its slot freed (19 Oct): all 18 launched.
+Accounts were matched to jobs by quota already used this week, the heaviest pair going to Eshad (fresh). 17 of 18 pushed 19 Oct; `e59-olmo-h` was refused on Nasif (both GPU slots busy, one with E58's unused resume copy) and went unchanged to TASHIN when its slot freed (19 Oct): all 18 launched. By 19 Oct afternoon 16 finished every phase with exit 0; `e59-deepseek-b` hit its 7.5 h guard with 4 of 8 variant items, so amendment 1 resumes it (`e59-deepseek-b-resume` on DIDHITI, saving each item as it finishes); `e59-olmo-h` still running on TASHIN.
 
 ### E58: closed 18 Oct, gate failed as predicted (Finding 83; protocol `protocols/E58_PROTOCOL.md`, committed `da7e18d` before launch)
 
