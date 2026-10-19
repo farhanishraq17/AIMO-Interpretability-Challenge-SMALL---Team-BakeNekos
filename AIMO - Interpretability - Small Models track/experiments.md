@@ -7,6 +7,26 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E60: running since 20 Oct (protocol `protocols/E60_PROTOCOL.md`, committed `5ad4ba0` before any variant)
+
+E59's labeller with premise-level contradictions instead of answer-property ones. Generated through OpenRouter's free
+models (amendment 1: no credit for the paid pair): `nvidia/nemotron-3-ultra-550b-a55b:free` wrote two contradicting
+conditions per problem, `minimax/minimax-m3.1-flash:free` checked each blind, with the original as a control. All 14
+problems got 2 kept variants (28; one problem needed the retry round); every original was judged solvable. Only the
+contradictions are sampled; base and consistent records are E59's.
+
+| Kernels | Account |
+| --- | --- |
+| `e60-olmo-a`, `e60-deepseek-a` | Labib |
+| `e60-qwen-c`, `e60-olmo-b` | SALAM |
+| `e60-qwen-a` | Eshad (its other slot runs another project's `arc26-*` kernels) |
+| `e60-olmo-d`, `e60-deepseek-d` | Nasif |
+| `e60-qwen-b`, `e60-olmo-e` | Samin |
+| `e60-olmo-f`, `e60-qwen-d` | ISHRAQ |
+| `e60-qwen-e`, `e60-olmo-g` | Mashrafi |
+| `e60-skywork-a` | TASHIN |
+| `e60-deepseek-b`, `e60-deepseek-c`, `e60-olmo-h`, `e60-olmo-c` | pending a free slot (Labib, SALAM, Nasif, Eshad) |
+
 ### E59: closed 19 Oct, gate failed (Finding 84; protocol `protocols/E59_PROTOCOL.md`, committed `c66fc17` before launch)
 
 **Outcome:** permission to answer "no solution" moved contradictions flagged from 0 of 192 to 6 of 216; every one of

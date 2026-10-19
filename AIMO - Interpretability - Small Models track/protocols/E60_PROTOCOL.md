@@ -91,4 +91,11 @@ becomes `nvidia/nemotron-3-ultra-550b-a55b:free` and the checker `minimax/minima
 different families. Both are free and rate-limited, so the script paces its calls, stops at the daily limit,
 and resumes where it stopped. Prompts, temperatures, placement, the keep rule, the retry round, sampling and
 the gate are unchanged. If either model proves unusable on the first problem (no parsable output), that is
-recorded here before switching to the next free model of another family.
+recorded here before switching to the next free model of another family. (Both worked; nothing switched.)
+
+**2, 20 October, before any E60 record existed.** Generation stopped at the first key's daily limit with 11 of 14
+problems done (2 kept variants each), and resumed on the second key for the other 3. The 12 kernels whose
+problems were all done were launched at once, with the 11-problem variants file. A problem's variants are final
+once written, so each kernel samples exactly the variants it would have had. The other 6 kernels are launched
+when the last 3 problems are done. Kernels went to accounts by GPU hours left this week
+(`scripts/kaggle_quota.py`), never DIDHITI (over quota), RSD (read-only) or MUBAMAN (no GPU).

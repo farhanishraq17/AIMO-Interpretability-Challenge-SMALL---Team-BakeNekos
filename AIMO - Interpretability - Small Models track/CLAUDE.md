@@ -306,6 +306,8 @@ Labib, Eshad, Mashrafi, Samin and Nasif. Three caveats a new owner will hit:
   Re-test with `kaggle_followup.py push capability-check --account MUBAMAN` before giving it work.
   Its quota shows 30 h allowed and none used, so the account is eligible; a second test on 20 Oct still
   got a CPU and no internet, the sign of a phone verification that has not registered on this username.
+- **Eshad is shared too** (20 Oct): its account runs another project's `arc26-*` kernels, which take a GPU
+  slot and quota of their own.
 - **SALAM and DIDHITI are shared with another project.** On 22 Sep both had their two GPU slots
   filled by that project's kernels, and a push is refused when either the session or the weekly
   limit is reached. Same for any account running five `kagri-*` kernels.
