@@ -17,7 +17,7 @@ def main():
                 values.append(value.encode())
     paths = subprocess.check_output(GIT + ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"]).decode().split("\0")
     paths = [path for path in paths if path]
-    pattern = re.compile(rb"KGAT_[A-Za-z0-9]{20,}|hf_[A-Za-z0-9]{25,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")
+    pattern = re.compile(rb"KGAT_[A-Za-z0-9]{20,}|hf_[A-Za-z0-9]{25,}|sk-or-v1-[A-Za-z0-9]{20,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")
     for path in paths:
         if not path.startswith(SMALL.name + "/"):
             raise SystemExit("Staged file outside the authorized Small Models scope.")
