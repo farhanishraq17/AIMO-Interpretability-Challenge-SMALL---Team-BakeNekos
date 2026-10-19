@@ -85,4 +85,10 @@ the variant style, not the budget, was the barrier.
 
 ## 9. Amendments
 
-None yet.
+**1, 20 October, before any variant was generated.** The paid models could not run: the account behind the key
+has no credit (HTTP 402 on the first call, which produced nothing). The owner cannot add credit. The generator
+becomes `nvidia/nemotron-3-ultra-550b-a55b:free` and the checker `minimax/minimax-m3.1-flash:free`, two
+different families. Both are free and rate-limited, so the script paces its calls, stops at the daily limit,
+and resumes where it stopped. Prompts, temperatures, placement, the keep rule, the retry round, sampling and
+the gate are unchanged. If either model proves unusable on the first problem (no parsable output), that is
+recorded here before switching to the next free model of another family.

@@ -41,9 +41,15 @@ sys.path.insert(0, str(PERTURB))
 
 from transforms import _belongs_to_question, split_sentences  # noqa: E402
 
-GENERATOR = "deepseek/deepseek-v4-pro"
-CHECKER = "anthropic/claude-sonnet-5.5"
+# Amendment 1: the paid pair (deepseek/deepseek-v4-pro, anthropic/claude-sonnet-5.5) had no credit to run on.
+GENERATOR = "nvidia/nemotron-3-ultra-550b-a55b:free"
+CHECKER = "minimax/minimax-m3.1-flash:free"
 URL = "https://openrouter.ai/api/v1/chat/completions"
+PACE_SECONDS = 4  # free models allow about 20 requests a minute
+
+
+class DailyLimit(Exception):
+    """The free models' daily request limit; rerun the script after it resets and it resumes."""
 
 GENERATION_PROMPT = """Below is a competition math problem and its correct answer.
 
@@ -89,7 +95,8 @@ def chat(key: str, model: str, prompt: str, temperature: float, log) -> str:
     """One OpenRouter completion; the request and response are logged without the key."""
     body = {"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": temperature,
             "max_tokens": 32000}
-    for attempt in range(4):
+    for attempt in range(6):
+        time.sleep(PACE_SECONDS)
         request = urllib.request.Request(URL, data=json.dumps(body).encode(),
                                          headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
         try:
@@ -99,10 +106,16 @@ def chat(key: str, model: str, prompt: str, temperature: float, log) -> str:
                                   "usage": response.get("usage")}) + "\n")
             log.flush()
             return text
-        except (urllib.error.URLError, KeyError, TimeoutError, json.JSONDecodeError) as exc:
+        except urllib.error.HTTPError as exc:
+            message = exc.read().decode(errors="replace").replace(key, "[REDACTED]")
+            if exc.code == 429 and "per-day" in message.lower():
+                raise DailyLimit(message[:200]) from None
+            print(f"  {model}: HTTP {exc.code} {message[:160]}; retry {attempt + 1}", flush=True)
+            time.sleep(30 * (attempt + 1))
+        except (urllib.error.URLError, KeyError, IndexError, TimeoutError, json.JSONDecodeError) as exc:
             print(f"  {model}: {type(exc).__name__}, retry {attempt + 1}", flush=True)
-            time.sleep(10 * (attempt + 1))
-    raise SystemExit(f"{model} failed four times")
+            time.sleep(30 * (attempt + 1))
+    raise SystemExit(f"{model} failed six times")
 
 
 def parse_conditions(text: str) -> list[dict]:
@@ -147,33 +160,47 @@ def main() -> None:
     key = api_key()
     pool = pd.read_parquet(args.pool)
     (args.out_dir / "raw").mkdir(parents=True, exist_ok=True)
-    kept, audit = [], []
-    with open(args.out_dir / "raw" / "generation.jsonl", "a", encoding="utf-8") as gen_log, \
-         open(args.out_dir / "raw" / "check.jsonl", "a", encoding="utf-8") as check_log:
-        for row in pool.itertuples(index=False):
-            original = verdict(chat(key, CHECKER, CHECK_PROMPT.format(problem=row.problem), 0.0, check_log))
-            mine = []
-            for round_ in (1, 2):
-                text = chat(key, GENERATOR, GENERATION_PROMPT.format(problem=row.problem, answer=int(row.answer)), 1.0, gen_log)
-                for condition in parse_conditions(text):
-                    variant = insert(row.problem, condition["sentence"])
-                    said = verdict(chat(key, CHECKER, CHECK_PROMPT.format(problem=variant), 0.0, check_log))
-                    ok = said == "CONTRADICTORY" and original == "SOLVABLE"
-                    audit.append({"pool_id": row.pool_id, "round": round_, "sentence": condition["sentence"],
-                                  "why_impossible": condition.get("why_impossible", ""), "checker_variant": said,
-                                  "checker_original": original, "kept": ok and len(mine) < args.per_problem})
-                    if audit[-1]["kept"]:
-                        mine.append({"variant_id": f"e60:contradict_premise:{row.pool_id}:{len(mine)}",
-                                     "pool_id": row.pool_id, "category": "contradict_premise", "family": "no_solution",
-                                     "tier": row.tier, "variant_problem": variant, "compliance": "distinct",
-                                     "expected_answer": int(row.answer), "sentence": condition["sentence"]})
-                if len(mine) >= args.per_problem:
-                    break
-            print(f"{row.pool_id}: original {original}, kept {len(mine)}", flush=True)
-            kept += mine
+    # One line per finished problem, so a run stopped by the daily limit resumes where it stopped.
+    progress_path = args.out_dir / "raw" / "progress.jsonl"
+    progress = [json.loads(line) for line in progress_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()] if progress_path.is_file() else []
+    done = {p["pool_id"] for p in progress}
+    try:
+        with open(args.out_dir / "raw" / "generation.jsonl", "a", encoding="utf-8") as gen_log, \
+             open(args.out_dir / "raw" / "check.jsonl", "a", encoding="utf-8") as check_log, \
+             open(progress_path, "a", encoding="utf-8") as progress_log:
+            for row in pool.itertuples(index=False):
+                if row.pool_id in done:
+                    continue
+                original = verdict(chat(key, CHECKER, CHECK_PROMPT.format(problem=row.problem), 0.0, check_log))
+                mine, audit = [], []
+                for round_ in (1, 2):
+                    text = chat(key, GENERATOR, GENERATION_PROMPT.format(problem=row.problem, answer=int(row.answer)), 1.0, gen_log)
+                    for condition in parse_conditions(text):
+                        variant = insert(row.problem, condition["sentence"])
+                        said = verdict(chat(key, CHECKER, CHECK_PROMPT.format(problem=variant), 0.0, check_log))
+                        ok = said == "CONTRADICTORY" and original == "SOLVABLE"
+                        audit.append({"pool_id": row.pool_id, "round": round_, "sentence": condition["sentence"],
+                                      "why_impossible": condition.get("why_impossible", ""), "checker_variant": said,
+                                      "checker_original": original, "kept": ok and len(mine) < args.per_problem})
+                        if audit[-1]["kept"]:
+                            mine.append({"variant_id": f"e60:contradict_premise:{row.pool_id}:{len(mine)}",
+                                         "pool_id": row.pool_id, "category": "contradict_premise", "family": "no_solution",
+                                         "tier": row.tier, "variant_problem": variant, "compliance": "distinct",
+                                         "expected_answer": int(row.answer), "sentence": condition["sentence"]})
+                    if len(mine) >= args.per_problem:
+                        break
+                progress_log.write(json.dumps({"pool_id": row.pool_id, "kept": mine, "audit": audit}) + "\n")
+                progress_log.flush()
+                progress.append({"pool_id": row.pool_id, "kept": mine, "audit": audit})
+                print(f"{row.pool_id}: original {original}, kept {len(mine)} of {len(audit)} checked", flush=True)
+    except DailyLimit as exc:
+        print(f"daily request limit reached ({exc}); rerun after it resets to resume", flush=True)
+    kept = [v for p in progress for v in p["kept"]]
     pd.DataFrame(kept).to_parquet(args.out_dir / "variants.parquet", index=False)
-    pd.DataFrame(audit).to_parquet(args.out_dir / "audit.parquet", index=False)
-    print(f"{len(kept)} variants for {len({k['pool_id'] for k in kept})} of {len(pool)} problems -> {args.out_dir}")
+    pd.DataFrame([a for p in progress for a in p["audit"]]).to_parquet(args.out_dir / "audit.parquet", index=False)
+    print(f"{len(progress)} of {len(pool)} problems done; {len(kept)} variants for "
+          f"{len({k['pool_id'] for k in kept})} problems -> {args.out_dir}")
 
 
 if __name__ == "__main__":
