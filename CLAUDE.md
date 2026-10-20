@@ -10,7 +10,8 @@ Team workspace for the **AIMO Interpretability Challenge (NeurIPS 2026)**, enter
   budget, and the final test runs the same way (Finding 79). Batch rankings and counts no longer act.
 - **What ships today:** `e27k` scored 0.86 under the old batch protocol; per-problem it collapses to the
   per-model constants and scores **0.64**. `e27f` gives the same predictions without loading a model
-  (`submission/make_e27.py` rebuilds every candidate ZIP into `dist/`). Read `PLAN.md` §12 first.
+  (`submission/make_e27.py` rebuilds every candidate ZIP into `dist/`). Read `PLAN.md` §13 first:
+  the final-push plan, the 21 Oct fleet and API-key state, and E61 (familiarity as a per-problem threshold).
 - **This repository is the Small Models Track only.** The Main Track (adds `gpt-oss-120b`) lives in
   its own repository, `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-LARGE---Team-BakeNekos`;
   nothing here depends on it, the two only share the Kaggle accounts, and its `LF-n` findings are
