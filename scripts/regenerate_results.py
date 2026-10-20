@@ -90,6 +90,8 @@ STEPS = [
     ["train/eval_e58.py", "--experiment", "e59"],
     # E60: premise-level contradictions; needs the e60 runs, data/e60/ and E59's result.
     ["train/eval_e58.py", "--experiment", "e60"],
+    # E61: familiarity as a per-problem threshold. CPU; needs the e23, e54 and e55 runs.
+    ["train/eval_e61.py"],
 ]
 
 

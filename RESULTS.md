@@ -1195,3 +1195,21 @@ On the labelled rows, self-labels agree with the official labels on 0.296; `e27f
 | olmo | 1 of 64 | 20 of 64 |
 
 **Exploratory, post hoc on the same 27 rows (decides nothing).** The per-row detection rate as a score for the official label: AUC 0.675, 95% problem-bootstrap CI [0.505, 0.860].
+
+## E61: familiarity as a per-problem threshold
+
+Rules fixed in `protocols/E61_PROTOCOL.md` before this table was computed. Balanced accuracy of the per-problem decisions, 95% problem-bootstrap interval (2,000 draws, seed 61); any constant scores 0.5. E61a: below E54's 75-problem AMC median. E61b: at or below the p_m quantile of E55's 548 unlabelled problems.
+
+| population | rows | robust | E61a | E61b |
+| --- | --- | --- | --- | --- |
+| P1 official rows | 34 | 0.71 | 0.458 [0.143, 0.682] (acc 0.441) | 0.329 [0.136, 0.481] (acc 0.382) |
+| P2 DeepSeek MATH | 142 | 0.27 | 0.638 [0.552, 0.726] (acc 0.683) | 0.624 [0.545, 0.697] (acc 0.535) |
+
+| model | p_m | E61b threshold | E61a threshold | E61a's quantile in R | R within 0.01 nats of E61b |
+| --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 0.600 | 1.4934 | 1.2685 | 0.394 | 0.013 |
+| `Skywork/Skywork-OR1-Math-7B` | 0.333 | 1.8658 | 2.0123 | 0.405 | 0.011 |
+| `allenai/Olmo-3-7B-Think` | 0.333 | 1.4405 | 1.5790 | 0.418 | 0.027 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.667 | 1.8888 | 1.5377 | 0.414 | 0.016 |
+
+**C2 (E61b on DeepSeek MATH, interval lower bound above 0.5): pass** (0.624 [0.545, 0.697]). C3 and C4 are reported only. C1, C5 and C6 are decided on the ZIP.
