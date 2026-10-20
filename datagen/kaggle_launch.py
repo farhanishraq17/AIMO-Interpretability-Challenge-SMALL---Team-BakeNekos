@@ -1026,7 +1026,9 @@ def load_accounts() -> dict[str, tuple[str, str]]:
             usernames[name.removeprefix("KAGGLE_USERNAME_")] = value
         elif name.startswith("KAGGLE_API_TOKEN_"):
             tokens[name.removeprefix("KAGGLE_API_TOKEN_")] = value
-    return {alias: (usernames.get(alias, ""), token) for alias, token in tokens.items()}
+    # An empty token (Tamim1, 21 Oct) cannot authenticate, and callers that scrub tokens from output would
+    # replace the empty string between every character.
+    return {alias: (usernames.get(alias, ""), token) for alias, token in tokens.items() if token}
 
 
 def kaggle(alias: str, *args: str) -> tuple[int, str]:

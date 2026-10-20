@@ -2717,6 +2717,45 @@ caps, base and consistent-premise records.
   for the collaborator's run: `premise_variants.py` (free models, resumable, key rotation),
   `sample.py --allow-no-solution`, `eval_e52.grade`.
 
+**86. E61: `e27k`'s familiarity statistic as an absolute per-problem threshold passes every check it can
+pass before the board: exact NLL parity on the four real checkpoints, DeepSeek MATH above chance, three
+minutes for sixty calls. On the 34 official rows it reverses, now with an interval below 0.5.**
+(`protocols/E61_PROTOCOL.md`, committed `606cf9b` before any threshold; `train/eval_e61.py`; GPU check on
+Nipun, 21 Oct, 12 minutes, `kernels/runs/e61-gpu-check-Nipun/result.json`. RESULTS, "E61: familiarity as a
+per-problem threshold".)
+
+Robust iff the scored model's mean token NLL on the bare problem is at or below a threshold fixed on
+unlabelled problems. E61b (the candidate) takes the `p_m` quantile of E55's 548 problems, `p_m` from the probe
+balances (Qwen 0.6, DeepSeek 2/3, Skywork and Olmo 1/3); E61a (the control) is E54's frozen S1.
+
+| check | result |
+| --- | --- |
+| C1 parity, E55's stored NLL vs the ZIP's, five problems per real checkpoint | **max abs diff 0.0** on all four |
+| C2 E61b on DeepSeek MATH (142) | **0.624 [0.545, 0.697]: pass** (E61a 0.638 [0.552, 0.726]) |
+| C3 official rows (34), reported only | E61a 0.458 [0.143, 0.682]; **E61b 0.329 [0.136, 0.481]** |
+| C4 thresholds, reported only | E54's AMC medians sit at the 0.39-0.42 quantile of R for every model; 1-3% of R lies within 0.01 nats of an E61b threshold |
+| C5 sixty one-problem calls, loads included, T4 pair | **180 s: pass** (limit 300); native bools; an unknown model returns `False` |
+| C6 contract | `run_local.py --small`: coverage 1.0, 0 invalid for both ZIPs. **Docker not run:** the daemon failed to start on this machine |
+
+- **The arithmetic is settled.** The submission's NLL equals the reference values to the bit on the real
+  models, so a threshold drawn from them means what it says on the evaluation path, up to Blackwell's bf16.
+- **The reversal on the official rows is the sharpest it has been.** At E61b's thresholds familiar official
+  problems are spurious more often than chance allows. The protocol fixed C3 as reported only, because the
+  owner chose the familiarity direction on the board and MATH evidence (§12.3), so it does not block the
+  board read. It is the strongest evidence yet that what familiarity predicts depends on the population,
+  and the report should say so whatever the board shows.
+- **AMC 2023 is more familiar to every model than the reference as a whole.** E54's thresholds, drawn from
+  those 75 problems, would call only about 40% of R robust, so E61a is a stricter rule than its "median"
+  name suggests.
+- **Two tooling bugs fixed on the way.** The capability check probed a dataset that now answers 401 to
+  everyone, so four healthy accounts (Mazharul, Simanta01, Simanta02, Tamim3: 2x T4 each) read as having no
+  internet; it now probes a model the kernels download. `load_accounts` returned Tamim1's empty token, and
+  `kaggle_live_logs.py` then scrubbed the empty string between every character of the log; empty tokens
+  are now dropped where they are read.
+- **What is left:** the Docker run, then the owner's two uploads in protocol order, E61a then E61b
+  (`dist/solution-e61b-quantile-small.zip`, SHA-256 `e19c0d5bede5ccf1…`). The ship rule (§5) then decides
+  the Google Form ZIP at the freeze.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

@@ -7,6 +7,21 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E61: built and checked 21 Oct, awaiting Docker and two board reads (Finding 86; protocol `protocols/E61_PROTOCOL.md`, committed `606cf9b` before any threshold)
+
+**Outcome so far:** C1 (NLL parity 0.0 on all four checkpoints), C2 (DeepSeek MATH 0.624 [0.545, 0.697]) and C5
+(180 s for 60 calls) pass; C6's local contract passes and its Docker half is pending. C3, reported only: E61b
+scores 0.329 [0.136, 0.481] on the official rows.
+
+| Kernel | Account | Time |
+| --- | --- | --- |
+| `capability-check` (v1, stale internet probe) | Mazharul, Simanta01, Simanta02, Tamim3 | ~5 min each; 2x T4 on all four |
+| `capability-check` (v2, fixed probe) | Mazharul | ~5 min |
+| `e61-gpu-check` | Nipun | 12 min |
+
+ZIPs: `dist/solution-e61a-amc-median-small.zip` (control) and `dist/solution-e61b-quantile-small.zip` (candidate),
+from `submission/make_e61.py`; thresholds from `train/eval_e61.py`.
+
 ### E60: closed 20 Oct, gate failed (Finding 85; protocol `protocols/E60_PROTOCOL.md`, committed `5ad4ba0` before any variant)
 
 **Outcome:** premise contradictions are flagged far more often than answer claims (Qwen 4 -> 19 of 72, Olmo 1 -> 20 of 64,
