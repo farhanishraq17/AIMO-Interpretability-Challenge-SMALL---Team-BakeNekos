@@ -18,7 +18,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parents[1]
-SMALL = ROOT / "AIMO - Interpretability - Small Models track"
 OUT = Path(__file__).resolve().parent / "figures"
 
 SOURCES = {
@@ -55,7 +54,7 @@ def save(fig, name: str) -> None:
 
 def fig1_layer_curve() -> None:
     """Every layer beats the honest nested result. That gap is the selection artifact."""
-    path = SMALL / "runs/e1b-stagea-deepseek/features/stagea-deepseek/layer_curve.csv"
+    path = ROOT / "runs/e1b-stagea-deepseek/features/stagea-deepseek/layer_curve.csv"
     rows = list(csv.DictReader(path.open(encoding="utf-8")))
     series = {}
     for r in rows:

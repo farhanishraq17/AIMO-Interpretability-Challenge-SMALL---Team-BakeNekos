@@ -1049,9 +1049,9 @@ python submission/make_e28.py     # rank successors
 python submission/make_probes.py  # the 5 constant probes
 ```
 
-Repository layout: the Small Models Track folder holds `CLAUDE.md` (conventions), `COMPETITION.md`
-(rules), `PLAN.md`, `PROGRESS.md` (numbered findings), `RESULTS.md` (generated — never hand-edited),
-`experiments.md` (registry) and `protocols/` (pre-registrations). Submissions are indexed by score
+Repository layout: the root holds `CLAUDE.md` (conventions), `PLAN.md`, `PROGRESS.md` (numbered
+findings) and `RESULTS.md` (generated — never hand-edited); `docs/` holds `COMPETITION.md` (rules)
+and `experiments.md` (registry), and `protocols/` the pre-registrations. Submissions are indexed by score
 in `submission/README.md`, and the built ZIPs are committed, so the artifact that scored can be
 uploaded from a clone without rebuilding. Kernels are exported to `kernels/` exactly as pushed, so
 any run can be rebuilt if a Kaggle account disappears. The failure table in §6 names the script
