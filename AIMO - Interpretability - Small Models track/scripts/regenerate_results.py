@@ -88,6 +88,8 @@ STEPS = [
     ["train/eval_e58.py"],
     # E59: the same labeller with a prompt that can decline. Needs the e59 runs; reads E58's result, so after it.
     ["train/eval_e58.py", "--experiment", "e59"],
+    # E60: premise-level contradictions; needs the e60 runs, data/e60/ and E59's result.
+    ["train/eval_e58.py", "--experiment", "e60"],
 ]
 
 

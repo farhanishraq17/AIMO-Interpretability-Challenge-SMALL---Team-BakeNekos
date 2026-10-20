@@ -2678,6 +2678,45 @@ E58 repeated with one change: every prompt ends "If the problem has no solution,
   run is the one place left to measure premise-level contradictions at 100k tokens; the prompt and the
   grader to use are in `datagen/perturb/sample.py` (`--allow-no-solution`) and `train/eval_e52.py`.
 
+**85. E60: contradictions about the problem's own objects are flagged far more often than claims about the
+answer (Qwen 4 -> 19 of 72, Olmo 1 -> 20 of 64), so the variant was much of what E58-E59 missed. But almost
+no row is flagged every time, and the gate fails again (kappa 0.045).** (`protocols/E60_PROTOCOL.md` with
+amendments 1-2, `datagen/perturb/premise_variants.py`, `train/eval_e58.py --experiment e60`; 18 kernels on eight
+accounts, 20 Oct, 45.9 session-hours; generation on OpenRouter's free tier at no cost. RESULTS, "E60:
+premise-level contradictions on the same gate".)
+
+`nvidia/nemotron-3-ultra-550b-a55b:free` wrote two contradicting conditions per official problem; the script
+inserted them; `minimax/minimax-m3.1-flash:free` checked each blind against the original. Example: "The height of
+the trapezoid is 7", where the inscribed circle forces 6. 28 of 30 checked conditions were kept, two for every
+problem, and every original was judged solvable. Everything else was E59's: prompt that can decline, decoding,
+caps, base and consistent-premise records.
+
+| | Qwen3.5-4B | DeepSeek-R1-Qwen3-8B | Skywork-OR1-Math-7B | Olmo-3-7B-Think |
+| --- | --- | --- | --- | --- |
+| flagged, E59 (answer claim) -> E60 (premise) | 4 -> **19** of 72 | 1 -> **5** of 56 | 0 -> **0** of 24 | 1 -> **20** of 64 |
+| out of budget, E59 -> E60 | 41 -> 11 | 36 -> 10 | 0 -> 0 | 60 -> 22 |
+| E60 answered (with the original answer) | 42 (36) | 40 (27) | 24 (19) | 22 (13) |
+| labelled rows: self robust / official robust | 1 of 9 / 7 | 0 of 7 / 5 | 0 of 3 / 2 | 1 of 8 / 7 |
+
+- **The variant mattered; the prompt alone had not** (Finding 84). Against the same rows, prompt and caps, a
+  contradiction about the problem's objects is flagged about five times as often by Qwen and twenty times as
+  often by Olmo, and it is resolved sooner: samples out of budget fall by two thirds. Among finished samples,
+  Olmo flags 20 of 42 and Qwen 19 of 61.
+- **The label still fails because it needs near-certain detection.** A robust row needs all 8 contradiction
+  samples flagged. Only 11 of 27 rows were flagged at all, and only one Qwen and one Olmo row every time, so 25
+  of 27 rows are labelled spurious against 21 officially robust. Kappa 0.045, CI [0.000, 0.182]; agreement 0.30
+  against the constants' 0.52. The gate fails, as pre-registered; the prediction's other half, that detection
+  would stay low, was wrong for Qwen and Olmo.
+- **Skywork never flags a contradiction in any form or budget we have tried** (E52, E58, E59, E60: 0 of 346
+  samples). It answers, with the original problem's answer 19 times in 24 here.
+- **Exploratory, post hoc on the same rows, decides nothing:** the per-row detection rate as a score for the
+  official label has AUC 0.675, CI [0.505, 0.860]. A continuous detection score may carry signal that the
+  all-or-nothing label discards; only new labelled rows could test that.
+- **What is left untested is the budget.** The organizers sample to 100k tokens, where the 33% of Olmo samples
+  still undecided at 16k and the 15% of Qwen's at 64k would finish. The generator, prompt and grader are ready
+  for the collaborator's run: `premise_variants.py` (free models, resumable, key rotation),
+  `sample.py --allow-no-solution`, `eval_e52.grade`.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

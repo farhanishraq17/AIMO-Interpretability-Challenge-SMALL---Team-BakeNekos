@@ -7,7 +7,11 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
-### E60: running since 20 Oct (protocol `protocols/E60_PROTOCOL.md`, committed `5ad4ba0` before any variant)
+### E60: closed 20 Oct, gate failed (Finding 85; protocol `protocols/E60_PROTOCOL.md`, committed `5ad4ba0` before any variant)
+
+**Outcome:** premise contradictions are flagged far more often than answer claims (Qwen 4 -> 19 of 72, Olmo 1 -> 20 of 64,
+DeepSeek 1 -> 5 of 56, Skywork 0 of 24), but only 2 of 27 rows are flagged every time, so kappa 0.045 and the gate
+fails. All 18 kernels finished every phase with exit 0. 45.9 session-hours; generation free.
 
 E59's labeller with premise-level contradictions instead of answer-property ones. Generated through OpenRouter's free
 models (amendment 1: no credit for the paid pair): `nvidia/nemotron-3-ultra-550b-a55b:free` wrote two contradicting
@@ -271,6 +275,7 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 | E48 | How many labels would each closed lane have needed? | local | Done | **63 to 320 rows; we had 33 to 61.** Power was 14-53%, so the experiments could not have returned a positive result even if their hypotheses were true (Finding 72) |
 | E50 | What exactly is the hidden set, given every score we have? | local | Done | **Solved to two states**, both Qwen 5, DeepSeek 3, Skywork 3, Olmo 3. `e27k` is perfect on the last three; its two misses are one swapped Qwen pair. Ranking null p = 0.048 on that composition. A public pre-withholding `train-main-v2` revision exposes 7 validation labels; unused (Finding 75) |
 | E51 | Which perturbation families make a label spurious? | local | Done | **Different ones per population.** MATH: domain (0.86 of rows drop >= 0.25). Olympiad: `expert_no_solution` (0.43), surface families <= 0.03. MATH-trained models learned the wrong mechanism (Finding 76) |
+| E60 | Do premise-level contradictions (LLM-written, checked blind) make the labeller work? | Kaggle + OpenRouter (free) | Done, gate failed | **No, but they are noticed far more.** Flagged: Qwen 19 of 72, Olmo 20 of 64 (from 4 and 1); only 2 of 27 rows flagged every time, kappa 0.045. The 100k budget is the one difference left (Finding 85) |
 | E59 | Does letting the prompt answer "no solution" make the E58 labeller work? | Kaggle | Done, gate failed | **No.** Flagged contradictions 0 of 192 -> 6 of 216; every row still spurious, kappa 0.000; no false abstention. The barrier is the variant or the budget, not the prompt (Finding 84) |
 | E58 | Does an automatic labeller (answer-property contradictions, T4-maximal budgets) reproduce the official labels? | Kaggle | Done, gate failed | **No.** 0 of 192 contradiction samples flagged; every row spurious, kappa 0.000. The models notice the clash, call it a typo and answer anyway (Finding 83) |
 | E57 GPU check | Does the per-problem template run on the real models and match its training features? | Kaggle | Done | **Yes:** exact parity with E55 on all four models, native bools, 0.68-1.43 s a call on T4 (Finding 82) |

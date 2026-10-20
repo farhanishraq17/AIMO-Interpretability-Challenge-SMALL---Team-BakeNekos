@@ -916,3 +916,8 @@ advance to fail. If it passes, E57's precondition is amended to accept it and E5
 contradictions flagged rose only from 0 of 192 to 6 of 216, and the gate failed the same way. Self-labelling on our
 compute is closed. What is left untested is premise-level contradictions at the organizers' 100k budget, which only
 the collaborator's compute can run. **The submission is `e27f`** unless their gate passes before the 27 Oct freeze.
+
+**E60 (20 Oct, Finding 85) ran exactly that variant at our caps:** LLM-written premise contradictions, checked blind,
+generated free on OpenRouter. Qwen and Olmo now flag a quarter to a third of them (from almost none), but a robust
+label needs every sample flagged, and only 2 of 27 rows were. Gate failed (kappa 0.045). The variant was a real part
+of the gap; the 100k budget is the part left, and it needs the collaborator's GPUs.

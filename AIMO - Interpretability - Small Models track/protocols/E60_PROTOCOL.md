@@ -1,6 +1,9 @@
 # E60: premise-level contradictions written by an LLM, on the same gate
 
-Status: **pre-registered 20 October 2026, before any E60 variant or record existed.** Code:
+Status: **closed 20 October 2026: the gate failed** (kappa 0.045, CI [0.000, 0.182]; 25 of 27 rows spurious). Detection
+rose sharply for Qwen (4 -> 19 of 72) and Olmo (1 -> 20 of 64), so §7's "detection stays low" was wrong for them
+(PROGRESS Finding 85). `e27f` stays.
+Pre-registered 20 October 2026, before any E60 variant or record existed. Code:
 `datagen/perturb/premise_variants.py` (generation and check), `scripts/e58_gpu_bundle.py` (the `e60-*` jobs),
 `train/eval_e58.py --experiment e60`. Any change after the first generated variant is read is an amendment,
 dated in §9.

@@ -1160,3 +1160,38 @@ On the labelled rows, self-labels agree with the official labels on 0.222; `e27f
 | deepseek | 0 of 40 | 1 of 56 | 0 of 28 | 0 of 56 |
 | skywork | 0 of 24 | 0 of 24 | 0 of 12 | 0 of 24 |
 | olmo | 0 of 56 | 1 of 64 | 0 of 32 | 0 of 64 |
+
+## E60: premise-level contradictions on the same gate
+
+Premise-level contradictions (`datagen/perturb/premise_variants.py`), with E59's base and consistent records, on the 27 official rows with a reference answer, sampled with the organizers' decoding at each model's T4 cap (`protocols/E60_PROTOCOL.md`).
+
+| model | cap | rows | sampled | eligible | labelled | self robust / spurious / band | official robust | contradiction samples: detected / answered (kept original) / truncated / other |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| qwen | 65,536 | 9 | 9 | 9 | 9 | 1 / 8 / 0 | 7 | 19 / 42 (36) / 11 / 0 |
+| deepseek | 32,768 | 7 | 7 | 7 | 7 | 0 / 7 / 0 | 5 | 5 / 40 (27) / 10 / 1 |
+| skywork | 32,768 | 3 | 3 | 3 | 3 | 0 / 3 / 0 | 2 | 0 / 24 (19) / 0 / 0 |
+| olmo | 16,384 | 8 | 8 | 8 | 8 | 1 / 7 / 0 | 7 | 20 / 22 (13) / 22 / 0 |
+
+**Gate: fails.** 27 of 27 rows labelled (needs 18); Cohen's kappa against the official labels 0.045, 95% problem-bootstrap CI [0.000, 0.182] (needs >= 0.3 with the lower bound above 0).
+
+On the labelled rows, self-labels agree with the official labels on 0.296; `e27f`'s constants agree on 0.519. Family that set `max_drop`: {'no_solution': 27}.
+
+**Exploratory (after the gate was read).** Contradiction samples whose stored ending mentions the clash:
+
+| model | answered: mention the clash | truncated: mention the clash |
+| --- | --- | --- |
+| qwen | 21 of 42 | 1 of 11 |
+| deepseek | 22 of 40 | 3 of 10 |
+| skywork | 0 of 24 | 0 of 0 |
+| olmo | 4 of 22 | 10 of 22 |
+
+**Reported (E60 protocol §5).** Generator yield: round 1: 23 kept of 24 checked, round 2: 5 kept of 6 checked; 14 of 14 problems have a kept variant.
+
+| model | flagged, E59 (answer-property) | flagged, E60 (premise) |
+| --- | --- | --- |
+| qwen | 4 of 72 | 19 of 72 |
+| deepseek | 1 of 56 | 5 of 56 |
+| skywork | 0 of 24 | 0 of 24 |
+| olmo | 1 of 64 | 20 of 64 |
+
+**Exploratory, post hoc on the same 27 rows (decides nothing).** The per-row detection rate as a score for the official label: AUC 0.675, 95% problem-bootstrap CI [0.505, 0.860].

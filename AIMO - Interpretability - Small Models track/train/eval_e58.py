@@ -262,6 +262,18 @@ def main() -> None:
               "confusion": pd.crosstab(labelled.official, labelled.self_robust).to_dict() if len(labelled) else {},
               "per_model": per_model.to_dict("records"), "per_row": frame.drop(columns="model_id").to_dict("records")}
     explore_lines, result["exploratory"] = exploratory(per_model)
+    if EXPERIMENT == "e60":  # exploratory, after the gate: does the detection rate itself carry the label?
+        from sklearn.metrics import roc_auc_score
+        rated = frame[frame.acc_no_solution.notna()].assign(rate=lambda d: d.acc_no_solution)
+        auc = float(roc_auc_score(rated.official, rated.rate))
+        def rate_auc(d: pd.DataFrame) -> float:
+            if d.official.nunique() < 2:
+                raise ValueError("one class")  # problem_bootstrap skips this draw
+            return float(roc_auc_score(d.official, d.rate))
+        low_auc, high_auc = problem_bootstrap(rated, rate_auc, seed=SEED)
+        result["exploratory"]["detection_rate_auc"] = [auc, low_auc, high_auc]
+        explore_lines += ["", f"**Exploratory, post hoc on the same 27 rows (decides nothing).** The per-row detection rate "
+                          f"as a score for the official label: AUC {auc:.3f}, 95% problem-bootstrap CI [{low_auc:.3f}, {high_auc:.3f}]."]
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "result.json").write_text(json.dumps(result, indent=2, default=float), encoding="utf-8")
 
@@ -273,7 +285,9 @@ def main() -> None:
                      f"{m.self_spurious} / {m.band} | {int(m.official_robust)} | {int(m.detected)} / {int(m.answered + m.kept_original)} "
                      f"({int(m.kept_original)}) / {int(m.truncated)} / {int(m.other)} |")
     body = "\n".join([
-        "Answer-property variants (`datagen/perturb/e58_variants.py`) on the 27 official rows with a reference answer, "
+        ("Premise-level contradictions (`datagen/perturb/premise_variants.py`), with E59's base and consistent records, "
+         if EXPERIMENT == "e60" else "Answer-property variants (`datagen/perturb/e58_variants.py`) ") +
+        "on the 27 official rows with a reference answer, "
         "sampled with the organizers' decoding at each model's T4 cap "
         f"(`protocols/{EXPERIMENT.upper()}_PROTOCOL.md`" + ("; the prompt can decline" if EXPERIMENT == "e59" else "") + ").",
         "", *table, "",
