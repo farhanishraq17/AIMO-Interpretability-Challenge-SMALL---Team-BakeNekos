@@ -13,7 +13,7 @@
 
 **Companion documents:**
 
-- `COMPETITION.md`: rules, contract, leaderboard mechanics.
+- `docs/COMPETITION.md`: rules, contract, leaderboard mechanics.
 - `PROGRESS.md`: what was built and measured, with numbered Findings.
 - `RESULTS.md`: generated metric tables.
 - `CLAUDE.md`: working conventions and commands.

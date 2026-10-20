@@ -59,8 +59,6 @@ The same method may also be submitted to the Main Track as a *separate* ZIP with
 | AIMO Prize / Kaggle org (upstream models) | https://www.kaggle.com/organizations/aimoprize |
 | AIMO 3 (Kaggle, open-weight solvers) | https://www.kaggle.com/competitions/ai-mathematical-olympiad-progress-prize-3 |
 
-Local copies of the first two URLs are in `Competiton-Website-Portal.txt` and `Github-Link.txt`.
-
 ---
 
 ## 4. Task contract (what we must implement)
