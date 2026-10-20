@@ -16,7 +16,8 @@ each, blind, before any of our models sees it:
    same prompt; whatever is kept after that is used.
 
 Every request and response is saved (`raw/*.jsonl`) for the report; the API key is read from `Secrets.env`
-(`omarapi`) and never written anywhere. Writes `<out>/variants.parquet` in the sampler's variants format
+(`omarapi`) and never written anywhere. A model named `gemini-*` goes to the Gemini API instead (E62's
+`--generator gemini-2.5-pro --checker gemini-2.5-flash`), its key sent as a header, never in a URL. Writes `<out>/variants.parquet` in the sampler's variants format
 (category `contradict_premise`, `expected_answer` the original answer).
 
 Run:  python datagen/perturb/premise_variants.py --pool data/e58/pool.parquet --out-dir data/e60
@@ -46,6 +47,8 @@ GENERATOR = "nvidia/nemotron-3-ultra-550b-a55b:free"
 CHECKER = "minimax/minimax-m3.1-flash:free"
 URL = "https://openrouter.ai/api/v1/chat/completions"
 PACE_SECONDS = 4  # free models allow about 20 requests a minute
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+GEMINI_PACE_SECONDS = 13  # the free tier's tightest per-minute limit, gemini-2.5-pro's, is 5 requests
 
 
 class DailyLimit(Exception):
@@ -96,24 +99,46 @@ def api_keys() -> list[str]:
     return keys
 
 
+def gemini_key() -> str:
+    """The Gemini key in Secrets.env: the first line whose name mentions gemini."""
+    for line in (ROOT / "Secrets.env").read_text(encoding="utf-8-sig").splitlines():
+        name, _, value = line.partition("=")
+        if "gemini" in name.lower() and value.strip():
+            return value.strip().strip("\"'")
+    raise SystemExit("no Gemini key in Secrets.env")
+
+
 def chat(keys: list[str], model: str, prompt: str, temperature: float, log) -> str:
-    """One OpenRouter completion on the first key with quota left; logged without the key."""
-    body = {"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": temperature,
-            "max_tokens": 32000}
+    """One completion, logged without the key: Gemini for `gemini-*`, else OpenRouter on the first key with quota."""
+    gemini = model.startswith("gemini-")
+    if gemini:
+        body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                "generationConfig": {"temperature": temperature, "maxOutputTokens": 32000}}
+    else:
+        body = {"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": temperature,
+                "max_tokens": 32000}
     for attempt in range(6):
-        time.sleep(PACE_SECONDS)
-        key = keys[0]
-        request = urllib.request.Request(URL, data=json.dumps(body).encode(),
-                                         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+        time.sleep(GEMINI_PACE_SECONDS if gemini else PACE_SECONDS)
+        key = gemini_key() if gemini else keys[0]
+        url, header = ((GEMINI_URL.format(model=model), {"x-goog-api-key": key}) if gemini
+                       else (URL, {"Authorization": f"Bearer {key}"}))
+        request = urllib.request.Request(url, data=json.dumps(body).encode(),
+                                         headers={**header, "Content-Type": "application/json"})
         try:
             response = json.load(urllib.request.urlopen(request, timeout=900))
-            text = response["choices"][0]["message"]["content"] or ""
+            if gemini:  # thought parts, if any, are not the answer
+                text = "".join(part.get("text", "") for part in response["candidates"][0]["content"]["parts"]
+                               if not part.get("thought"))
+            else:
+                text = response["choices"][0]["message"]["content"] or ""
             log.write(json.dumps({"model": model, "prompt": prompt, "temperature": temperature, "response": text,
-                                  "usage": response.get("usage")}) + "\n")
+                                  "usage": response.get("usageMetadata" if gemini else "usage")}) + "\n")
             log.flush()
             return text
         except urllib.error.HTTPError as exc:
             message = exc.read().decode(errors="replace").replace(key, "[REDACTED]")
+            if gemini and exc.code == 429 and "perday" in message.lower():
+                raise DailyLimit(message[:200]) from None
             if exc.code == 429 and "per-day" in message.lower():
                 keys.pop(0)  # this account's free quota is spent for today; move to the next
                 if not keys:
@@ -165,6 +190,8 @@ def main() -> None:
     parser.add_argument("--pool", type=Path, default=ROOT / "data" / "e58" / "pool.parquet")
     parser.add_argument("--out-dir", type=Path, default=ROOT / "data" / "e60")
     parser.add_argument("--per-problem", type=int, default=2)
+    parser.add_argument("--generator", default=GENERATOR)
+    parser.add_argument("--checker", default=CHECKER)
     args = parser.parse_args()
 
     keys = api_keys()
@@ -182,19 +209,19 @@ def main() -> None:
             for row in pool.itertuples(index=False):
                 if row.pool_id in done:
                     continue
-                original = verdict(chat(keys, CHECKER, CHECK_PROMPT.format(problem=row.problem), 0.0, check_log))
+                original = verdict(chat(keys, args.checker, CHECK_PROMPT.format(problem=row.problem), 0.0, check_log))
                 mine, audit = [], []
                 for round_ in (1, 2):
-                    text = chat(keys, GENERATOR, GENERATION_PROMPT.format(problem=row.problem, answer=int(row.answer)), 1.0, gen_log)
+                    text = chat(keys, args.generator, GENERATION_PROMPT.format(problem=row.problem, answer=int(row.answer)), 1.0, gen_log)
                     for condition in parse_conditions(text):
                         variant = insert(row.problem, condition["sentence"])
-                        said = verdict(chat(keys, CHECKER, CHECK_PROMPT.format(problem=variant), 0.0, check_log))
+                        said = verdict(chat(keys, args.checker, CHECK_PROMPT.format(problem=variant), 0.0, check_log))
                         ok = said == "CONTRADICTORY" and original == "SOLVABLE"
                         audit.append({"pool_id": row.pool_id, "round": round_, "sentence": condition["sentence"],
                                       "why_impossible": condition.get("why_impossible", ""), "checker_variant": said,
                                       "checker_original": original, "kept": ok and len(mine) < args.per_problem})
                         if audit[-1]["kept"]:
-                            mine.append({"variant_id": f"e60:contradict_premise:{row.pool_id}:{len(mine)}",
+                            mine.append({"variant_id": f"{args.out_dir.name}:contradict_premise:{row.pool_id}:{len(mine)}",
                                          "pool_id": row.pool_id, "category": "contradict_premise", "family": "no_solution",
                                          "tier": row.tier, "variant_problem": variant, "compliance": "distinct",
                                          "expected_answer": int(row.answer), "sentence": condition["sentence"]})
