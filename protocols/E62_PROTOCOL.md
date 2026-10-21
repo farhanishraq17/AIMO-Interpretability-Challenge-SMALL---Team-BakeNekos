@@ -82,3 +82,16 @@ variant generated (one original had been checked by `gemini-2.5-flash`; that rec
 - checker: **`gemini-3-flash-preview`**, a different model from the generator, temperature 0.
 
 Everything else in §2 stands, including the 30-variant hand audit, which matters more with a Flash generator.
+
+**2 (21 Oct, 00:20 UTC, before any variant was sampled): E60's models, and generation for eligible problems only.**
+The free Gemini tier allows 20 requests per model per day (the 429 names the quota
+`GenerateRequestsPerDayPerProjectPerModel-FreeTier`, value 20); the checker spent its 20 on the first four problems.
+At about five requests a problem that is four problems a day. So:
+
+- **generator and checker are E60's, unchanged:** `nvidia/nemotron-3-ultra-550b-a55b:free` writes,
+  `minimax/minimax-m3.1-flash:free` checks, through OpenRouter's free tier with both keys (about 100 requests a day).
+  This restores E60's cross-family check, which amendment 1 had given up. The 8 variants Gemini kept for 4 problems
+  are set aside in `data/e62/superseded/`; one generator writes every variant used;
+- **variants are generated only for problems the base phase found eligible**, in `problem_key` order, once base
+  records exist (before that, in `problem_key` order over the whole pool). Ineligible problems are never sampled, so
+  this changes no measurement; it spends the daily requests where they can count.
