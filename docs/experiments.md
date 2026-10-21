@@ -9,10 +9,18 @@ Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (
 
 ### E62: running from 21 Oct (report experiment; protocol `protocols/E62_PROTOCOL.md`, committed `aa4ae4a` before any variant or sample, amendment 1 at `cf9ab83`)
 
-Qwen base phase (k = 2, 32k cap, the prompt that can decline) in eight hash-ordered slices of the 497-problem pool;
-premise contradictions generated in parallel on the free Gemini tier by three workers on interleaved thirds of the
-pool (`data/e62/e62{a,b,c}/`), each resumable. The contradiction phase is pushed once a slice's base records and
-variants both exist.
+Qwen base phase (k = 2, 32k cap, the prompt that can decline) in eight hash-ordered slices of the 497-problem pool,
+version 2 pushed 00:10-00:20 UTC; engines up by 00:42, about 9.5 minutes each. Contradictions come from E60's
+OpenRouter pair (amendment 2) in one resumable worker into `data/e62/`, about 12 problems an hour until the free
+daily limit stops it; rerun the same command after the limit resets. Once base records are downloaded, restrict
+the generator's pool to eligible problems (amendment 2), then push `e62v-qwen-<slice>` for each slice: it bundles
+that slice's downloaded base records and `data/e62/variants.parquet` as they stand.
+
+```powershell
+python scripts\kaggle_followup.py output e62-qwen-a --account Tamim2      # each slice, after it finishes
+python datagen\perturb\premise_variants.py --pool data\e62\pool.parquet --out-dir data\e62   # resumes
+python scripts\kaggle_followup.py push e62v-qwen-a --account <ALIAS>      # per slice, once variants exist
+```
 
 | Kernels | Account |
 | --- | --- |
@@ -21,8 +29,9 @@ variants both exist.
 | `e62-qwen-e`, `e62-qwen-f` | Simanta02 |
 | `e62-qwen-g`, `e62-qwen-h` | Mazharul |
 
-**Two false starts, neither touching a measurement.** (1) `gemini-2.5-pro` answers 404 and no Pro-class model has
-free quota on the key: amendment 1 moved to Flash-class models before any variant was kept. (2) Version 1 of every
+**Three false starts, none touching a measurement.** (1) `gemini-2.5-pro` answers 404 and no Pro-class model has
+free quota on the key: amendment 1 moved to Flash-class models before any variant was kept. (3) The free Gemini
+tier then turned out to allow 20 requests per model per day: amendment 2 returned to E60's OpenRouter models. (2) Version 1 of every
 base kernel stopped at start: the olympiad pool reuses 34 AMC `pool_id`s (Finding 29) and the sampler drops repeated
 ids, so 7 of a slice's keys were missing. `e62_pool.py` now derives the id from `problem_key`; the generators were
 restarted on the rebuilt pool and every kernel re-pushed as version 2. Superseded outputs are kept in
