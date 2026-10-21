@@ -92,6 +92,8 @@ STEPS = [
     ["train/eval_e58.py", "--experiment", "e60"],
     # E61: familiarity as a per-problem threshold. CPU; needs the e23, e54 and e55 runs.
     ["train/eval_e61.py"],
+    # E62: familiarity against contradiction detection, Qwen. CPU; needs the e62 runs, data/e62/ and the e55 runs.
+    ["train/eval_e62.py"],
 ]
 
 
