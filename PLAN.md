@@ -1033,7 +1033,8 @@ set), and `e27f` ships.
 **Cost:** CPU for C2-C4 and the build, about 1 GPU-hour for C1/C5, two uploads.
 
 **Status, 21 Oct (Finding 86):** pre-registered at `606cf9b`. C1, C2 and C5 pass, C6's local contract passes;
-Docker and the two uploads remain. C3, reported only: E61b scores 0.329 [0.136, 0.481] on the official rows.
+Docker skipped (amendment 1). C3, reported only: E61b scores 0.329 [0.136, 0.481] on the official rows. **Board: E61a
+8/14, E61b 9/14, equal to the constants.** §5 and §6 disagree at exactly 9/14; the owner decides the Form ZIP.
 
 ### 13.4 E62: does a model miss contradictions on the problems it finds familiar? (report experiment)
 

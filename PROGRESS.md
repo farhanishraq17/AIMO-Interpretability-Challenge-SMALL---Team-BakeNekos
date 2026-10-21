@@ -2752,9 +2752,16 @@ balances (Qwen 0.6, DeepSeek 2/3, Skywork and Olmo 1/3); E61a (the control) is E
   internet; it now probes a model the kernels download. `load_accounts` returned Tamim1's empty token, and
   `kaggle_live_logs.py` then scrubbed the empty string between every character of the log; empty tokens
   are now dropped where they are read.
-- **What is left:** the Docker run, then the owner's two uploads in protocol order, E61a then E61b
-  (`dist/solution-e61b-quantile-small.zip`, SHA-256 `e19c0d5bede5ccf1…`). The ship rule (§5) then decides
-  the Google Form ZIP at the freeze.
+- **The board reads (21 Oct; Docker skipped by the owner, amendment 1): E61a 8/14 (0.57, submission 1007214),
+  E61b 9/14 (0.64, submission 1007215)**, read from the public leaderboard API and mapped by upload order (E61a was
+  uploaded first, as the protocol fixed). E61b equals the per-model constants; the control loses a case. The absolute
+  thresholds do not carry the batch ranking's 12/14 to the hidden problems: their NLLs sit on a different scale from
+  the 548 reference problems, or the gains and losses cancel. A one-case difference on 14 cases is noise, so neither
+  read separates the rules from the constants.
+- **The protocol contradicts itself at exactly 9/14.** §5 ships E61b at "at least 9/14"; §6 reads "9/14 or below" as
+  the threshold failing to transfer, with `e27f` shipping. The owner decides which governs (amendment 2). Against E61b
+  at a tie: no gain on the board, a significant reversal on the official rows (C3), a slower run where ties break on
+  runtime, and no Docker run yet.
 
 ## 10. Open questions and blockers
 

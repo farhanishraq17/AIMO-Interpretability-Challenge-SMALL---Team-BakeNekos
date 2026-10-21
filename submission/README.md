@@ -45,18 +45,17 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 | 0.29 | 4/14 | `e27d-familiarity` | Familiarity ranking, **unfamiliar** half robust | Far below chance, which is informative: the ranking is real and simply inverted. Shipping its opposite (`e27e`) is what opened the whole series (Finding 49) |
 | 0.29 | 4/14 | `e28d-min-k-gap` | Min-K gap for every model | The exact ZIP was retried once after an ingestion-host failure and scored the same, so this is a genuine transfer failure, not a packaging one (Finding 50) |
 
-### Built, awaiting upload (per-problem evaluation)
+### Per-problem evaluation (since 15 Oct)
 
-Upload in this order, so the board ends on the candidate (`protocols/E61_PROTOCOL.md` §4). Run the Docker
-load test on each first (`DOCKER_LOAD_TEST.md`).
+| Score | | Submission | What it does | What it settled |
+| --- | --- | --- | --- | --- |
+| 0.64 | 9/14 | `e61b-quantile` (1007215, 21 Oct) | Robust iff mean NLL is at or below the `p_m` quantile of E55's 548 unlabelled problems (Qwen 0.6, DeepSeek 2/3, Skywork and Olmo 1/3) | **Equals the constants.** The batch ranking's 12/14 does not survive an absolute threshold (Finding 86) |
+| 0.64 | 9/14 | `e27k-tilted` (990659, re-scored 15 Oct) | The batch ranking; with one problem a call it is the constants | Finding 79 |
+| 0.57 | 8/14 | `e61a-amc-median` (1007214, 21 Oct) | Control: robust iff mean NLL is below E54's frozen 75-problem AMC median | One case below the constants |
 
-| Order | Submission | What it does | Checks |
-| --- | --- | --- | --- |
-| 1 | `e61a-amc-median` | Control: robust iff mean NLL is below E54's frozen 75-problem AMC median | C1-C5 as E61b; Docker pending |
-| 2 | **`e61b-quantile`** | **Candidate:** robust iff mean NLL is at or below the `p_m` quantile of E55's 548 unlabelled problems (Qwen 0.6, DeepSeek 2/3, Skywork and Olmo 1/3) | NLL parity 0.0 on four checkpoints, DeepSeek MATH 0.624 [0.545, 0.697], 180 s for 60 calls; Docker pending (Finding 86) |
-
-**Ship rule:** `e61b` replaces `e27f` as the Google Form ZIP if its read is at least 9/14; `e61a`'s read is
-reported and decides nothing.
+Both E61 ZIPs were uploaded without the Docker test (owner's decision, `protocols/E61_PROTOCOL.md` amendment 1).
+The protocol's ship rule (§5: E61b ships at "at least 9/14") and its reading (§6: "9/14 or below" means the threshold
+does not transfer and `e27f` ships) disagree at exactly 9/14; the owner decides (Finding 86).
 
 ### Built, never uploaded
 
