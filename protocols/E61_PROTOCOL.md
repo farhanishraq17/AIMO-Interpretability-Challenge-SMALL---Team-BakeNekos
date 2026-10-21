@@ -95,4 +95,8 @@ themselves; no third upload of an E61 variant.
 
 ## 8. Amendments
 
-None yet.
+**1 (21 Oct, owner's decision, before either score was read): both ZIPs were uploaded without C6's Docker half.**
+Docker Desktop failed to start on the build machine. Every other check passed: C1, C2, C5, and C6's local contract
+(`run_local.py`: coverage 1.0, 0 invalid). The two ZIPs import only what `e27k` imports, plus the stdlib `math`, and
+`e27k` passed the Docker test (Findings 65-66). The board reads stand as recorded. §5's ship rule still requires
+C6, so the Docker run moves to before the Google Form submission: E61b cannot replace `e27f` there until it passes.
