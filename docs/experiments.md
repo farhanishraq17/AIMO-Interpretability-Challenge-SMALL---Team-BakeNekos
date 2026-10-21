@@ -26,7 +26,7 @@ twice (the second picks up from the first's records) or split it.
 
 ```powershell
 python scripts\kaggle_followup.py output e62-qwen-a --account Tamim2      # each slice, after it finishes
-python datagen\perturb\premise_variants.py --pool data\e62\pool.parquet --out-dir data\e62   # resumes
+python datagen\perturb\premise_variants.py --pool data\e62\eligible.parquet --out-dir data\e62   # resumes; after 00:00 UTC
 python scripts\kaggle_followup.py push e62v-qwen-a --account <ALIAS>      # per slice, once variants exist
 ```
 
