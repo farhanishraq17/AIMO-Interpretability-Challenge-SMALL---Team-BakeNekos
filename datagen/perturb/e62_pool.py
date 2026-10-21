@@ -24,6 +24,9 @@ def main() -> None:
     pool = pd.read_parquet(ROOT / "data" / "olympiad_pool" / "pool.parquet").drop_duplicates("problem_key")
     out = e55.merge(pool[["problem_key", "pool_id", "tier", "source", "answer"]], on="problem_key", validate="one_to_one")
     out["answer"] = out["answer"].astype(int)
+    # The olympiad pool reuses 34 AMC `pool_id`s for different problems (Finding 29), and the sampler drops every
+    # row with a repeated id, so the id here comes from the problem itself.
+    out["pool_id"] = "e62:" + out["problem_key"]
     out = out.sort_values("problem_key").reset_index(drop=True)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     out.to_parquet(OUT, index=False)

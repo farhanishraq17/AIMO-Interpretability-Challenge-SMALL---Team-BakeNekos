@@ -7,6 +7,27 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E62: running from 21 Oct (report experiment; protocol `protocols/E62_PROTOCOL.md`, committed `aa4ae4a` before any variant or sample, amendment 1 at `cf9ab83`)
+
+Qwen base phase (k = 2, 32k cap, the prompt that can decline) in eight hash-ordered slices of the 497-problem pool;
+premise contradictions generated in parallel on the free Gemini tier by three workers on interleaved thirds of the
+pool (`data/e62/e62{a,b,c}/`), each resumable. The contradiction phase is pushed once a slice's base records and
+variants both exist.
+
+| Kernels | Account |
+| --- | --- |
+| `e62-qwen-a`, `e62-qwen-b` | Tamim2 |
+| `e62-qwen-c`, `e62-qwen-d` | Tamim3 |
+| `e62-qwen-e`, `e62-qwen-f` | Simanta02 |
+| `e62-qwen-g`, `e62-qwen-h` | Mazharul |
+
+**Two false starts, neither touching a measurement.** (1) `gemini-2.5-pro` answers 404 and no Pro-class model has
+free quota on the key: amendment 1 moved to Flash-class models before any variant was kept. (2) Version 1 of every
+base kernel stopped at start: the olympiad pool reuses 34 AMC `pool_id`s (Finding 29) and the sampler drops repeated
+ids, so 7 of a slice's keys were missing. `e62_pool.py` now derives the id from `problem_key`; the generators were
+restarted on the rebuilt pool and every kernel re-pushed as version 2. Superseded outputs are kept in
+`data/e62/superseded/`.
+
 ### E61: built and checked 21 Oct, awaiting Docker and two board reads (Finding 86; protocol `protocols/E61_PROTOCOL.md`, committed `606cf9b` before any threshold)
 
 **Outcome so far:** C1 (NLL parity 0.0 on all four checkpoints), C2 (DeepSeek MATH 0.624 [0.545, 0.697]) and C5
