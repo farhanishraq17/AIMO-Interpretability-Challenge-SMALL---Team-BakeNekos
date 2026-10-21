@@ -10,6 +10,9 @@ one kernel per problem.
 E59 (`protocols/E59_PROTOCOL.md`) reruns the same kernels with one change, `--allow-no-solution`, so the prompt
 offers a way to decline; Qwen gets five kernels instead of three, since `e58-qwen-c` hit its guard.
 
+E62 (`protocols/E62_PROTOCOL.md` §3) is Qwen's base phase only, on E62's own 497-problem pool: k = 2 at a 32k cap,
+eight hash-ordered slices. Its contradictions are sampled later from these kernels' base records.
+
 Run via:  python scripts/kaggle_followup.py push e58-qwen-a --account <ALIAS>   (or e59-qwen-a)
 """
 
@@ -39,10 +42,14 @@ PER_GPU = {"qwen": True, "deepseek": False, "skywork": False, "olmo": False}
 HOURS = {"base": 2.5, "variants": 7.0}  # --max-hours per phase; the guard allows half an hour more
 SPLITS = {"e58": {"qwen": 3, "deepseek": 4, "skywork": 2, "olmo": 8},
           "e59": {"qwen": 5, "deepseek": 4, "skywork": 1, "olmo": 8},
-          "e60": {"qwen": 5, "deepseek": 4, "skywork": 1, "olmo": 8}}
+          "e60": {"qwen": 5, "deepseek": 4, "skywork": 1, "olmo": 8},
+          "e62": {"qwen": 8}}
+# E62: its own pool, k = 2, a 32k cap, and base kernels long enough for 62 problems a slice (chunk 16 for throughput).
+POOL = {"e62": "data/e62/pool.parquet"}
+E62 = {"k": "2", "cap": 32768, "hours": 9.0, "chunk": "16"}
 FLAGS = {"e58": [], "e59": ["--allow-no-solution"],
          # E60 §3: E59's prompt; DeepSeek saves each item as it finishes (E59 amendment 1's lesson).
-         "e60": ["--allow-no-solution"]}
+         "e60": ["--allow-no-solution"], "e62": ["--allow-no-solution"]}
 VARIANTS = {"e58": "data/e58/variants.parquet", "e59": "data/e58/variants.parquet", "e60": "data/e60/variants.parquet"}
 # E60 samples only its contradictions; eligibility comes from each model's E59 base records, bundled.
 E59_BASE = "runs/e59-{model}-*/e59-{model}-*/base/shard_*/records.jsonl"
@@ -55,11 +62,15 @@ RESUME = {"e58": {"qwen-c": ("runs/e58-qwen-c-TASHIN/e58-qwen-c", None)},
 JOBS = [f"{m}-{part}" for m, n in SPLITS["e58"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e58"]]
 E59_JOBS = [f"{m}-{part}" for m, n in SPLITS["e59"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e59"]]
 E60_JOBS = [f"{m}-{part}" for m, n in SPLITS["e60"].items() for part in "abcdefgh"[:n]]
+E62_JOBS = [f"{m}-{part}" for m, n in SPLITS["e62"].items() for part in "abcdefgh"[:n]]
 
 
 def part_keys(model: str, part: str, experiment: str = "e58") -> list[str]:
-    rows = pd.read_parquet(ROOT / "data/e58/rows.parquet")
-    keys = sorted(rows.loc[rows.model_id == MODELS[model], "problem_key"])
+    if experiment in POOL:
+        keys = sorted(pd.read_parquet(ROOT / POOL[experiment])["problem_key"])
+    else:
+        rows = pd.read_parquet(ROOT / "data/e58/rows.parquet")
+        keys = sorted(rows.loc[rows.model_id == MODELS[model], "problem_key"])
     return keys["abcdefgh".index(part)::SPLITS[experiment][model]]
 
 
@@ -74,12 +85,15 @@ def render(job: str, experiment: str = "e58") -> tuple[str, dict]:
         records = {json.loads(line)["item_id"]: line for path in sorted(ROOT.glob(E59_BASE.format(model=model)))
                    for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
         extra["e59_base/records.jsonl"] = ("\n".join(records.values()) + "\n").encode()
-    files = tuple(f for f in FILES if f != "data/e58/variants.parquet") + (VARIANTS[experiment],)
+    pool = POOL.get(experiment, "data/e58/pool.parquet")
+    files = tuple(f for f in FILES if f not in ("data/e58/variants.parquet", "data/e58/pool.parquet")) + (pool,)
+    files += (VARIANTS[experiment],) if experiment in VARIANTS else ()
     entries, hashes = payload((*files, f"protocols/{experiment.upper()}_PROTOCOL.md"), extra)
     out = f"{experiment}-{model}-{part}"
     common = ["datagen/perturb/sample.py", "--model-id", MODELS[model], "--backend", "vllm",
-              "--pool", "data/e58/pool.parquet", "--variants", VARIANTS[experiment],
+              "--pool", pool, *(["--variants", VARIANTS[experiment]] if experiment in VARIANTS else []),
               *DECODING, "--max-new-tokens", str(CAP[model]), *ENGINE[model], *FLAGS[experiment],
+              *(["--k", E62["k"], "--max-new-tokens", str(E62["cap"]), "--chunk", E62["chunk"]] if experiment == "e62" else []),
               *(["--chunk", chunk] if chunk else []),
               *(["--chunk", "1"] if experiment == "e60" and model == "deepseek" else []),
               "--out-dir", f"/kaggle/working/{out}", "--problem-keys", *part_keys(model, part, experiment)]
@@ -91,6 +105,9 @@ def render(job: str, experiment: str = "e58") -> tuple[str, dict]:
     if experiment == "e60":
         phases = {"variants": [*common, "--phase", "variants", "--max-hours", str(HOURS["variants"]),
                                "--base-records", "/tmp/aimo-e52/e59_base/records.jsonl"]}
+    if experiment == "e62":
+        phases = {"base": [*common, "--phase", "base", "--max-hours", str(E62["hours"])]}
+    hours = {"base": E62["hours"], "variants": E62["hours"]} if experiment == "e62" else HOURS
     source = HEADER.format(out=out, entries=json.dumps(entries)) + f'''cuda = runpy.run_path(str(root / "scripts/kaggle_cuda_setup.py"))["prepare_cuda_linker"]()
 (out / "cuda-link-check.json").write_text(json.dumps(cuda, indent=2))
 subprocess.run([sys.executable, "-m", "venv", "--without-pip", "/tmp/e52-env"], check=True)
@@ -115,8 +132,8 @@ for phase, argv in phases.items():
         cmd = [py, "-c", launcher, py]
     else:
         cmd = [py, *argv]
-    results[phase] = guard(cmd, root, out / f"{{phase}}.log", timeout={HOURS["variants"] * 3600 + 1800}
-                           if phase == "variants" else {HOURS["base"] * 3600 + 1800})
+    results[phase] = guard(cmd, root, out / f"{{phase}}.log", timeout={hours["variants"] * 3600 + 1800}
+                           if phase == "variants" else {hours["base"] * 3600 + 1800})
     (out / "execution.json").write_text(json.dumps({{**results, "end_to_end_seconds": time.time() - started}}, indent=2))
 raise SystemExit(max(r["exit_code"] for r in results.values()))
 '''

@@ -72,4 +72,13 @@ reversal stays unexplained, and the publication hypothesis (Finding 69) loses it
 
 ## 8. Amendments
 
-None yet.
+**1 (21 Oct, before any variant was kept): the models in §2.** `gemini-2.5-pro` answers 404, "no longer available
+to new users", although the key's model list includes it, so the first run stopped after six failures with no
+variant generated (one original had been checked by `gemini-2.5-flash`; that record is set aside in
+`data/e62/superseded/`). Every Pro-class model the key lists (`gemini-3.1-pro-preview`, `gemini-pro-latest`,
+`gemini-4-argon`) answers 429 at once: this key has no free quota for them. Flash-class models answer. So:
+
+- generator: **`gemini-3.8-flash`**, the newest model the key can call, temperature 1.0;
+- checker: **`gemini-3-flash-preview`**, a different model from the generator, temperature 0.
+
+Everything else in §2 stands, including the 30-variant hand audit, which matters more with a Flash generator.

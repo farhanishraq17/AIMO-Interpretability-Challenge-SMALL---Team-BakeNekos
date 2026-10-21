@@ -27,7 +27,7 @@ from e52_gpu_bundle import JOBS as E52_JOBS  # noqa: E402
 from e55_gpu_bundle import JOBS as E55_JOBS  # noqa: E402
 from e57_gpu_bundle import JOBS as E57_JOBS  # noqa: E402
 from e61_gpu_bundle import JOBS as E61_JOBS  # noqa: E402
-from e58_gpu_bundle import E59_JOBS, E60_JOBS, JOBS as E58_JOBS  # noqa: E402
+from e58_gpu_bundle import E59_JOBS, E60_JOBS, E62_JOBS, JOBS as E58_JOBS  # noqa: E402
 
 FILES = (
     "train/eval_e36_budget_path.py", "train/eval_e37_gsm_confirmation.py",
@@ -66,6 +66,9 @@ def render(job: str) -> tuple[str, dict]:
     if job.startswith("e49-"):
         from e49_gpu_bundle import render as render_e49
         return render_e49(job.removeprefix("e49-"))
+    if job.startswith("e62-"):
+        from e58_gpu_bundle import render as render_e58
+        return render_e58(job.removeprefix("e62-"), "e62")
     if job.startswith("e60-"):
         from e58_gpu_bundle import render as render_e58
         return render_e58(job.removeprefix("e60-"), "e60")
@@ -132,7 +135,7 @@ def main() -> None:
     parser.add_argument("job", choices=["capability-check", "cuda-link-check", "e37-confirmation", "e37-official-qwen",
                                        "e37-official-skywork", "e37-official-olmo", "e37-official-deepseek", "e38-prefix-audit",
                                        "e37-retry-qwen", "e37-retry-skywork", "e37-retry-olmo", "e37-retry-deepseek",
-                                       *(f"e49-{job}" for job in E49_JOBS), *(f"e52-{job}" for job in E52_JOBS), *(f"e55-{job}" for job in E55_JOBS), *(f"e57-{job}" for job in E57_JOBS), *(f"e61-{job}" for job in E61_JOBS), *(f"e58-{job}" for job in E58_JOBS), *(f"e59-{job}" for job in E59_JOBS), *(f"e60-{job}" for job in E60_JOBS)])
+                                       *(f"e49-{job}" for job in E49_JOBS), *(f"e52-{job}" for job in E52_JOBS), *(f"e55-{job}" for job in E55_JOBS), *(f"e57-{job}" for job in E57_JOBS), *(f"e61-{job}" for job in E61_JOBS), *(f"e58-{job}" for job in E58_JOBS), *(f"e59-{job}" for job in E59_JOBS), *(f"e60-{job}" for job in E60_JOBS), *(f"e62-{job}" for job in E62_JOBS)])
     parser.add_argument("--account", required=True, choices=sorted(load_accounts()))
     args = parser.parse_args()
     if args.command == "push" and args.account in READ_ONLY_ACCOUNTS:
