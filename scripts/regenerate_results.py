@@ -94,6 +94,8 @@ STEPS = [
     ["train/eval_e61.py"],
     # E62: familiarity against contradiction detection, Qwen. CPU; needs the e62 runs, data/e62/ and the e55 runs.
     ["train/eval_e62.py"],
+    # E63: E61 recalibrated on the organizers' problems. CPU; needs the e23, e54, e55 runs and E61's thresholds.
+    ["train/eval_e63.py"],
 ]
 
 

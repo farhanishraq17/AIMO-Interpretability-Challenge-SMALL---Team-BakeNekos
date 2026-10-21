@@ -2763,6 +2763,25 @@ balances (Qwen 0.6, DeepSeek 2/3, Skywork and Olmo 1/3); E61a (the control) is E
   at a tie: no gain on the board, a significant reversal on the official rows (C3), a slower run where ties break on
   runtime, and no Docker run yet.
 
+**87. Why E61 failed, and the ceiling of per-problem familiarity: E61's cutoffs came from the wrong population, and
+even perfectly calibrated cutoffs expect about 10.3 of 14, not 12.** (`protocols/E63_PROTOCOL.md`, committed `989cd4c`
+before any threshold; `train/eval_e63.py`. RESULTS, "E63: familiarity cutoffs on the organizers' problems".)
+
+- **The reference was the wrong population.** E55's 548 problems are mostly OlympiadBench. The organizers' own 36
+  `train-main-v2` problems, built by the pipeline that built validation and test, are more familiar to every model
+  and about twice as long. On those 36, E61b's cutoffs call 78% (Qwen), 83% (DeepSeek), 56% (Skywork) and 53% (Olmo)
+  robust, against 60%, 67%, 33% and 33% intended.
+- **That explains the reads.** With hidden batches drawn from the 36 and labels following familiarity inside each
+  batch as E50 recovered, E61a is expected at 9.10 and E61b at 9.28; the board gave 8 and 9.
+- **The ceiling, under the same model:** the best cutoff (or constant) per model expects **10.30**. DeepSeek, Skywork
+  and Olmo gain about 0.43 each over their constants; on Qwen no cutoff beats `True`. The batch ranking's 12/14 used
+  relative information inside a batch, which one-problem calls remove by design. **No per-problem familiarity rule can
+  be expected to reach 12/14**, and the model behind this number is the optimistic one (perfect order inside each
+  batch).
+- **E63** (`dist/solution-e63-official-quantile-small.zip`): E61's quantiles over the 36 official problems, Qwen at its
+  constant. Expected 10.29. C2 passes (DeepSeek MATH 0.631 [0.538, 0.719]); C6's local contract passes; C3, reported
+  only, 0.400 [0.172, 0.579] on the official rows. One upload; it replaces `e27f` only at 10/14 or better.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

@@ -53,6 +53,10 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 | 0.64 | 9/14 | `e27k-tilted` (990659, re-scored 15 Oct) | The batch ranking; with one problem a call it is the constants | Finding 79 |
 | 0.57 | 8/14 | `e61a-amc-median` (1007214, 21 Oct) | Control: robust iff mean NLL is below E54's frozen 75-problem AMC median | One case below the constants |
 
+**Built, awaiting upload:** `e63-official-quantile` (Finding 87): E61's cutoffs recalibrated on the 36 `train-main-v2`
+problems, Qwen at its constant `True`. Expected about 10.3/14 if the hidden problems resemble the organizers' own; it
+replaces `e27f` in the Form only at 10/14 or better.
+
 Both E61 ZIPs were uploaded without the Docker test (owner's decision, `protocols/E61_PROTOCOL.md` amendment 1).
 The protocol's ship rule (§5: E61b ships at "at least 9/14") and its reading (§6: "9/14 or below" means the threshold
 does not transfer and `e27f` ships) disagree at exactly 9/14; the owner decides (Finding 86).

@@ -1213,3 +1213,29 @@ Rules fixed in `protocols/E61_PROTOCOL.md` before this table was computed. Balan
 | `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.667 | 1.8888 | 1.5377 | 0.414 | 0.016 |
 
 **C2 (E61b on DeepSeek MATH, interval lower bound above 0.5): pass** (0.624 [0.545, 0.697]). C3 and C4 are reported only. C1, C5 and C6 are decided on the ZIP.
+
+## E63: familiarity cutoffs on the organizers' problems
+
+Fixed in `protocols/E63_PROTOCOL.md` before this table was computed. Expected board scores assume the hidden problems are drawn from the 36 `train-main-v2` problems with labels following familiarity inside each batch (E50); 6000 draws, seed 63.
+
+| model | intended share robust | E61b's share on the 36 | E61a's share on the 36 | E63 cutoff |
+| --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 0.60 | 0.78 | 0.58 | constant `True` |
+| `Skywork/Skywork-OR1-Math-7B` | 0.33 | 0.56 | 0.56 | 1.5825 |
+| `allenai/Olmo-3-7B-Think` | 0.33 | 0.53 | 0.58 | 1.2887 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.67 | 0.83 | 0.58 | 1.6613 |
+
+| rule | expected board score | qwen | skywork | olmo | deepseek |
+| --- | --- | --- | --- | --- | --- |
+| E61a (board 8) | **9.10** | 2.42 | 2.18 | 2.12 | 2.38 |
+| E61b (board 9) | **9.28** | 2.51 | 2.18 | 2.23 | 2.36 |
+| E63 | **10.29** | 3.00 | 2.43 | 2.43 | 2.43 |
+| constants | **9.00** | 3.00 | 2.00 | 2.00 | 2.00 |
+| ceiling: best cutoff or constant per model | **10.30** | 3.00 | 2.44 | 2.43 | 2.43 |
+
+| population | rows | robust | E63 balanced accuracy |
+| --- | --- | --- | --- |
+| P1 official rows (reported only) | 34 | 0.71 | 0.400 [0.172, 0.579] (acc 0.441) |
+| P2 DeepSeek MATH (C2) | 142 | 0.27 | 0.631 [0.538, 0.719] (acc 0.627) |
+
+**C2: pass.** C3 reported only; C1 and C5 carry from E61 (identical solution code).

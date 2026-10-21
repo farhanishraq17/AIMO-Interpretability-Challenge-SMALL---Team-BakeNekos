@@ -1036,6 +1036,10 @@ set), and `e27f` ships.
 Docker skipped (amendment 1). C3, reported only: E61b scores 0.329 [0.136, 0.481] on the official rows. **Board: E61a
 8/14, E61b 9/14, equal to the constants.** §5 and §6 disagree at exactly 9/14; the owner decides the Form ZIP.
 
+**E63 (Finding 87):** E61 drew its cutoffs from the wrong population; recalibrated on the organizers' 36 problems
+(Qwen at its constant) it expects 10.3/14, which is also the ceiling of any per-problem familiarity cutoff. Built and
+checked; one upload pending. Beyond 10.3 needs a different per-problem signal.
+
 ### 13.4 E62: does a model miss contradictions on the problems it finds familiar? (report experiment)
 
 The one compute-heavy experiment worth running, and it is for the report, not the submission. It
