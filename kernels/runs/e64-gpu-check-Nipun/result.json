@@ -1,0 +1,50 @@
+{
+  "models": {
+    "Qwen/Qwen3.5-4B": {
+      "download_seconds": 109.5,
+      "c5_seconds_load_and_15_calls": 44.38,
+      "dtype": "torch.bfloat16",
+      "state_shape": [
+        5,
+        33,
+        2560
+      ]
+    },
+    "Skywork/Skywork-OR1-Math-7B": {
+      "download_seconds": 115.4,
+      "c5_seconds_load_and_15_calls": 55.19,
+      "dtype": "torch.bfloat16",
+      "state_shape": [
+        5,
+        29,
+        3584
+      ]
+    },
+    "allenai/Olmo-3-7B-Think": {
+      "download_seconds": 83.7,
+      "c5_seconds_load_and_15_calls": 26.67,
+      "dtype": "torch.bfloat16",
+      "state_shape": [
+        5,
+        33,
+        4096
+      ]
+    },
+    "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": {
+      "download_seconds": 88.7,
+      "c5_seconds_load_and_15_calls": 45.76,
+      "dtype": "torch.bfloat16",
+      "state_shape": [
+        5,
+        37,
+        4096
+      ]
+    }
+  },
+  "unknown_model": [
+    false
+  ],
+  "c5_total_seconds": 172.0,
+  "c5_pass": true,
+  "end_to_end_seconds": 617.6335556507111
+}

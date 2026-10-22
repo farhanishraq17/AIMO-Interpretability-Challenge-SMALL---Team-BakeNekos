@@ -2782,6 +2782,34 @@ before any threshold; `train/eval_e63.py`. RESULTS, "E63: familiarity cutoffs on
   constant. Expected 10.29. C2 passes (DeepSeek MATH 0.631 [0.538, 0.719]); C6's local contract passes; C3, reported
   only, 0.400 [0.172, 0.579] on the official rows. One upload; it replaces `e27f` only at 10/14 or better.
 
+**88. E64: difficulty, read from one forward pass, predicts the organizers' labels where familiarity reverses: AUC
+0.883 [0.687, 1.000] on the 34 official rows, with no robustness label in training.** (`protocols/E64_PROTOCOL.md`,
+committed `5f3fd30` before any fit; `train/eval_e64.py`. RESULTS, "E64: predicted difficulty as the per-problem score".)
+
+Target: Qwen's mean log trace length on E62's 497 olympiad problems (none of them official). For every model, a
+per-layer ridge from its own E55 prompt states to that target, averaged over layers; easier = robust; cutoffs at E61's
+`p_m` quantiles of the 36 official problems.
+
+| check | result |
+| --- | --- |
+| D1 (gate >= 0.30): CV Spearman, predicted vs observed difficulty | Qwen 0.786, Skywork 0.771, Olmo 0.788, DeepSeek 0.768: **pass** |
+| D2 (gate >= 0.60): AUC on the 34 official rows | **0.883 [0.687, 1.000]: pass** |
+| D3: Spearman with mean NLL | -0.35 to -0.50: harder problems are *more* familiar |
+| reported only (amendment 2): the shipped decisions on the 34 rows | accuracy **0.824** (balanced 0.729), against the constants' 0.529 (0.463) |
+| C6 | coverage 1.0, 0 invalid |
+| C1, C5 (GPU, amendment 3; Nipun, `kernels/runs/e64-gpu-check-Nipun/`) | the ZIP's states on the four real checkpoints, read out locally: max abs diff **2.0e-06**; 60 calls with loads **172 s**; read-out about 2 ms a call: **pass** |
+
+- **It is not length.** Predicted difficulty correlates about 0.6 with log length, but length alone scores AUC 0.529 on
+  the same rows, and the part of predicted difficulty that length does not explain still scores 0.846 (exploratory,
+  computed after D2 was read).
+- **It holds model by model** (exploratory): Qwen 0.875 (12 rows), Olmo 0.929 (9), DeepSeek 0.905 (10); Skywork's 3
+  rows are too few. Qwen, the model familiarity could never move, is among the strongest.
+- **It resolves §12.3's contradiction on the official rows.** Familiar problems there are the hard, long ones, which
+  is why familiarity reversed (D3).
+- **What the board may say.** The batch ranking's evidence ran the other way (familiar = robust, p about 0.05 on 14
+  cases). E64 leans against familiarity, so its read is a real test between the two; the pre-registered rule ships it
+  at 10/14 or better.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

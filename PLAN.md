@@ -1040,6 +1040,12 @@ Docker skipped (amendment 1). C3, reported only: E61b scores 0.329 [0.136, 0.481
 (Qwen at its constant) it expects 10.3/14, which is also the ceiling of any per-problem familiarity cutoff. Built and
 checked; one upload pending. Beyond 10.3 needs a different per-problem signal.
 
+**E64 (Finding 88), 22 Oct: that signal.** Difficulty read from one forward pass (ridge from prompt states to Qwen's log
+trace length on E62's 497 problems) scores AUC 0.883 on the 34 official rows and its decisions 0.824 against the
+constants' 0.529, with no robustness label in training. Every check passes (fit, official rows, GPU parity, timing,
+contract). **Upload E63, then E64, as soon as Codabench is reachable.** E64 is the preferred Form ZIP at 10/14 or
+better; the Docker test is still owed before the Form.
+
 ### 13.4 E62: does a model miss contradictions on the problems it finds familiar? (report experiment)
 
 The one compute-heavy experiment worth running, and it is for the report, not the submission. It
