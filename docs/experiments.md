@@ -31,7 +31,7 @@ command below once a day by hand).
 
 ```powershell
 python scripts\kaggle_followup.py output e62-qwen-a --account Tamim2      # each slice, after it finishes
-python datagen\perturb\premise_variants.py --pool data\e62\eligible.parquet --out-dir data\e62   # resumes; after 00:00 UTC
+python datagen\perturb\premise_variants.py --pool data\e62\eligible.parquet --out-dir data\e62 --checker dots-studio/dots-3-note-preview:free   # resumes; after 00:00 UTC (amendment 3)
 python scripts\kaggle_followup.py push e62v-qwen-a --account <ALIAS>      # per slice, once variants exist
 ```
 

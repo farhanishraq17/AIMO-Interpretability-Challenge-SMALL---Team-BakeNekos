@@ -95,3 +95,11 @@ At about five requests a problem that is four problems a day. So:
 - **variants are generated only for problems the base phase found eligible**, in `problem_key` order, once base
   records exist (before that, in `problem_key` order over the whole pool). Ineligible problems are never sampled, so
   this changes no measurement; it spends the daily requests where they can count.
+
+**3 (22 Oct, 13:30 UTC, before any contradiction was sampled): a new checker.** OpenRouter ended the free variant of
+`minimax/minimax-m3.1-flash` on 22 Oct (HTTP 404). Of the free models listed that day, `google/gemma-4-31b-it:free` and
+`gemma-4-26b-a4b-it:free` were rate-limited upstream and `thinkingmachines/inkling:free` refused API use;
+`dots-studio/dots-3-note-preview:free` answered and, on a test problem built to be contradictory, said so. It checks
+every variant from here on; it is from a different family than the generator, as E60 required. Variants already kept
+under the MiniMax checker (problems done by 22 Oct) stay; the analysis reports the checker beside each problem, and
+the hand audit of §2 samples both.
