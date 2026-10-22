@@ -55,4 +55,5 @@ changes after any number is read. No state across calls; no use of `train-main-v
 
 ## 8. Amendments
 
-None yet.
+**1 (22 Oct, before the first run): D4 is dropped.** E55's prompt states cover its 548 problems only; the 142 DeepSeek
+MATH problems have no states in that format, so D4 cannot be computed. It was reported-only and gates nothing.
