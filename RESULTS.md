@@ -1239,3 +1239,20 @@ Fixed in `protocols/E63_PROTOCOL.md` before this table was computed. Expected bo
 | P2 DeepSeek MATH (C2) | 142 | 0.27 | 0.631 [0.538, 0.719] (acc 0.627) |
 
 **C2: pass.** C3 reported only; C1 and C5 carry from E61 (identical solution code).
+
+## E64: predicted difficulty as the per-problem score
+
+Fixed in `protocols/E64_PROTOCOL.md` before any fit. Target: Qwen's mean log trace length (cap 32k) on E62's 497 problems. Score: per-layer ridge from each model's own E55 prompt states, averaged over layers; lower = robust.
+
+| model | D1 CV Spearman (gate >= 0.30) | D3 Spearman with mean NLL | cutoff (p_m quantile, official 36) | share of the 36 called robust |
+| --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 0.786 | -0.351 | 10.3858 | 0.61 |
+| `Skywork/Skywork-OR1-Math-7B` | 0.771 | -0.504 | 9.9695 | 0.33 |
+| `allenai/Olmo-3-7B-Think` | 0.788 | -0.416 | 9.9438 | 0.33 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.768 | -0.404 | 10.3925 | 0.67 |
+
+**D2 (gate: AUC >= 0.60), official rows:** AUC 0.883 [0.687, 1.000] on 34 rows.
+
+Reported only (amendment 2): the shipped decisions on the same 34 rows score accuracy 0.824 (balanced 0.729); the per-model constants 0.529 (balanced 0.463).
+
+**Gates: D1 pass, D2 pass.** D4 (DeepSeek MATH) is not computable: E55 holds no prompt states for those problems (amendment 1).

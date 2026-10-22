@@ -57,3 +57,12 @@ changes after any number is read. No state across calls; no use of `train-main-v
 
 **1 (22 Oct, before the first run): D4 is dropped.** E55's prompt states cover its 548 problems only; the 142 DeepSeek
 MATH problems have no states in that format, so D4 cannot be computed. It was reported-only and gates nothing.
+
+**2 (22 Oct, after the first run): one reported-only line added.** The accuracy of the shipped decisions on the same 34
+rows, beside the constants'. It is computed after D1-D3 were read and decides nothing.
+
+**3 (22 Oct, before the GPU run): C1 and C5 are split between GPU and CPU.** The ZIP's arrays are 5.2 MB, several times
+the largest script the fleet has accepted (0.8 MB). So the GPU kernel runs the ZIP's own `_load` and `mean_states` on
+the four checkpoints, saves five problems' states per model and times fifteen forward passes per model; the ZIP's own
+`difficulty` read-out is then applied locally to those GPU states and compared with the offline predictions (same
+1e-3 tolerance), and its cost is timed locally. Together these cover the shipped path; the pass rules are unchanged.

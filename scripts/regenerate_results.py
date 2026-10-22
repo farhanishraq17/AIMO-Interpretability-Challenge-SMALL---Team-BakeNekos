@@ -96,6 +96,8 @@ STEPS = [
     ["train/eval_e62.py"],
     # E63: E61 recalibrated on the organizers' problems. CPU; needs the e23, e54, e55 runs and E61's thresholds.
     ["train/eval_e63.py"],
+    # E64: predicted difficulty from one forward pass. CPU (~5 min); needs the e55 and e62 runs.
+    ["train/eval_e64.py"],
 ]
 
 

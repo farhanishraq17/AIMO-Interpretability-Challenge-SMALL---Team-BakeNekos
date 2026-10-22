@@ -120,6 +120,13 @@ def main() -> None:
     rows["neg_difficulty"] = [-predicted[m].loc[k] for m, k in zip(rows["model_id"], rows["problem_key"])]
     d2 = template_auc(rows, "neg_difficulty")
     gates = {"D1": all(v >= 0.30 for v in d1.values()), "D2": d2["auc"] >= 0.60}
+    # Amendment 2 (reported only, decides nothing): the shipped decisions on the same 34 rows, against the constants.
+    rows["e64"] = [bool(predicted[m].loc[k] <= cutoffs[m]) for m, k in zip(rows["model_id"], rows["problem_key"])]
+    rows["constants"] = rows["model_id"].isin(["Qwen/Qwen3.5-4B", "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"])
+    truth = rows["is_robust"].astype(bool)
+    decisions = {k: {"accuracy": float((rows[k] == truth).mean()),
+                     "balanced_accuracy": float(np.mean([(rows[k][truth] == True).mean(), (rows[k][~truth] == False).mean()]))}  # noqa: E712
+                 for k in ("e64", "constants")}
     calls = {m: float(np.mean(predicted[m].loc[sorted(official)] <= cutoffs[m])) for m in SHORT}
 
     lines = ["Fixed in `protocols/E64_PROTOCOL.md` before any fit. Target: Qwen's mean log trace length (cap 32k) on E62's 497 "
@@ -128,6 +135,9 @@ def main() -> None:
              "| --- | --- | --- | --- | --- |"]
     lines += [f"| `{m}` | {d1[m]:.3f} | {d3[m]:.3f} | {cutoffs[m]:.4f} | {calls[m]:.2f} |" for m in SHORT]
     lines += ["", f"**D2 (gate: AUC >= 0.60), official rows:** AUC {d2['auc']:.3f} [{d2['ci'][0]:.3f}, {d2['ci'][1]:.3f}] on {d2['n']} rows.",
+              "", f"Reported only (amendment 2): the shipped decisions on the same 34 rows score accuracy "
+              f"{decisions['e64']['accuracy']:.3f} (balanced {decisions['e64']['balanced_accuracy']:.3f}); the per-model constants "
+              f"{decisions['constants']['accuracy']:.3f} (balanced {decisions['constants']['balanced_accuracy']:.3f}).",
               "", f"**Gates: D1 {'pass' if gates['D1'] else 'fail'}, D2 {'pass' if gates['D2'] else 'fail'}.** D4 (DeepSeek MATH) is not "
               "computable: E55 holds no prompt states for those problems (amendment 1)."]
     body = "\n".join(lines)
@@ -135,7 +145,8 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     np.savez(OUT / "artifact.npz", **arrays)
     (OUT / "result.json").write_text(json.dumps({"d1": d1, "d2": d2, "d3": d3, "cutoffs": cutoffs, "gates": gates,
-                                                 "official_called_robust": calls}, indent=2), encoding="utf-8")
+                                                 "official_called_robust": calls, "official_decisions": decisions}, indent=2),
+                                     encoding="utf-8")
     pd.DataFrame(predicted).to_csv(OUT / "predicted_difficulty.csv")
     if not args.no_write:
         upsert_section(ROOT / "RESULTS.md", HEADING, body)
