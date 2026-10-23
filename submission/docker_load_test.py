@@ -23,6 +23,7 @@ Run (inside the image):  python /work/docker_load_test.py /work/solution.zip
 
 from __future__ import annotations
 
+import inspect
 import json
 import sys
 import zipfile
@@ -98,19 +99,44 @@ def main() -> None:
     import solution  # noqa: E402  (the packaged file, which is the point)
 
     report["imported"] = True
+
+    # Call it the way the harness does, not the way we assume. Upstream `ingestion.py` at
+    # `de79405` inspects the signature and only passes `reasoning_effort` when the solution
+    # declares it - by keyword, never as a third positional argument. Calling positionally
+    # rejected the organizers' own `uncertainty-profiling` baseline, which takes
+    # `(model_id, problems)`: a false FAIL on a valid submission, the mirror of Finding 65's
+    # two bugs in this same script. Mirror the harness's rule exactly.
+    params = list(inspect.signature(solution.are_robust).parameters.values())
+    accepts_effort = any(
+        p.kind is inspect.Parameter.VAR_KEYWORD
+        or (
+            p.name == "reasoning_effort"
+            and p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
+        )
+        for p in params
+    )
+    report["accepts_effort"] = accepts_effort
+
+    def call(model_id, problems):
+        if accepts_effort:
+            return solution.are_robust(model_id, reasoning_effort="default", problems=problems)
+        return solution.are_robust(model_id, problems)
+
     results = {}
     for model_id in [*MODELS, "some/model-we-never-saw"]:
-        predictions = solution.are_robust(model_id, PROBLEMS, "default")
+        predictions = call(model_id, PROBLEMS)
         results[model_id] = {
             "predictions": predictions,
             "length_ok": len(predictions) == len(PROBLEMS),
             "native_bools": all(type(p) is bool for p in predictions),
         }
     report["are_robust"] = results
-    # The two-argument form is the legacy caller and must keep working (COMPETITION.md section 4).
+    # The two-argument form is the legacy caller and must keep working for a solution that
+    # declares `reasoning_effort` with a default (COMPETITION.md section 4). A solution that
+    # does not declare it is only ever called this way, so the check is the same call twice.
     legacy = solution.are_robust(MODELS[0], PROBLEMS)
     report["legacy_two_arg_call"] = {"predictions": legacy, "native_bools": all(type(p) is bool for p in legacy)}
-    report["empty_batch"] = solution.are_robust(MODELS[0], [])
+    report["empty_batch"] = call(MODELS[0], [])
 
     ok = (
         report["solution_at_root"]

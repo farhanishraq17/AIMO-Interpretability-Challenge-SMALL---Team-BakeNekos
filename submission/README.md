@@ -49,6 +49,8 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 
 | Submission | What it does | Why it sat |
 | --- | --- | --- |
+| **`e61a-always-true`** ⭐ | `True` for all four small-track models, no model loaded | **The current incumbent** (E61 gate A, Finding 89). On the 43 official rows it scores 0.721 against `e27f`'s 0.465, and `e27f` is below both constants on balanced accuracy (Finding 87). Not yet uploaded: under the owner's 14 Oct rule the board is read once per candidate and selects nothing |
+| `e61b-uncertainty-baseline` | The organizers' own `solutions/uncertainty-profiling`, the published 69.23% ± 10.13 baseline | **Fails gate A as packaged** (Finding 88): it raises `OSError` when the weights are not cached instead of falling back, and upstream ingestion marks a batch invalid on any exception. Needs a fallback wrapper or a GPU audit with cached weights. Rebuild with `cd getting-started; python -m uv run scripts/build.py solutions --small` |
 | `e28b-mean-suffix` | Familiarity ranked by mean + suffix NLL | Pre-registered E28 candidates. After `e28a` tied rather than beat `e27e` and `e28d` scored 4/14, the family was rejected and the remaining two were not worth an upload on a 14-case board |
 | `e28c-min-k-20` | Familiarity ranked by Min-K% at k = 20 | ″ |
 

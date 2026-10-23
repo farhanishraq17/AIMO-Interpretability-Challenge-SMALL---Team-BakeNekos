@@ -2717,6 +2717,108 @@ caps, base and consistent-premise records.
   for the collaborator's run: `premise_variants.py` (free models, resumable, key rotation),
   `sample.py --allow-no-solution`, `eval_e52.grade`.
 
+
+**86. The task is close to novel, and the prior art that exists was written by this competition's
+organizers.** (E61 checkpoint C0, prompt R5; raw output in `docs/LITERATURE_SWEEP.md`, 23 Oct.)
+
+The sweep found no earlier math-reasoning paper posing our task: binary per-(model, problem)
+robustness prediction under a perturbation suite, conditional on initial correctness, from the
+original problem alone. One structurally identical target exists outside math - Fazla et al.
+(arXiv 2606.16583, clinical VQA) - and **Barbara Plank is an author of it and an organizer here**.
+
+Three results change what we build.
+
+- **Our leading C2 candidate was already refuted by a competitor.** `byeolki`, a small-track entrant,
+  ran a test-time counterfactual check with self-generated perturbations: **0.50 on the validation set
+  and 0.38 on the official rows**, below always-robust. Premise-ablation answer stability was the
+  mechanism E61 was going to build. It is dropped without spending a GPU-hour, which is the whole
+  purpose of running C0 before C2.
+- **The mechanism with evidence is uncertainty on the original problem**, from three sources, two
+  written by organizers of this competition. Grünefeld et al. (arXiv 2605.07776; Mondorf and Plank are
+  organizers) report AUROC up to 0.807 for chain-of-thought correctness from the uncertainty-trace
+  profile and **0.801 from only the first few hundred tokens**. Fazla et al. find flipped items carried
+  higher baseline uncertainty in every model/method combination under one perturbation and 85 of 96
+  under another, with **answer-token NLL from a single pass the best single-pass discriminator on 11 of
+  12 models**. The organizers' own `uncertainty-profiling` baseline is published at 69.23% ± 10.13.
+- **Honest small-track entries cluster where we are.** `EconLearn` reports 9 of 14 and `byeolki` 0.643;
+  `e27f` is 9 of 14. Independently, `byeolki` records that **always-robust already scores 0.68 on the
+  official rows**, which confirms Finding 87 below from outside this repository. The board's visible
+  0.93 to 1.00 is therefore not the field's method quality, and §12.7's refusal to read the board for
+  selection is supported rather than merely principled.
+
+Two cautions carried from the sweep. Two independent entrants found their signals tracked **solve rate
+rather than fragility** ("Prompt Probes Read Solve Rate, Not Robustness"; "Difficulty is not
+fragility"), which is where E23 arrived by another route - so E61 gate B4 now requires beating a
+difficulty-only baseline at matched solve rate. And with 7 to 8 official rows per model, **per-model
+thresholds cannot be fitted**; normalisation must come from unlabelled data, which E55's 548-problem
+pool provides.
+
+**87. The official labelled set grew from 34 rows to 43 on 15 October, and on it the shipped constants
+score 0.465 against always-robust's 0.721.** (`submission/make_e61.py`, 23 Oct, CPU, from
+`datagen/ingest_public.py` at `train-main-v2` revision `fa8af758`.)
+
+`train-main-v2` was last modified 15 Oct. Nothing in this repository had re-ingested it, so every
+document still quoted 34 rows and the per-model shares measured on 1 Oct. Re-running the ingest:
+
+| model | official rows | robust | share | `e27f` ships | correct |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 12 | 8 | 0.667 | `True` | 8 |
+| **Skywork-OR1-Math-7B** | **12** (was 3) | **9** | **0.750** | `False` | 3 |
+| Olmo-3-7B-Think | 9 | 7 | 0.778 | `False` | 2 |
+| DeepSeek-R1-0528-Qwen3-8B | 10 | 7 | 0.700 | `True` | 7 |
+| **pooled** | **43** | **31** | **0.721** | | **20** |
+
+| policy | accuracy | balanced accuracy |
+| --- | --- | --- |
+| `e27f` constants, shipped | **0.465** | **0.450** |
+| always-robust | **0.721** | 0.500 |
+| always-spurious | 0.279 | 0.500 |
+
+- **The gap widened.** On 34 rows it was 0.529 against 0.706; on 43 it is 0.465 against 0.721, eleven
+  rows of forty-three. `e27f` is now below *both* constants on balanced accuracy, so this is not a
+  prevalence trade-off - it is worse on both axes.
+- **The row that moved is Skywork's**, from 3 rows at 2 robust to 12 at 9. The model `e27f` hardcodes
+  to `False` is now the second most robust-leaning of the four, measured on four times the data that
+  set the constant. Finding 67 identified Skywork and Olmo as the hinge of the whole bet and set the
+  disagreement aside as too few rows to flip on; it is no longer too few.
+- **Every model is majority robust**, so per-model constants derived from the official labels are
+  `True` four times. With Finding 38 - the label is a property of the problem, agreement 20 of 20 and
+  83 of 85 - there is no per-model split to make, which is `e27f`'s entire content.
+- **What this does not settle.** On the solved validation set `e27f` scores 9 of 14 and always-robust 7
+  (RESULTS, "E50"), so the two populations still disagree and the private prior is still unmeasured.
+  What changes is the weight of evidence on each side: three validation cases per model against twelve.
+
+**88. Our Docker load test would have rejected the organizers' own baseline, and that baseline has no
+fallback path.** (`submission/docker_load_test.py`, 23 Oct, in `aimo-competition:local`.)
+
+Two separate defects, found by running the test against a ZIP we did not write.
+
+- **The test called `are_robust(model_id, problems, "default")` positionally**, a call the harness never
+  makes. Upstream `ingestion.py` at `de79405` inspects the signature and passes `reasoning_effort`
+  **by keyword only when the solution declares it**, falling back to the two-argument form otherwise.
+  The organizers' `uncertainty-profiling` baseline takes `(model_id, problems)`, so our test raised
+  `TypeError` on a submission the real harness would have run - a **false FAIL**, the mirror of the two
+  false-PASS bugs of Finding 65 in the same script. The test now mirrors the harness's rule and reports
+  `accepts_effort`. `e61a` and `e27f` pass under it unchanged.
+- **The baseline raises when the weights are not cached.** With no model cache it propagates an
+  `OSError` from `AutoTokenizer` rather than answering. Upstream ingestion marks a batch's cases invalid
+  on any exception, so on a worker where anything goes wrong the published 69.23% method scores 0 for
+  that batch. Every shipped artifact of ours falls back to constants instead (Finding 20). **E61's
+  `e61b` therefore cannot pass gate A as packaged** and needs either a fallback wrapper or a GPU audit
+  with cached weights, as E39 did for `e27k`.
+
+**89. `e61a-always-true` is built and passes gate A.** (`submission/make_e61.py`;
+`dist/solution-e61a-always-true-small.zip`, 23 Oct.)
+
+Loads no model. In `Dockerfile.competition` with networking off: all nine pinned versions match,
+`solution.py` at the root, `small.txt` present and correct, three native `bool`s per model for all four
+small-track models, `False` for an unknown model, both call styles accepted, empty batch returns `[]`.
+`DOCKER LOAD TEST: PASS`. The starter kit's own scorer reports `coverage 1.0` and
+`invalid_predictions 0`; its accuracy on `val-sample` is not a score estimate, since 1 of those 24
+cases is a small-track model (`docs/COMPETITION.md` §9).
+
+Per `protocols/E61_PROTOCOL.md` §4, **`e61a` is now the incumbent and the rollback point for C2**.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

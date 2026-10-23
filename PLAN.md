@@ -921,3 +921,99 @@ the collaborator's compute can run. **The submission is `e27f`** unless their ga
 generated free on OpenRouter. Qwen and Olmo now flag a quarter to a third of them (from almost none), but a robust
 label needs every sample flagged, and only 2 of 27 rows were. Gate failed (kappa 0.045). The variant was a real part
 of the gap; the 100k budget is the part left, and it needs the collaborator's GPUs.
+
+---
+
+## 13. Reset after the per-problem change (23 October 2026)
+
+Pre-registration: `protocols/E61_PROTOCOL.md`, written before any E61 artifact existed. This section
+is the forward plan; the protocol holds the frozen gates.
+
+### 13.1 Why the plan changes
+
+Section 12.8 kept `e27f` as the submission and put the remaining upside in the collaborator's
+labelling run. That left the incumbent unexamined. Re-read against the two label sources we already
+hold, it does not survive:
+
+| | `e27f` constants | always-robust | source |
+| --- | --- | --- | --- |
+| 34 official olympiad rows, accuracy | **0.529** | **0.706** | Finding 58 table; RESULTS "E54" |
+| the same rows, balanced accuracy | **0.463** | 0.500 | RESULTS "E54" |
+| solved validation set, of 14 | **9** | 7 | RESULTS "E50" |
+
+The constants win on the validation set and lose on the official rows, so the score tables alone do
+not decide it. Two structural facts do.
+
+- **Finding 38: the label is a property of the problem, not of the model.** Small-track models agree
+  on 20 of 20 shared problems, and 83 of 85 across every configuration, against 0.608 at chance.
+  `e27f`'s entire content is a per-model distinction.
+- **E43: every model is majority robust in the official labels** (Qwen 8/12, DeepSeek 7/10, Skywork
+  2/3, Olmo 7/9). Constants derived from that source are `True` four times; there is no split.
+
+A policy answering `True` on a share `w` of pairs and `False` on the rest scores `w·p + (1−w)·(1−p)`
+under a shared prior `p`: a weighted average of `p` and `1−p`, never above `max(p, 1−p)`, exactly 0.5
+at `w = 0.5`. Always-robust scores `p`. The constants can only win if the per-model priors differ in
+the assumed direction, which is what the two facts above argue against. Their evidence is three
+validation cases each for Skywork and Olmo, contradicted in sign by 3 and 9 official rows.
+
+### 13.2 What goes first, and why
+
+1. **Drop the per-model split; default every pair to `True`.** One hour of packaging, no GPU, no
+   model. It is the only change that is both free and supported by measurements already in the
+   repository, and it moves the floor on the only labelled olympiad data from 0.529 to 0.706.
+2. **Change the target from a classifier to a flip-only detector.** At a robust prior near 0.7 with
+   accuracy as the metric, value is `flips × (2·precision − 1)`. The requirement is precision above
+   0.5 on a handful of flips, not balanced accuracy above 0.6 — which is what every gate in this
+   project asked for, and is why nothing ever cleared one.
+3. **Re-open the generation budget.** The organizers' own `uncertainty-profiling` baseline spends
+   4,096 generated tokens per problem and is published at 69.23% ± 10.13, so that cost is affordable
+   by their construction. The cost gate that closed E14 and E36/E37 was rejecting 28k-token methods
+   (PAPER §10); it does not reach 4k. A method inside 4k that targets premise-checking has never been
+   built here.
+
+### 13.3 Checkpoints, gates and rollback
+
+Gates are in `protocols/E61_PROTOCOL.md` §4. The incumbent starts as `e27f` and is only replaced by a
+checkpoint that passes its own gate. `dist/` is append-only; the shipped choice is a file selection.
+**A gate may be failed, never relaxed** — the only legal response to a failure is the rollback below.
+
+| ID | What | Entry | Gate | On fail, roll back to |
+| --- | --- | --- | --- | --- |
+| **C0** | Literature sweep, 5 prompts (`docs/LITERATURE_SWEEP.md`) | none | cannot fail; it selects C2's mechanism | — |
+| **C1** | `e61a-always-true` and `e61b-uncertainty-baseline`, Docker load-tested | none | Gate A: both load, native bools, `small.txt` | `e27f`, repair packaging only |
+| **C2** | The detector C0 selected, as a flip-only rule on `e61a` | C1 passed **and** C0 returned a mechanism with ≥2 papers | Gate B1 precision ≥ 0.60 over ≥3 flips; B2 flips ≤ 40%; B3 ≤ 4k tokens and ≤ 50 min projected | **B1: `e61a`.** B2/B3 only: one re-parameterisation, re-gate once, then `e61a` |
+| **C3** | One board read per surviving candidate | C1 passed | none — the board selects nothing | a candidate below 0.50 is suspected broken and inspected, not discarded |
+| **C4** | Freeze: incumbent through the Google Form | C1 passed | — | send `e61a`; the form can be resubmitted until 30 Oct |
+| **C5** | E57, unchanged, if the collaborator's gate passes | their gate | E57 §5, with rule 3 raised to 0.706 | `e61a` |
+
+```
+C0 ──────┐
+         ├──> C2 ──┐
+C1 ──────┤         ├──> C3 ──> C4
+         └─────────┘
+C5 ──────────────────────────> C4
+```
+
+**C1 is the recovery point everything falls back to, and C4 can fire from C1 alone.**
+
+### 13.4 Schedule
+
+| Date | Work |
+| --- | --- |
+| 23 Oct | C0 and C1 in parallel. C1 needs `git submodule update --init --recursive` first — `getting-started/` is not checked out on this machine. |
+| 24–26 Oct | C2, if C0 produced a mechanism. C3 as candidates become available. |
+| **27 Oct** | **Freeze.** Send the incumbent through the Google Form; record its SHA-256. |
+| 28–30 Oct | Slack held in reserve. A better-gated candidate may be resubmitted to the form. |
+| 1 Nov, 11:55 UTC | Codabench closes. `docs/COMPETITION.md` records 12:55; the competition page says 11:55, and the earlier time governs. |
+
+### 13.5 What this does not do
+
+- **It does not fit the 14 cases.** The owner's 14 Oct rule stands: the board is read once per
+  candidate as a sanity check and selects nothing. The E50 solved labels are reported, never used to
+  choose.
+- **It does not relax a gate to let a candidate through.** §12.5's traps apply, and `e27f` is itself
+  an instance of one: gate G2 required a model to clear always-robust's 0.706 on the official rows
+  (10 Oct), and E57 §5 lowered that to the constants' 0.529 (17 Oct). The protocol raises it back.
+- **It does not restart labelling on our compute.** E58, E59 and E60 closed that (Findings 83–85).
+- **It does not touch the E57 pipeline**, which stays as pre-registered and remains the larger upside
+  if the collaborator's gate passes before the freeze.
