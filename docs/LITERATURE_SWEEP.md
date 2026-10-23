@@ -24,8 +24,8 @@ ships — which is a legitimate outcome, not a failure of the sweep.
 | Prompt | Question | Status | Qualifies C2? |
 | --- | --- | --- | --- |
 | R1 | Does premise-ablation predict brittleness? | not run (**downgraded**: R5 found a competing entrant scored 0.38 on the official rows with it) | — |
-| R2 | Cheap faithfulness tests inside a small token budget | not run (**next**: confirms the truncation length for the selected mechanism) | — |
-| R3 | High-precision detection at tiny n | not run (**promoted**: one pooled threshold is now the binding question) | — |
+| R2 | Operational definitions of the two selected signals, and what truncation costs | not run (**rewritten 23 Oct**: the faithfulness survey was retargeted onto the mechanism R5 chose) | — |
+| R3 | High-precision detection at tiny n | not run (**promoted**: one pooled threshold is now the binding question; n corrected 34 → 43) | — |
 | R4 | Memorization against robustness | not run | — |
 | R5 | Prior art on the task itself | **done 23 Oct** | **yes — selected C2's mechanism** |
 
@@ -56,7 +56,7 @@ neither established that this *predicts* the label.
 >
 > Output: a table with columns — paper, venue and year, models tested, perturbation type, the
 > correlation or AUC reported between premise-sensitivity and robustness, and sample size. Then three
-> sentences on whether the effect is large enough to be useful at n of about 30. Then a list of anything
+> sentences on whether the effect is large enough to be useful at n of about 40. Then a list of anything
 > that failed to find the effect.
 >
 > If the evidence is thin or absent, say so explicitly rather than assembling a plausible case from
@@ -68,32 +68,83 @@ _Not run._
 
 ---
 
-## R2 — cheap faithfulness tests inside a small token budget
+## R2 — operational definitions of the two selected signals, and what truncation costs
 
-**Why it is asked.** The budget is the binding constraint on every generative method we tried. The
-organizers' own baseline spends 4,096 generated tokens per problem, so that cost is affordable by
-their construction; our rejected methods wanted 28k (PAPER §10). This asks what fits in 4k.
+**Rewritten 23 Oct, after R5.** The original R2 asked which chain-of-thought *faithfulness* test fits
+in 4,000 generated tokens, ranking early-answering (Lanham et al. 2023), biasing-feature tests (Turpin
+et al. 2023) and GSM-Symbolic clause insertion (Mirzadeh et al. 2024). That is now the wrong question:
+R5 selected the mechanism and it is not from that family, so the old prompt would survey methods
+amendment 1 has already declined. The old text is preserved in git history at `5fae3f5`.
+
+**Why it is asked.** R5 named the two signals — answer-token log-probability (Label NLL, Fazla et al.
+2606.16583) and uncertainty-trace shape (Grünefeld et al. 2605.07776) — but not how to compute either
+one, and §3 of the protocol commits us to reading both from **one truncated trace**. Three things block
+the code, and the third is a genuine conflict rather than a gap:
+
+1. Neither paper's feature definition is in hand at the precision needed to reimplement it.
+2. The early-window result (AUROC 0.801 from a few hundred tokens) is measured on GSM8K and ProntoQA,
+   whose full traces are short. Olympiad traces are five to twenty times longer, so a fixed early
+   window is a far smaller *fraction* of the trace here and the result may not carry.
+3. **Label NLL is read at the answer token; a truncated trace has not produced one.** The two signals
+   cannot come from the same cut of the same pass unless something forces an answer at the cut. Gate
+   B3's 4,000-token ceiling is what makes this bite — with an unbounded budget we would generate to
+   completion and the question would not arise.
 
 ### Prompt
 
-> You are a research assistant surveying chain-of-thought faithfulness measurement.
+> You are a research assistant surveying uncertainty-based failure prediction in LLM reasoning.
 >
-> Task: identify test-time measurements that detect unfaithful or shortcut reasoning and cost under
-> about 4,000 generated tokens per problem. Rank them by reported effect size per token spent.
+> Task: I have already selected two zero-training signals and am not looking for alternatives. I need
+> their exact operational definitions and their behaviour under trace truncation. Answer the four
+> questions below.
 >
-> Context: I need a per-problem signal computable in one evaluation pass on a single 96 GB GPU, no
-> network, no training labels. Candidates I know of: early-answering and corrupted-CoT (Lanham et al.
-> 2023), biasing-feature tests (Turpin et al. 2023), GSM-Symbolic irrelevant-clause insertion (Mirzadeh
-> et al. 2024). I do not know which are cheapest or which have the strongest reported effects.
+> 1. **Answer-token log-probability ("Label NLL").** How is it computed when the model emits a
+> free-form answer rather than selecting among given options: which tokens enter the quantity, how is
+> a multi-token answer handled, and is it length-normalised? Give the definition each paper that
+> reports it actually uses, rather than one synthesised across them.
 >
-> Sources: arXiv and major ML/NLP venues, 2023–2026. Prefer papers reporting per-example cost or token
-> counts.
+> 2. **Uncertainty-trace features.** In Grünefeld et al., "Tracing Uncertainty in Language Model
+> 'Reasoning'" (arXiv 2605.07776), which features of the uncertainty trace carry the signal — slope,
+> linearity, mean, variance, change points, something else — over what window, at what token sampling
+> interval, and computed from which per-token quantity (entropy, max probability, margin)? Report
+> their stated definitions.
 >
-> Output: a ranked table — method, paper, tokens or forward passes per example, effect size reported,
-> and whether it needs labels to calibrate. Then name the single cheapest method with a reported effect
-> above chance on math reasoning.
+> 3. **Truncation on long traces.** That paper reports AUROC 0.801 using only the first few hundred
+> tokens, against 0.807 for the full trace, on GSM8K and ProntoQA. Does any paper report how an
+> early-window uncertainty result behaves when full traces are much longer — thousands to tens of
+> thousands of tokens, as on olympiad-level competition mathematics with a reasoning model? State the
+> longest traces for which an early-window uncertainty result has actually been reported, and whether
+> the early window is defined as a fixed token count or as a fraction of the trace.
 >
-> Flag any method whose cost is not reported rather than estimating it.
+> 4. **Reconciling 1 with 2.** Label NLL requires the answer token; a truncated trace has not reached
+> one. What do papers that combine pre-answer uncertainty with answer-conditioned uncertainty do about
+> this — forced early answering, appending an answer-eliciting prompt at the truncation point, a second
+> short pass, or reading a proxy instead? For whichever technique each uses, report its measured cost in
+> forward passes or tokens per example, and any measured loss against reading the answer from an
+> untruncated trace.
+>
+> Context already held — do not re-derive or re-survey it:
+> - The target is binary per-(model, problem) prediction of whether an already-correct answer survives
+> an answer-preserving perturbation suite, from the original problem only.
+> - Four open-weight models at 4B–8B. 43 labelled rows in total, about 7–12 per model, so thresholds
+> are rank- or z-normalised per model on an unlabelled pool and a single pooled threshold is fitted.
+> - Budget: one 96 GB GPU, no network, roughly 35 s per (model, problem) pair, which rules out
+> self-consistency and semantic entropy over several long traces.
+> - The closest prior work and its headline numbers are known (Fazla et al. 2606.16583; Grünefeld et al.
+> 2605.07776; the challenge's own 69.23% uncertainty baseline). Do not re-establish that these signals
+> work — for my purposes that question is settled.
+>
+> Sources: arXiv and major ML/NLP venues, 2023–2026, plus any released code or appendices for the two
+> papers named. Prefer a paper's own text, appendix or repository over a secondary description of it.
+> Released implementation code outranks the paper's prose where the two differ, and say so if they do.
+>
+> Output: four sections, one per question. In each, give the definition or number, its source, and the
+> section, table or file it comes from. Then one implementation recommendation: which two scalars to
+> compute, at what truncation length in tokens, and in how many forward passes per problem.
+>
+> Where a definition is not stated precisely enough to reimplement, say so for that item rather than
+> reconstructing a plausible version. A list of what is underspecified is a usable answer; a guessed
+> formula is not.
 
 ### Answer
 
@@ -104,30 +155,32 @@ _Not run._
 ## R3 — high-precision detection at tiny n
 
 **Why it is asked.** E61 changes the target from a classifier to a flip-only detector, whose value is
-`flips × (2·precision − 1)`. Gate B1 asks for precision ≥ 0.60 over ≥ 3 flips, and at that sample size
-the interval is very wide. This asks whether any framework gives a usable guarantee at n = 34, or
-whether B1 can only ever be a screen.
+`flips × (2·precision − 1)`. Gate B1 asks for a one-sided binomial p ≤ 0.05 against this population's
+0.279 spurious base rate over at least 3 flips (revision 1), and at that sample size the interval is
+very wide. This asks whether any framework gives a usable guarantee at n = 43, or whether B1 can only
+ever be a screen.
 
 ### Prompt
 
 > You are a statistics-literate research assistant.
 >
-> Task: what methods reliably produce a high-precision minority-class detector when only about 30
-> labelled examples exist, the minority class is about 30% of the data, and the metric is plain accuracy
+> Task: what methods reliably produce a high-precision minority-class detector when only about 40
+> labelled examples exist, the minority class is about 28% of the data, and the metric is plain accuracy
 > against a majority-class baseline?
 >
 > Context: I must decide whether to flip individual predictions away from a majority default. I need
-> precision above 0.5 on the flipped subset, and I cannot afford to fit a threshold on the same 30 rows
-> I evaluate on. I am looking for selective-prediction, conformal, or abstention frameworks with
-> finite-sample guarantees at n of about 30, and for honest statements of where they break down.
+> precision above the 0.28 base rate on the flipped subset, and I cannot afford to fit a threshold on
+> the same 43 rows I evaluate on. I am looking for selective-prediction, conformal or abstention
+> frameworks with finite-sample guarantees at n of about 40, and for honest statements of where they
+> break down.
 >
 > Sources: statistics and ML methodology literature; conformal prediction, selective classification,
 > Learn-then-Test. Prefer sources that state small-sample behaviour explicitly.
 >
 > Output: three to five named methods, each with its assumptions, the minimum n where its guarantee is
-> non-vacuous, and what it gives up. Then one recommendation for n of 34 with a 0.7 majority prior.
+> non-vacuous, and what it gives up. Then one recommendation for n of 43 with a 0.72 majority prior.
 >
-> If no method gives a usable guarantee at n of 34, say that plainly — that is a useful answer.
+> If no method gives a usable guarantee at n of 43, say that plainly — that is a useful answer.
 
 ### Answer
 
