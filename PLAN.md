@@ -1049,7 +1049,7 @@ better; the Docker test is still owed before the Form.
 **E65 (Finding 89), 24 Oct: E64 reverses on DeepSeek MATH** (AUC 0.346 [0.246, 0.447]; familiarity 0.683 there). Both
 signals flip between populations, and the hidden board sides with MATH so far, so E64's read is now expected below
 10/14. Its ship rule stands for the board read; if Codabench (down for everyone since 22 Oct) is still unreachable on
-27 Oct, the Form recommendation is `e27f`.
+27 Oct, the Form recommendation is `e27f`. Upload order is now E64 first, then E63, so the board ends on E63.
 
 ### 13.4 E62: does a model miss contradictions on the problems it finds familiar? (report experiment)
 
