@@ -58,10 +58,12 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 | Order | Submission | What it does | Evidence before upload |
 | --- | --- | --- | --- |
 | 1 | `e63-official-quantile` (Finding 87) | E61's familiarity cutoffs recalibrated on the 36 `train-main-v2` problems, Qwen at its constant | Expected about 10.3/14 under E50's structure; official rows 0.400 (reverses) |
-| 2 | **`e64-difficulty`** (Finding 88) | Difficulty read from one forward pass (per-layer ridge from prompt states to log trace length); easier = robust | **Official rows AUC 0.883, decisions 0.824 vs constants 0.529**; GPU parity 2e-6; 172 s for 60 calls |
+| 2 | **`e64-difficulty`** (Finding 88) | Difficulty read from one forward pass (per-layer ridge from prompt states to log trace length); easier = robust | **Official rows AUC 0.883, decisions 0.824 vs constants 0.529**; GPU parity 2e-6; 172 s for 60 calls. **Reverses on DeepSeek MATH (E65, Finding 89): AUC 0.346** |
 
 Each replaces `e27f` in the Form at 10/14 or better; if both do, E64 is preferred (fixed in its protocol before any
 read, because it does not reverse on the organizers' rows).
+E65 found that it reverses on DeepSeek's MATH rows instead, so its read is expected below 10/14; if Codabench is
+still down on 27 Oct, `e27f` stays in the Form.
 
 Both E61 ZIPs were uploaded without the Docker test (owner's decision, `protocols/E61_PROTOCOL.md` amendment 1).
 The protocol's ship rule (§5: E61b ships at "at least 9/14") and its reading (§6: "9/14 or below" means the threshold

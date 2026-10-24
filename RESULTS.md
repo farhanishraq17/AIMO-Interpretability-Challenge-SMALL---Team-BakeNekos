@@ -1256,3 +1256,16 @@ Fixed in `protocols/E64_PROTOCOL.md` before any fit. Target: Qwen's mean log tra
 Reported only (amendment 2): the shipped decisions on the same 34 rows score accuracy 0.824 (balanced 0.729); the per-model constants 0.529 (balanced 0.463).
 
 **Gates: D1 pass, D2 pass.** D4 (DeepSeek MATH) is not computable: E55 holds no prompt states for those problems (amendment 1).
+
+## E65: E64's difficulty on DeepSeek MATH
+
+Fixed in `protocols/E65_PROTOCOL.md` before any score was computed on these rows. E64's shipped DeepSeek arithmetic (nothing refitted) on `e1b-stagea-deepseek`'s prompt states for DeepSeek's Hendrycks MATH instances: 137 rows, 36 robust, older label rule. 95% row-bootstrap intervals (2,000 draws, seed 65).
+
+| score | value |
+| --- | --- |
+| **gate: AUC of -(predicted difficulty)** | **0.346 [0.246, 0.447]** |
+| AUC of -(mean NLL), E61's statistic, same rows | 0.683 [0.582, 0.780] |
+| E64's decisions at DeepSeek's cutoff (10.3925): balanced accuracy | 0.500 [0.500, 0.500] (accuracy 0.263; 1.00 called robust) |
+| Spearman, predicted difficulty vs mean NLL | -0.340 |
+
+**Gate (lower bound above 0.5): fail.**

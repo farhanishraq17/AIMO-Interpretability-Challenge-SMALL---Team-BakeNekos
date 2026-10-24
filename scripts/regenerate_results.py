@@ -98,6 +98,8 @@ STEPS = [
     ["train/eval_e63.py"],
     # E64: predicted difficulty from one forward pass. CPU (~5 min); needs the e55 and e62 runs.
     ["train/eval_e64.py"],
+    # E65: E64's difficulty on DeepSeek MATH. CPU; needs the e1b and e64 runs.
+    ["train/eval_e65.py"],
 ]
 
 

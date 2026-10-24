@@ -2810,6 +2810,32 @@ per-layer ridge from its own E55 prompt states to that target, averaged over lay
   cases). E64 leans against familiarity, so its read is a real test between the two; the pre-registered rule ships it
   at 10/14 or better.
 
+**89. E65: E64's difficulty score reverses on DeepSeek's MATH rows: AUC 0.346 [0.246, 0.447], where familiarity still
+scores 0.683.** (`protocols/E65_PROTOCOL.md`, committed `91726c5` before any score on these rows; `train/eval_e65.py`.
+RESULTS, "E65: E64's difficulty on DeepSeek MATH".)
+
+E64's amendment 1 dropped its MATH check because E55 has no states for those problems; `e1b-stagea-deepseek` has them in
+the same format (extractor, prompt, chat template, 2048 tokens, mean pooling, bf16). E64's shipped DeepSeek arithmetic,
+unrefitted, on DeepSeek's 137 Hendrycks MATH rows (36 robust, older label rule):
+
+| score | value |
+| --- | --- |
+| gate (lower bound above 0.5): AUC of -(predicted difficulty) | **0.346 [0.246, 0.447]: fail** |
+| AUC of -(mean NLL), same rows | 0.683 [0.582, 0.780] |
+| E64's decisions at DeepSeek's cutoff | every row called robust (balanced 0.500): MATH sits below an olympiad cutoff |
+| Spearman, predicted difficulty vs mean NLL | -0.340 |
+
+- **Both signals flip between the two labelled populations, and together.** Harder problems are more familiar in both
+  (Spearman -0.34 here, -0.35 to -0.50 on the official rows). On MATH familiar = robust (0.683), so harder = robust
+  (0.654); on the 34 official rows easier = robust (0.883), so familiar = spurious. No fixed direction of either score
+  holds on both, so E64 reads one population's structure, not robustness that generalizes.
+- **The hidden set sides with MATH so far.** E50's board structure (familiar = robust inside every batch) is the third
+  population, built by the organizers' pipeline like the official rows. Two of three populations run against E64. Its
+  board read remains the decisive test, and the expected read is now below 10/14.
+- **Use (E65 §5):** E64's ship rule is unchanged (Form at 10/14 or better on the board). If Codabench is still
+  unreachable on 27 Oct, the recommendation is `e27f`, not E64. Codabench has refused connections from outside our
+  network too since 22 Oct (`ECONNREFUSED` from a remote fetch on 24 Oct), so the outage is theirs.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
