@@ -53,8 +53,7 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 | 0.64 | 9/14 | `e27k-tilted` (990659, re-scored 15 Oct) | The batch ranking; with one problem a call it is the constants | Finding 79 |
 | 0.57 | 8/14 | `e61a-amc-median` (1007214, 21 Oct) | Control: robust iff mean NLL is below E54's frozen 75-problem AMC median | One case below the constants |
 
-**Built, awaiting upload. Order changed 24 Oct after E65: E64 first, then E63, so the board (`Force_Latest_Multiple`)
-ends on the candidate with the higher expected read.** The Order column below is the original plan.
+**Built, awaiting upload, in this order (the owner kept it on 26 Oct after E65, so the board ends on E64):**
 
 | Order | Submission | What it does | Evidence before upload |
 | --- | --- | --- | --- |

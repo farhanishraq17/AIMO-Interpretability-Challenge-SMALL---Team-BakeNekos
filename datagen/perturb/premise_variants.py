@@ -26,6 +26,7 @@ Run:  python datagen/perturb/premise_variants.py --pool data/e58/pool.parquet --
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import re
 import sys
@@ -147,7 +148,8 @@ def chat(keys: list[str], model: str, prompt: str, temperature: float, log) -> s
                 continue
             print(f"  {model}: HTTP {exc.code} {message[:160]}; retry {attempt + 1}", flush=True)
             time.sleep(30 * (attempt + 1))
-        except (urllib.error.URLError, KeyError, IndexError, TimeoutError, json.JSONDecodeError) as exc:
+        # OSError covers URLError, timeouts and a connection reset mid-response (which ended two daily runs)
+        except (OSError, http.client.HTTPException, KeyError, IndexError, json.JSONDecodeError) as exc:
             print(f"  {model}: {type(exc).__name__}, retry {attempt + 1}", flush=True)
             time.sleep(30 * (attempt + 1))
     raise SystemExit(f"{model} failed six times")
