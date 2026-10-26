@@ -8,10 +8,10 @@ Team workspace for the **AIMO Interpretability Challenge (NeurIPS 2026)**, enter
   answer-preserving perturbations) or **spurious**.
 - **Evaluation is per-problem since 15 Oct 2026:** `are_robust` gets a one-item list per call, 1 h 10 min
   budget, and the final test runs the same way (Finding 79). Batch rankings and counts no longer act.
-- **What ships today:** `e27k` scored 0.86 under the old batch protocol; per-problem it collapses to the
-  per-model constants and scores **0.64**. `e27f` gives the same predictions without loading a model
-  (`submission/make_e27.py` rebuilds every candidate ZIP into `dist/`). Read `PLAN.md` §13 first:
-  the final-push plan, the 21 Oct fleet and API-key state, and E61 (familiarity as a per-problem threshold).
+- **What ships today:** `e64-difficulty` scored **0.71 (10/14)** per problem on 26 Oct, one case above the
+  per-model constants (`e27f`, 0.64), and is the Form ZIP under its pre-registered rule (`submission/make_e64.py`).
+  `e27k`'s 0.86 was the old batch protocol; per problem it collapses to the constants. Read `PLAN.md` §13 first:
+  the final-push plan, E61/E63 (familiarity per problem, 8-9/14), E64 (difficulty) and E65 (E64 reverses on MATH).
 - **This repository is the Small Models Track only.** The Main Track (adds `gpt-oss-120b`) lives in
   its own repository, `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-LARGE---Team-BakeNekos`;
   nothing here depends on it, the two only share the Kaggle accounts, and its `LF-n` findings are

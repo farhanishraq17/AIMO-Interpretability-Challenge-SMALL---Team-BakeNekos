@@ -1051,6 +1051,12 @@ signals flip between populations, and the hidden board sides with MATH so far, s
 10/14. Its ship rule stands for the board read; if Codabench (down for everyone since 22 Oct) is still unreachable on
 27 Oct, the Form recommendation is `e27f`. Upload order stays E63 first, then E64 (the owner's decision, 26 Oct).
 
+**Board reads, 26 Oct (Codabench back at 09:58 UTC): E63 9/14 (0.64), E64 10/14 (0.71).** E64 is the first
+per-problem method above the constants and moves us from 27th to 12th of 93 (11 teams above, 15 tied). Under its
+pre-registered rule **E64 is the Form ZIP**; the Docker load test is the one check left before it goes in (deadline
+1 Nov 12:55 UTC). The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, if the owner waives it as for E61. Docker Desktop still fails to start here (the stale `dockerInference` socket, owner to clear). One case of 14 is weak evidence: the board now sides with the official rows against MATH, where
+on 21 Oct the batch ranking had sided the other way.
+
 ### 13.4 E62: does a model miss contradictions on the problems it finds familiar? (report experiment)
 
 The one compute-heavy experiment worth running, and it is for the report, not the submission. It

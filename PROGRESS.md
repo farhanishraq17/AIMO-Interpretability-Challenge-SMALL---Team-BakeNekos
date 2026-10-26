@@ -2781,6 +2781,9 @@ before any threshold; `train/eval_e63.py`. RESULTS, "E63: familiarity cutoffs on
 - **E63** (`dist/solution-e63-official-quantile-small.zip`): E61's quantiles over the 36 official problems, Qwen at its
   constant. Expected 10.29. C2 passes (DeepSeek MATH 0.631 [0.538, 0.719]); C6's local contract passes; C3, reported
   only, 0.400 [0.172, 0.579] on the official rows. One upload; it replaces `e27f` only at 10/14 or better.
+- **Board, 26 Oct (submission 1010959): 9/14 (0.64), equal to the constants**, below the 10.29 expected. Per-problem
+  familiarity has now read 8 (E61a), 9 (E61b) and 9 (E63): it does not beat the constants on the hidden set under
+  any calibration we have tried. `e27f` is not replaced by E63.
 
 **88. E64: difficulty, read from one forward pass, predicts the organizers' labels where familiarity reverses: AUC
 0.883 [0.687, 1.000] on the 34 official rows, with no robustness label in training.** (`protocols/E64_PROTOCOL.md`,
@@ -2809,6 +2812,12 @@ per-layer ridge from its own E55 prompt states to that target, averaged over lay
 - **What the board may say.** The batch ranking's evidence ran the other way (familiar = robust, p about 0.05 on 14
   cases). E64 leans against familiarity, so its read is a real test between the two; the pre-registered rule ships it
   at 10/14 or better.
+- **Board, 26 Oct (submission 1010961, uploaded after E63): 10/14 (0.71)**, one case above the constants and the
+  first per-problem read above 9. Rank 12 of 93 teams with a small-track score (11 above, 15 tied at 0.71). Under
+  the pre-registered rule **E64 replaces `e27f` as the Form ZIP**, pending the Docker load test. One case of 14 is
+  weak evidence on its own; what it adds is direction: on the hidden set, read one problem at a time, difficulty
+  beat familiarity (10 against 8, 9 and 9), the order the official rows predicted and DeepSeek MATH (Finding 89) did
+  not.
 
 **89. E65: E64's difficulty score reverses on DeepSeek's MATH rows: AUC 0.346 [0.246, 0.447], where familiarity still
 scores 0.683.** (`protocols/E65_PROTOCOL.md`, committed `91726c5` before any score on these rows; `train/eval_e65.py`.
@@ -2829,9 +2838,10 @@ unrefitted, on DeepSeek's 137 Hendrycks MATH rows (36 robust, older label rule):
   (Spearman -0.34 here, -0.35 to -0.50 on the official rows). On MATH familiar = robust (0.683), so harder = robust
   (0.654); on the 34 official rows easier = robust (0.883), so familiar = spurious. No fixed direction of either score
   holds on both, so E64 reads one population's structure, not robustness that generalizes.
-- **The hidden set sides with MATH so far.** E50's board structure (familiar = robust inside every batch) is the third
-  population, built by the organizers' pipeline like the official rows. Two of three populations run against E64. Its
-  board read remains the decisive test, and the expected read is now below 10/14.
+- **The hidden set sided with MATH so far.** E50's board structure (familiar = robust inside every batch) is the third
+  population, built by the organizers' pipeline like the official rows. Two of three populations ran against E64. Its
+  board read remained the decisive test, and the expected read was below 10/14. **The read, 26 Oct, was 10/14**
+  (Finding 88): per problem, the hidden set sides with the official rows.
 - **Use (E65 §5):** E64's ship rule is unchanged (Form at 10/14 or better on the board). If Codabench is still
   unreachable on 27 Oct, the recommendation is `e27f`, not E64. Codabench has refused connections from outside our
   network too since 22 Oct (`ECONNREFUSED` from a remote fetch on 24 Oct), so the outage is theirs.

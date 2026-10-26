@@ -49,21 +49,13 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 
 | Score | | Submission | What it does | What it settled |
 | --- | --- | --- | --- | --- |
+| **0.71** | **10/14** | **`e64-difficulty`** ⭐ (1010961, 26 Oct) | Difficulty read from one forward pass (per-layer ridge from prompt states to Qwen's log trace length on 497 unlabelled olympiad problems); easier = robust, cutoffs at the `p_m` quantiles of the 36 official problems | **The first per-problem method above the constants**, by one case. Its pre-registered ship rule (10/14 or better) makes it the Form ZIP (Finding 88), although it reverses on DeepSeek MATH (Finding 89) |
+| 0.64 | 9/14 | `e63-official-quantile` (1010959, 26 Oct) | E61's familiarity cutoffs recalibrated on the 36 `train-main-v2` problems, Qwen at its constant | **Equals the constants**, below its expected 10.3. Per-problem familiarity has now read 8, 9 and 9 (Finding 87) |
 | 0.64 | 9/14 | `e61b-quantile` (1007215, 21 Oct) | Robust iff mean NLL is at or below the `p_m` quantile of E55's 548 unlabelled problems (Qwen 0.6, DeepSeek 2/3, Skywork and Olmo 1/3) | **Equals the constants.** The batch ranking's 12/14 does not survive an absolute threshold (Finding 86) |
 | 0.64 | 9/14 | `e27k-tilted` (990659, re-scored 15 Oct) | The batch ranking; with one problem a call it is the constants | Finding 79 |
 | 0.57 | 8/14 | `e61a-amc-median` (1007214, 21 Oct) | Control: robust iff mean NLL is below E54's frozen 75-problem AMC median | One case below the constants |
 
-**Built, awaiting upload, in this order (the owner kept it on 26 Oct after E65, so the board ends on E64):**
-
-| Order | Submission | What it does | Evidence before upload |
-| --- | --- | --- | --- |
-| 1 | `e63-official-quantile` (Finding 87) | E61's familiarity cutoffs recalibrated on the 36 `train-main-v2` problems, Qwen at its constant | Expected about 10.3/14 under E50's structure; official rows 0.400 (reverses) |
-| 2 | **`e64-difficulty`** (Finding 88) | Difficulty read from one forward pass (per-layer ridge from prompt states to log trace length); easier = robust | **Official rows AUC 0.883, decisions 0.824 vs constants 0.529**; GPU parity 2e-6; 172 s for 60 calls. **Reverses on DeepSeek MATH (E65, Finding 89): AUC 0.346** |
-
-Each replaces `e27f` in the Form at 10/14 or better; if both do, E64 is preferred (fixed in its protocol before any
-read, because it does not reverse on the organizers' rows).
-E65 found that it reverses on DeepSeek's MATH rows instead, so its read is expected below 10/14; if Codabench is
-still down on 27 Oct, `e27f` stays in the Form.
+**Uploaded 26 Oct, 21:13 and 21:14 UTC, E63 first so the board ends on E64.** Two earlier attempts the same evening (1010405, 1010444) never received a score and are not reads. The Form ZIP is `e64-difficulty` under the rule fixed in its protocol before either read: it replaces `e27f` at 10/14 or better, and E63 did not reach 10. The Docker load test is still owed before the Form. The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, if the owner waives it as for E61. Docker Desktop still fails to start here (the stale `dockerInference` socket, owner to clear).
 
 Both E61 ZIPs were uploaded without the Docker test (owner's decision, `protocols/E61_PROTOCOL.md` amendment 1).
 The protocol's ship rule (§5: E61b ships at "at least 9/14") and its reading (§6: "9/14 or below" means the threshold
