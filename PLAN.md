@@ -1053,8 +1053,7 @@ signals flip between populations, and the hidden board sides with MATH so far, s
 
 **Board reads, 26 Oct (Codabench back at 09:58 UTC): E63 9/14 (0.64), E64 10/14 (0.71).** E64 is the first
 per-problem method above the constants and moves us from 27th to 12th of 93 (11 teams above, 15 tied). Under its
-pre-registered rule **E64 is the Form ZIP**; the Docker load test is the one check left before it goes in (deadline
-1 Nov 12:55 UTC). The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, if the owner waives it as for E61. Docker Desktop still fails to start here (the stale `dockerInference` socket, owner to clear). One case of 14 is weak evidence: the board now sides with the official rows against MATH, where
+pre-registered rule **E64 is the Form ZIP**; the Docker load test was the one check left (deadline 1 Nov 12:55 UTC). The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, and the owner waived it on 27 Oct, as for E61 (`protocols/E64_PROTOCOL.md` amendment 4). **`dist/solution-e64-difficulty-small.zip` goes into the Google Form**, submitted by the owner. One case of 14 is weak evidence: the board now sides with the official rows against MATH, where
 on 21 Oct the batch ranking had sided the other way.
 
 ### 13.4 E62: does a model miss contradictions on the problems it finds familiar? (report experiment)

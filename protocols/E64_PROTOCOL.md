@@ -66,3 +66,9 @@ the largest script the fleet has accepted (0.8 MB). So the GPU kernel runs the Z
 the four checkpoints, saves five problems' states per model and times fifteen forward passes per model; the ZIP's own
 `difficulty` read-out is then applied locally to those GPU states and compared with the offline predictions (same
 1e-3 tolerance), and its cost is timed locally. Together these cover the shipped path; the pass rules are unchanged.
+
+**4 (27 Oct, after the board read): the Docker load test is waived (owner's decision), as E61's amendment 1 waived
+it.** Docker Desktop has not started on this machine since 21 Oct. The Codabench run (submission 1010961, the
+organizers' GPU runner) had coverage 1.0 and 0 invalid predictions, and its 10/14 differs from the constants' 9/14,
+so the shipped model path ran in the evaluation runtime rather than the fallback. `e64-difficulty` goes into the
+Google Form unchanged (`dist/solution-e64-difficulty-small.zip`).

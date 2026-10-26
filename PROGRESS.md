@@ -2814,7 +2814,8 @@ per-layer ridge from its own E55 prompt states to that target, averaged over lay
   at 10/14 or better.
 - **Board, 26 Oct (submission 1010961, uploaded after E63): 10/14 (0.71)**, one case above the constants and the
   first per-problem read above 9. Rank 12 of 93 teams with a small-track score (11 above, 15 tied at 0.71). Under
-  the pre-registered rule **E64 replaces `e27f` as the Form ZIP**, pending the Docker load test. One case of 14 is
+  the pre-registered rule **E64 replaces `e27f` as the Form ZIP**; the owner waived the Docker test on 27 Oct
+  (E64 amendment 4: the Codabench run itself had coverage 1.0, 0 invalid, and a read off the constants). One case of 14 is
   weak evidence on its own; what it adds is direction: on the hidden set, read one problem at a time, difficulty
   beat familiarity (10 against 8, 9 and 9), the order the official rows predicted and DeepSeek MATH (Finding 89) did
   not.
