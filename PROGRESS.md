@@ -2847,6 +2847,40 @@ unrefitted, on DeepSeek's 137 Hendrycks MATH rows (36 robust, older label rule):
   unreachable on 27 Oct, the recommendation is `e27f`, not E64. Codabench has refused connections from outside our
   network too since 22 Oct (`ECONNREFUSED` from a remote fetch on 24 Oct), so the outage is theirs.
 
+**90. E66: lifting the 32k cap from E64's target sharpens the label-free fit but ranks the official rows worse (AUC
+0.808 against 0.883, decisions 26/34 against 28/34). Two gates fail, so E64 stays the Form ZIP.**
+(`protocols/E66_PROTOCOL.md`, committed `5720e7a` before any sample; amendment 1 before any fit; `train/eval_e66.py`.
+RESULTS, "E66: E64 refitted on a 64k-cap target".)
+
+E64's target is flat at log(32768) on the 194 of 497 problems where Qwen hit the cap, and Qwen's and DeepSeek's cutoffs
+sat in that flat region. Sixteen Kaggle kernels re-sampled those 194 with Qwen at a 65,536-token cap (seed 66, k = 2;
+26-27 Oct, 3.5-7.4 h each, all exit 0). Every problem got both samples. E64's fit, unchanged, on the new target:
+
+| gate | E66 | E64 | result |
+| --- | --- | --- | --- |
+| G1: share of the 497 with both samples at the cap (<= 0.142) | **0.087** (43) | 0.284 (141) | pass |
+| G2: 5-fold CV Spearman, every model (>= 0.30) | **0.78-0.80** | 0.77-0.79 | pass |
+| G3: AUC of -(predicted difficulty), 34 official rows (>= E64's) | **0.808** [0.571, 1.000] | 0.883 | **fail** |
+| G4: shipped decisions' accuracy, same rows (>= E64's) | **26/34** (0.765) | 28/34 (0.824) | **fail** |
+
+- **The cap still binds.** 28.6% of the 388 new samples reached 65,536 tokens, and 43 problems hit it twice: Qwen
+  writes past 64k on about a fifth of these problems.
+- **The loss is on Qwen's rows.** Per model (exploratory): Qwen AUC 0.875 to 0.812 and decisions 11/12 to 9/12; Olmo
+  0.929 to 0.786 with the same 7/9; DeepSeek 0.905 to 0.857 with the same 8/10; Skywork unchanged. On the 36 official
+  problems, Qwen changes 6 decisions and DeepSeek 8; Skywork and Olmo none (their cutoffs sit below the old cap). Two
+  spurious Qwen problems move under the cutoff. One of them, `b62d28d3…`, *is* the cutoff: E64's share for Qwen
+  (0.6 of 36) is an exact order statistic, so one official problem always sits on it, and the shipped arithmetic
+  calls it robust by 1e-6. Called the other way, the count would be 27/34. That still fails.
+- **MATH is unchanged.** E65's check with the new DeepSeek arrays scores 0.345 [0.246, 0.448] (E64: 0.346).
+- **What it means.** The new target removes most of the censoring and fits slightly better without labels. It does not
+  rank the official rows better. The 34 rows cannot separate 0.808 from 0.883 (the intervals overlap almost entirely),
+  so this does not show that resolution above 32k hurts. It shows that the structural argument for E66 did not survive
+  the only labelled check. The rule was strict on purpose (§6: an equally good E66 fails G3 or G4 about half the
+  time), and it applies.
+- **Use (§6):** E64 stays in the Google Form. E66 never reached the board (G6 runs only after G1-G5 pass), so nothing
+  needs re-uploading. Reported only: E66's arrays pass the contract arithmetic (548 problems x 4 models, max diff
+  3.7e-06) and the GPU-state check (1.7e-06). No ZIP is kept.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

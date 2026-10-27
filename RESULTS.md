@@ -1269,3 +1269,23 @@ Fixed in `protocols/E65_PROTOCOL.md` before any score was computed on these rows
 | Spearman, predicted difficulty vs mean NLL | -0.340 |
 
 **Gate (lower bound above 0.5): fail.**
+
+## E66: E64 refitted on a 64k-cap target
+
+Fixed in `protocols/E66_PROTOCOL.md` before any sample was drawn. E64's fit, unchanged, on a new target: the 194 problems E62 sampled at the 32k cap re-sampled by Qwen at a 65,536-token cap (seed 66, k = 2), the other 303 keep E62's target. 497 problems in the fit, 0 dropped for lacking two samples.
+
+**G1 (label-free, gate <= 0.142):** 0.087 of the 497 have both samples at the cap (E64: 141/497 = 0.284). pass. Reported: 0.286 of the 388 new samples reach 65,536 tokens.
+
+| model | G2 CV Spearman (gate >= 0.30) | D3 Spearman with mean NLL | cutoff (E64's share, official 36) | share of the 36 called robust | of the 36, decisions that differ from E64 |
+| --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 0.804 | -0.326 | 10.6538 | 0.61 | 6 |
+| `Skywork/Skywork-OR1-Math-7B` | 0.786 | -0.497 | 10.0750 | 0.33 | 0 |
+| `allenai/Olmo-3-7B-Think` | 0.800 | -0.400 | 10.0351 | 0.33 | 0 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.781 | -0.408 | 10.6836 | 0.67 | 8 |
+
+**G3 (official AUC, gate >= E64's 0.8833):** 0.8083 [0.571, 1.000] on 34 rows. fail.
+**G4 (official decisions, gate >= E64's 0.8235):** accuracy 0.7647 (26/34). fail.
+
+Reported only: E65's check with the new DeepSeek arrays, AUC 0.345 [0.246, 0.448] on DeepSeek's 137 MATH rows (E64: 0.346).
+
+**G1-G4: fail.** G5 (contract) and G6 (board) are run after this; the ship rule is the protocol's §6.

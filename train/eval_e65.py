@@ -38,13 +38,8 @@ OUT = ROOT / "runs" / "e65"
 HEADING = "E65: E64's difficulty on DeepSeek MATH"
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--no-write", action="store_true", help="print only; do not touch RESULTS.md")
-    args = parser.parse_args()
-    e64.SEED = e54.SEED = 65
-
-    arrays = dict(np.load(ROOT / "runs" / "e64" / "artifact.npz"))
+def math_frame(arrays: dict) -> pd.DataFrame:
+    """DeepSeek's 137 MATH rows with the shipped arithmetic's predicted difficulty (E66 reuses this with its arrays)."""
     bundle = np.load(STATES)
     index = {str(k): i for i, k in enumerate(bundle["problem_keys"])}
     X = bundle["X_mean"].astype(np.float32)
@@ -54,6 +49,17 @@ def main() -> None:
     math = math[math["problem_key"].isin(index)].copy()
     assert len(math) == 137 and math["is_robust"].sum() == 36, (len(math), math["is_robust"].sum())
     math["difficulty"] = [solution.difficulty(arrays, "deepseek", X[index[k]]) for k in math["problem_key"]]
+    return math
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--no-write", action="store_true", help="print only; do not touch RESULTS.md")
+    args = parser.parse_args()
+    e64.SEED = e54.SEED = 65
+
+    arrays = dict(np.load(ROOT / "runs" / "e64" / "artifact.npz"))
+    math = math_frame(arrays)
     nll = load_scores()
     math = math.merge(nll.loc[nll["scored_model_id"] == DEEPSEEK, ["problem_key", "mean_nll"]], on="problem_key",
                       validate="one_to_one")

@@ -5,6 +5,9 @@ replace E64 in the Google Form, under §6's rule only. Code: `datagen/perturb/e6
 `scripts/e58_gpu_bundle.py` (kernels `e66-qwen-a` to `e66-qwen-p`), `train/eval_e66.py` (target, fit, gates),
 `submission/make_e64.py --experiment e66` (ZIP), `scripts/e64_gpu_bundle.py --verify --experiment e66` (GPU states). Any change after the first sample is read is an amendment, dated in §8.
 
+**Result, 27 Oct (Finding 90): G1 and G2 pass; G3 (AUC 0.808) and G4 (26/34) fail. E64 stays in the Form; E66 is
+not uploaded.**
+
 ## Motivation
 
 E64 learns difficulty from Qwen's mean log trace length on E62's 497 problems, sampled at a 32,768-token cap. **194 of
@@ -73,4 +76,8 @@ choice among variants by any read. The samples are not used to label robustness.
 
 ## 8. Amendments
 
-None.
+1. **27 Oct 2026, 08:30 UTC, before any fit on E66's target** (only the sample counts behind G1 had been read: all 194
+   problems have two new samples, 43 with both at 65,536). G3 and G4 compare against E64's exact values in
+   `runs/e64/result.json`, AUC 212/240 = 0.8833 and accuracy 28/34 = 0.8235. The table's 0.883 and 0.824 are those
+   values rounded; 0.824 read literally would fail E64 itself. "At least E64's" was the intent, and is what
+   `train/eval_e66.py` checks.

@@ -100,6 +100,8 @@ STEPS = [
     ["train/eval_e64.py"],
     # E65: E64's difficulty on DeepSeek MATH. CPU; needs the e1b and e64 runs.
     ["train/eval_e65.py"],
+    # E66: E64 refitted on the 64k-cap target. CPU (~5 min); needs the e1b, e55, e62, e64 and e66 runs.
+    ["train/eval_e66.py"],
 ]
 
 

@@ -10,6 +10,7 @@ On Kaggle T4s, the E64 solution's own `_load` and `mean_states` run on the four 
 
 Run via:  python scripts/kaggle_followup.py push e64-gpu-check --account <ALIAS>
           python scripts/e64_gpu_bundle.py --verify      (after `output e64-gpu-check`)
+          python scripts/e64_gpu_bundle.py --verify --experiment e66   (E66's arrays on the same saved states)
 """
 
 import argparse
@@ -84,12 +85,12 @@ print(json.dumps(result, indent=2))
     return source, hashes
 
 
-def verify() -> None:
+def verify(experiment: str = "e64") -> None:
     """C1: the shipped arithmetic on the GPU-computed states against the offline predictions."""
     sys.path.insert(0, str(ROOT / "submission" / "e64-difficulty"))
     import solution
-    arrays = dict(np.load(ROOT / "runs" / "e64" / "artifact.npz"))
-    offline = pd.read_csv(ROOT / "runs" / "e64" / "predicted_difficulty.csv", index_col=0)
+    arrays = dict(np.load(ROOT / "runs" / experiment / "artifact.npz"))
+    offline = pd.read_csv(ROOT / "runs" / experiment / "predicted_difficulty.csv", index_col=0)
     run = next(ROOT.glob("runs/e64-gpu-check-*/e64-gpu-check"))
     gpu = json.loads((run / "result.json").read_text())
     worst = 0.0
@@ -109,5 +110,7 @@ def verify() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--verify", action="store_true")
-    if parser.parse_args().verify:
-        verify()
+    parser.add_argument("--experiment", default="e64", choices=["e64", "e66"])
+    args = parser.parse_args()
+    if args.verify:
+        verify(args.experiment)

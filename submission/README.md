@@ -57,6 +57,10 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 
 **Uploaded 26 Oct, 21:13 and 21:14 UTC, E63 first so the board ends on E64.** Two earlier attempts the same evening (1010405, 1010444) never received a score and are not reads. The Form ZIP is `e64-difficulty` under the rule fixed in its protocol before either read: it replaces `e27f` at 10/14 or better, and E63 did not reach 10. The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, and the owner waived it on 27 Oct, as for E61 (`protocols/E64_PROTOCOL.md` amendment 4). **`dist/solution-e64-difficulty-small.zip` goes into the Google Form**, submitted by the owner (SHA-256 `665f86ddd28730c2…`).
 
+**E66 (27 Oct) built no ZIP for upload.** E64 refitted on a 64k-cap target failed its official-row gates (AUC 0.808,
+26/34, against E64's 0.883 and 28/34; Finding 90), so it never reached the board and E64 stays the Form ZIP.
+`make_e64.py --experiment e66` can rebuild it; the E64 ZIP rebuilds byte for byte after the builder change.
+
 Both E61 ZIPs were uploaded without the Docker test (owner's decision, `protocols/E61_PROTOCOL.md` amendment 1).
 The protocol's ship rule (§5: E61b ships at "at least 9/14") and its reading (§6: "9/14 or below" means the threshold
 does not transfer and `e27f` ships) disagree at exactly 9/14; the owner decides (Finding 86).

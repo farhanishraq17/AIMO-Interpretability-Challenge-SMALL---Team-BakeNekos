@@ -1056,6 +1056,11 @@ per-problem method above the constants and moves us from 27th to 12th of 93 (11 
 pre-registered rule **E64 is the Form ZIP**; the Docker load test was the one check left (deadline 1 Nov 12:55 UTC). The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, and the owner waived it on 27 Oct, as for E61 (`protocols/E64_PROTOCOL.md` amendment 4). **`dist/solution-e64-difficulty-small.zip` goes into the Google Form**, submitted by the owner. One case of 14 is weak evidence: the board now sides with the official rows against MATH, where
 on 21 Oct the batch ranking had sided the other way.
 
+**E66 (Finding 90), 27 Oct: closed, E64 stays.** E64 was refitted on a target re-sampled at a 64k cap for the 194
+capped problems. Censoring falls from 28% to 9% and the label-free fit improves slightly (G1, G2 pass). On the official
+rows it does worse: AUC 0.808 against 0.883, decisions 26/34 against 28/34 (G3, G4 fail). Under the pre-registered rule
+E64 remains the Form ZIP. E66 was not uploaded, so the board still ends on E64.
+
 ### 13.4 E62: does a model miss contradictions on the problems it finds familiar? (report experiment)
 
 The one compute-heavy experiment worth running, and it is for the report, not the submission. It

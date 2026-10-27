@@ -80,22 +80,21 @@ def template_auc(frame: pd.DataFrame, score: str) -> dict:
     return {"auc": float(roc_auc_score(y, s)), "ci": np.percentile(values, [2.5, 97.5]).tolist(), "n": int(len(y))}
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--no-write", action="store_true", help="print only; do not touch RESULTS.md")
-    args = parser.parse_args()
+def official_keys() -> list[str]:
+    return sorted(set(pd.read_parquet(ROOT / "data" / "e55" / "instances.parquet").query("dataset_id == 'train-main-v2'")["problem_key"]))
 
-    y_all = difficulty()
-    official = set(pd.read_parquet(ROOT / "data" / "e55" / "instances.parquet").query("dataset_id == 'train-main-v2'")["problem_key"])
-    rows = load_rows()
-    rows = rows[rows["model_id"].isin(SHORT)].copy()
+
+def fit_models(y_all: pd.Series):
+    """Per model: D1 (out-of-fold Spearman), D3, the p_m cutoff, full-fit predictions on every E55 problem, and the
+    arrays the ZIP ships. E66 calls this with its own target."""
+    official = official_keys()
     arrays, d1, d3, cutoffs, predicted = {}, {}, {}, {}, {}
     for model, short in SHORT.items():
         bundle = np.load(next(ROOT.glob(FEATURES.format(short=short))), allow_pickle=True)
         keys = [str(k) for k in bundle["problem_keys"]]
         X = bundle["X_mean"].astype(np.float32)
         train = [i for i, k in enumerate(keys) if k in y_all.index]
-        assert len(train) == 497, f"{short}: {len(train)} training problems"
+        assert len(train) == len(y_all), f"{short}: {len(train)} of {len(y_all)} training problems"
         Xt, yt = X[train], y_all.loc[[keys[i] for i in train]].to_numpy()
 
         oof = np.zeros(len(yt))
@@ -109,13 +108,25 @@ def main() -> None:
         nll = {r["problem_key"]: r["mean_nll"] for p in ROOT.glob(E55_RECORDS.format(short=short))
                for r in map(json.loads, p.read_text(encoding="utf-8").splitlines()) if r}
         d3[model] = float(spearmanr(pred.loc[list(nll)], list(nll.values())).statistic)
-        cutoffs[model] = float(np.quantile(pred.loc[sorted(official)], P_ROBUST[model]))
+        cutoffs[model] = float(np.quantile(pred.loc[official], P_ROBUST[model]))
         arrays.update({f"{short}__mean": np.stack([s.mean_ for s, _ in fits]).astype(np.float32),
                        f"{short}__scale": np.stack([s.scale_ for s, _ in fits]).astype(np.float32),
                        f"{short}__coef": np.stack([r.coef_ for _, r in fits]).astype(np.float32),
                        f"{short}__intercept": np.array([r.intercept_ for _, r in fits], dtype=np.float32),
                        f"{short}__cutoff": np.float32(cutoffs[model])})
         print(f"{short}: D1 {d1[model]:.3f}, D3 {d3[model]:.3f}, cutoff {cutoffs[model]:.4f}", flush=True)
+    return arrays, d1, d3, cutoffs, predicted
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--no-write", action="store_true", help="print only; do not touch RESULTS.md")
+    args = parser.parse_args()
+
+    official = official_keys()
+    rows = load_rows()
+    rows = rows[rows["model_id"].isin(SHORT)].copy()
+    arrays, d1, d3, cutoffs, predicted = fit_models(difficulty())
 
     rows["neg_difficulty"] = [-predicted[m].loc[k] for m, k in zip(rows["model_id"], rows["problem_key"])]
     d2 = template_auc(rows, "neg_difficulty")
@@ -127,7 +138,7 @@ def main() -> None:
     decisions = {k: {"accuracy": float((rows[k] == truth).mean()),
                      "balanced_accuracy": float(np.mean([(rows[k][truth] == True).mean(), (rows[k][~truth] == False).mean()]))}  # noqa: E712
                  for k in ("e64", "constants")}
-    calls = {m: float(np.mean(predicted[m].loc[sorted(official)] <= cutoffs[m])) for m in SHORT}
+    calls = {m: float(np.mean(predicted[m].loc[official] <= cutoffs[m])) for m in SHORT}
 
     lines = ["Fixed in `protocols/E64_PROTOCOL.md` before any fit. Target: Qwen's mean log trace length (cap 32k) on E62's 497 "
              "problems. Score: per-layer ridge from each model's own E55 prompt states, averaged over layers; lower = robust.", "",
