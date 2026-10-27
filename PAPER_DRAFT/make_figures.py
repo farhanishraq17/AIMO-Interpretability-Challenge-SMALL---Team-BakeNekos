@@ -22,7 +22,8 @@ OUT = Path(__file__).resolve().parent / "figures"
 
 SOURCES = {
     "fig1": "runs/e1b-stagea-deepseek/features/stagea-deepseek/layer_curve.csv (generated)",
-    "fig2": "experiments.md, the leaderboard series; PROGRESS.md Findings 49, 50, 60, 61",
+    "fig2": "experiments.md, the leaderboard series; submission/README.md, per-problem table; "
+            "PROGRESS.md Findings 49, 50, 60, 61, 79, 86-88",
     "fig3": "train/eval_batch_composition.py, RESULTS.md 'E40: batch composition'",
     "fig4": "RESULTS.md 'E28: familiarity rank candidates' (offline) + the leaderboard series",
 }
@@ -91,46 +92,63 @@ def fig1_layer_curve() -> None:
 
 
 def fig2_leaderboard_ladder() -> None:
-    """Twenty uploads, each answering one question. The ladder is 1/14 per rung."""
-    rows = [
-        ("e27k  ranking + derived counts", 12, True),
-        ("e27m/n/o/p  each count neighbour", 11, False),
-        ("e27e  ranking, median split", 10, False),
-        ("e27h  DeepSeek's split alone", 10, False),
-        ("e28a  suffix NLL", 10, False),
-        ("e27f  best constants", 9, False),
-        ("e27g/i/j  one other model's split", 9, False),
-        ("E11 v2  fused text + states", 9, False),
-        ("e27a/b/c  fitted on official labels", 8, False),
-        ("e29a  Min-K gap, DeepSeek only", 8, False),
-        ("all-False", 7, False),
-        ("e27d  ranking, inverted", 4, False),
-        ("e28d  Min-K gap, all models", 4, False),
+    """Every scored upload, batch protocol then per problem. The ladder is 1/14 per rung."""
+    panels = [
+        ("Batch calls, until 15 Oct: twenty uploads", [
+            ("e27k  ranking + derived counts", 12, True),
+            ("e27m/n/o/p  each count neighbour", 11, False),
+            ("e27e  ranking, median split", 10, False),
+            ("e27h  DeepSeek's split alone", 10, False),
+            ("e28a  suffix NLL", 10, False),
+            ("e27f  best constants", 9, False),
+            ("e27g/i/j  one other model's split", 9, False),
+            ("E11 v2  fused text + states", 9, False),
+            ("e27a/b/c  fitted on official labels", 8, False),
+            ("e29a  Min-K gap, DeepSeek only", 8, False),
+            ("all-False", 7, False),
+            ("e27d  ranking, inverted", 4, False),
+            ("e28d  Min-K gap, all models", 4, False),
+        ]),
+        ("One problem per call, from 15 Oct: four uploads and one re-score", [
+            ("e64  difficulty, easier = robust", 10, True),
+            ("e63  familiarity, cutoffs on the 36", 9, False),
+            ("e61b  familiarity, cutoffs on 548", 9, False),
+            ("e27k  re-scored = the constants", 9, False),
+            ("e61a  familiarity, AMC median", 8, False),
+        ]),
     ]
-    fig, ax = plt.subplots(figsize=(7.2, 4.6))
-    ys = range(len(rows))[::-1]
-    for y, (label, score, is_best) in zip(ys, rows):
-        colour = ORANGE if is_best else BLUE
-        ax.barh(y, score, height=0.62, color=colour, zorder=3,
-                path_effects=None, edgecolor=SURFACE, linewidth=1.0)
-        ax.annotate(f"{score}/14", (score, y), xytext=(6, 0), textcoords="offset points",
-                    va="center", fontsize=8.5, color=INK, fontweight="bold" if is_best else "normal")
-    ax.set_yticks(list(ys))
-    ax.set_yticklabels([r[0] for r in rows], fontsize=8.5)
-    ax.axvline(7, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=2)
-    ax.annotate("all-False = 7", (7, len(rows) - 0.3), xytext=(4, 0), textcoords="offset points",
-                fontsize=8, color=MUTED)
-    ax.axvline(9, color=INK2, lw=1.2, ls=(0, (2, 2)), zorder=2)
-    ax.annotate("constants ceiling = 9", (9, -0.8), xytext=(4, 0), textcoords="offset points",
-                fontsize=8, color=INK2)
-    ax.set_xlim(0, 14.6)
-    ax.set_xlabel("cases correct, of 14")
-    ax.grid(axis="y", visible=False)
-    ax.set_title("The leaderboard series: each upload answers one question", pad=12, fontsize=11,
-                 fontweight="bold", loc="left")
-    fig.text(0.0, -0.05, "e27d at 4/14 is the hinge: far below chance means the ranking carries "
-             "information and points the wrong way.\nShipping its exact opposite scored 10/14.",
-             fontsize=8, color=INK2, ha="left")
+    fig, axes = plt.subplots(2, 1, figsize=(7.2, 6.4), sharex=True,
+                             gridspec_kw={"height_ratios": [len(panels[0][1]), len(panels[1][1]) + 0.8], "hspace": 0.32})
+    for ax, (heading, rows) in zip(axes, panels):
+        ys = range(len(rows))[::-1]
+        for y, (label, score, is_best) in zip(ys, rows):
+            ax.barh(y, score, height=0.62, color=ORANGE if is_best else BLUE, zorder=3,
+                    edgecolor=SURFACE, linewidth=1.0)
+            ax.annotate(f"{score}/14", (score, y), xytext=(6, 0), textcoords="offset points",
+                        va="center", fontsize=8.5, color=INK, fontweight="bold" if is_best else "normal")
+        ax.set_yticks(list(ys))
+        ax.set_yticklabels([r[0] for r in rows], fontsize=8.5)
+        ax.set_ylim(-0.6, len(rows) - 0.4)
+        ax.axvline(7, color=MUTED, lw=1.2, ls=(0, (4, 3)), zorder=2)
+        ax.axvline(9, color=INK2, lw=1.2, ls=(0, (2, 2)), zorder=2)
+        ax.grid(axis="y", visible=False)
+        ax.set_title(heading, loc="left", fontsize=9, color=INK2, fontweight="bold", pad=6)
+    # The reference lines are labelled once, in the empty band below the lower panel's bars.
+    low = axes[-1]
+    low.annotate("all-False = 7", (7, -1.3), xytext=(-4, 0), textcoords="offset points",
+                 ha="right", va="bottom", fontsize=8, color=MUTED)
+    low.annotate("constants = 9", (9, -1.3), xytext=(4, 0), textcoords="offset points",
+                 va="bottom", fontsize=8, color=INK2)
+    low.set_ylim(-1.4, len(panels[-1][1]) - 0.4)
+    low.set_xlim(0, 14.6)
+    low.set_xlabel("cases correct, of 14")
+    fig.subplots_adjust(left=0.33, right=0.97, top=0.9)
+    fig.suptitle("The leaderboard series: each upload answers one question", x=0.01, ha="left",
+                 fontsize=11, fontweight="bold")
+    fig.text(0.01, 0.0, "e27d at 4/14 is the hinge: far below chance means the ranking carries information "
+             "and points the wrong way.\nPer problem the ranking cannot act: familiarity, calibrated three "
+             "ways, reads 8, 9 and 9; difficulty reads 10.\nOrange: the submission under each protocol.",
+             fontsize=8, color=INK2, ha="left", va="top")
     save(fig, "fig2_leaderboard_ladder")
 
 

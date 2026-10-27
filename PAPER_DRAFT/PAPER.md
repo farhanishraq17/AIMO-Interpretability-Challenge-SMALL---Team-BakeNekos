@@ -7,7 +7,7 @@
 ¹ Correspondence: farhanishraq2003@gmail.com · Code:
 <https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-SMALL---Team-BakeNekos>
 
-**Draft — 18 October 2026.** Every number here is regenerable from the repository; the
+**Draft — 27 October 2026.** Every number here is regenerable from the repository; the
 commands are in §14. Findings are cited as `F-n` (`PROGRESS.md`). Where this draft and a
 `RESULTS.md` table disagree, the table is right.
 
@@ -19,12 +19,12 @@ The AIMO Interpretability Challenge asks a question that sounds like classificat
 given a model and a problem, will that model's answer survive perturbations that leave the
 mathematics unchanged? We ran more than forty experiments over seven weeks, spending well over 300
 GPU-hours on a shared free-tier fleet. **Almost all of them failed**, and
-the failures are the substance of this report: seventeen rejected hypotheses over twelve distinct signals — hidden-state probes,
+the failures are the substance of this report: twenty rejected hypotheses — hidden-state probes,
 reasoning-trace uncertainty, answer agreement under rewriting, self-generated perturbation labels,
-activation geometry, contamination statistics — either sat at chance or reversed sign when moved
-to an independent population.
+activation geometry, contamination statistics, problem difficulty — either sat at chance or reversed
+sign when moved to an independent population.
 
-We make four claims. **First**, the method that topped our leaderboard series has **no learned
+We make four claims. **First**, the method that topped our batch leaderboard series has **no learned
 parameters at all**: one forward pass per problem, rank the batch by the scoring model's own mean
 token negative log-likelihood, call the more familiar half robust, with each model's count fixed by a
 closed-form identity in its measured class balance. It scored **12/14 = 0.857** on the hidden
@@ -32,8 +32,13 @@ validation set; solved exactly from our own submissions, its only misses were on
 one model's batch. **It did not survive the protocol the prizes use.** On 15 October the organizers
 began scoring one problem per call, as the final test will, and called policies that rely on a batch's
 balanced labels "a sort of overfitting". With one problem a call the ranking and the counts cannot act,
-the method reduces to its per-model constants, and it scores **0.64**; no signal we hold beats those
-constants as a per-problem rule on independent data (§7.4). **Second**,
+the method reduces to its per-model constants, and it scores **0.64** (§7.4). What we submit instead
+reads **problem difficulty**, also from a single forward pass: a per-layer ridge from each model's
+prompt states to how long Qwen3.5-4B reasons on 497 unlabelled olympiad problems, with no robustness
+label anywhere in the fit, and a per-model cutoff set by the measured balances. Scored one problem per
+call it reads **10/14 = 0.71**, our first per-problem read above the constants, 12th of 93 teams (§4,
+§7.5). Its direction, easier problems robust, holds on the organizers' labelled rows (AUC 0.883) and
+**reverses** on our MATH rows (AUC 0.346), where familiarity does the opposite (§9). **Second**,
 nothing transferred from our labelled MATH data to the olympiad distribution the competition scores,
 and we can say why twice over. In mechanism: the two label sources are decided by different
 perturbation families — domain rewording on MATH, where it breaks 86% of solved rows, and on
@@ -44,7 +49,8 @@ not have returned a positive result even had their hypotheses been true. **Third
 behaviour — the candidate with the best offline credentials (AUC 0.867, maxT p = 0.0010) scored
 4/14, while the one that failed its offline gate scored 12/14. **Fourth**, two of the eight method
 families we pursued could not have been submitted at any accuracy, missing the 3,600-second
-whole-run budget by 10× and 11×, where ours runs in **334 seconds for four models**; the gate that
+whole-run budget by 10× and 11×, where our submission answers sixty one-problem calls, model loads
+included, in **172 seconds** on T4s; the gate that
 catches this is one multiplication and we never applied it.
 
 We argued in advance that on a 14-case board where scores are multiples of 1/14, leaderboard
@@ -138,7 +144,8 @@ said in advance that the final ordering *"will depend on a new set of problems a
 exactly which two of our fourteen calls are wrong.
 
 Three days later the board itself changed: the organizers erased it and re-scored submissions one
-problem per call, and our 12/14 became 9/14 (§7.4).
+problem per call, and our 12/14 became 9/14 (§7.4). Familiarity, turned into an absolute
+per-problem rule three ways, then read 8, 9 and 9; predicted difficulty read 10 (§7.5).
 
 When a public board saturates, three things decide the outcome, and none of them is leaderboard
 position:
@@ -150,17 +157,19 @@ position:
 3. the **$5,000 writeup pool**, awarded on generalization, actionable interpretability, negative
    results and efficient methods.
 
-That is the argument for the rest of this report. A method with no fitted parameters cannot fail to
-transfer in the way a fitted one can (§9); a method that never generates a token is hard to beat on
-runtime (§10); and seventeen documented negative results are worth more in a writeup than one more
-case on a board the prizes do not use.
+That is the argument for the rest of this report. A method that fits no robustness label cannot
+overfit the labels, though §9 shows it can still read one population's structure; a method that
+never generates a token is hard to beat on runtime (§10); and twenty documented negative results are
+worth more in a writeup than one more case on a board the prizes do not use.
 
 We therefore state what we claim up front:
 
-1. **A training-free predictor.** One forward pass per problem, no fitted estimator, no training
-   data, and per-model counts derived in closed form from a measured class balance rather than
-   tuned. Its only model-specific quantity is four integers. §4, §9.
-2. **Nothing transfers, and we can say why.** Seventeen rejected hypotheses, several with
+1. **A per-problem predictor that fits no robustness label.** One forward pass per problem; a
+   per-layer ridge reads predicted difficulty from the prompt states, trained on an unlabelled
+   target (Qwen's reasoning length); per-model cutoffs come in closed form from a measured class
+   balance rather than tuned. It reads 10/14 one problem per call. The batch method before it, with
+   no fitted parameter at all, reached 12/14 under batch scoring. §4, §7.5, §9.
+2. **Nothing transfers, and we can say why.** Twenty rejected hypotheses, several with
    independent-population confirmations; a mechanism — the MATH and olympiad labels are decided by
    different perturbation families, and on the olympiad one the models answer through an impossible
    premise; and a power analysis saying the nulls are substantially measuring sample size, stated
@@ -237,35 +246,46 @@ shared (F-59). The last point killed an entire planned lane.
 
 ## 4. Method
 
+**What we submit is `e64-difficulty`** (F-88): `submission/e64-difficulty/solution.py`, fitted by
+`train/eval_e64.py` and packaged by `submission/make_e64.py`. It replaced the per-model constants on
+26 October under a ship rule fixed in `protocols/E64_PROTOCOL.md` before its board read (§7.5). The
+batch method behind our 12/14 is kept in §4.6, because §6 to §9 refer to it.
+
 ### 4.1 The predictor
 
-Let `m` be the model being scored and `P = (p₁ … pₙ)` the batch. For each problem, take **one
-forward pass** over the bare problem text and record the mean token negative log-likelihood:
+Let `m` be the model being scored and `p` the problem; since 15 October each call carries one. Wrap
+`p` in the organizers' baseline system prompt and `m`'s chat template with the generation prompt
+appended, truncate at 2048 tokens, and take **one forward pass**. Mean-pool the hidden states over
+the prompt tokens at every layer `ℓ = 0 … L_m`, embeddings included (33, 29, 33 and 37 layers for
+Qwen, Skywork, Olmo and DeepSeek):
 
 ```
-s_i = − (1/|t(p_i)|) Σ_k log P_m( t_k | t_{<k} ),      t(p_i) = tokens of p_i
+h_ℓ(p) = (1/|t(p)|) Σ_k H_ℓ,k(p)          rounded to float16, as the training states were stored
 ```
 
-No generation, no chat template, no system prompt, truncation at 2048 tokens (which never fires:
-the longest official problem is 609 to 667 tokens, depending on the tokenizer). Rank ascending — **familiar first** — and call the
-first `c_m` problems robust:
+Each layer carries its own standardised ridge, and the score is their mean:
 
 ```
-π = argsort(s),        ŷ_{π_j} = 1  iff  j ≤ c_m
+D_m(p) = 1/(L_m + 1) · Σ_ℓ [ w_mℓ · (h_ℓ(p) − μ_mℓ) / σ_mℓ  +  b_mℓ ]
 ```
 
-### 4.2 The count, in closed form
+`D_m(p)` is **predicted difficulty**: the ridges were fitted to how long Qwen3.5-4B reasons about a
+problem, in log tokens (§4.3). The call returns robust iff the problem is predicted easy enough:
 
-This is the part that is derived rather than tuned. It is also the part the per-problem protocol of
-15 October removes: with one problem per call there is no batch to count in, and the organizers named
-reliance on a batch's label balance as overfitting (§7.4). We keep the derivation because it is
-correct and because it explains the 12/14; it is not a method for the final test.
+```
+ŷ(m, p) = 1   iff   D_m(p) ≤ τ_m
+```
 
-For model `m` on the hidden set, let `r_m` and `q_m` be its robust and spurious case counts,
-`n_m = r_m + q_m` its batch size, and `d_m = r_m − q_m` its **class balance**. Constant-prediction
-probes measure `d_m` directly: with all-False scoring `a` cases, a probe answering `True` for model
-`m` alone scores `a + d_m`, because it gains `r_m` and loses `q_m`. Measured twice, twelve days
-apart (F-27, F-64):
+No token is generated, and only the cutoff `τ_m` uses anything measured on the evaluation
+distribution.
+
+### 4.2 The cutoff: a share in closed form
+
+This is the part that is derived rather than tuned. For model `m` on the hidden set, let `r_m` and
+`q_m` be its robust and spurious case counts, `n_m = r_m + q_m` its case count, and
+`d_m = r_m − q_m` its **class balance**. Constant-prediction probes measure `d_m` directly: with
+all-False scoring `a` cases, a probe answering `True` for model `m` alone scores `a + d_m`, because
+it gains `r_m` and loses `q_m`. Measured twice, twelve days apart (F-27, F-64):
 
 | Model | all-False | probe | `d_m` |
 | --- | --- | --- | --- |
@@ -274,8 +294,34 @@ apart (F-27, F-64):
 | Skywork-OR1-Math-7B | 7/14 | 6/14 | **−1** |
 | Olmo-3-7B-Think | 7/14 | 6/14 | **−1** |
 
-A ranking policy should call exactly `r_m` problems robust — any other count is wrong before the
-ranking is even consulted. From the definitions, `r_m = (n_m + d_m)/2`. The four balances sum to 0
+From the definitions `r_m = (n_m + d_m)/2`, so the share of model `m`'s cases that are robust is
+
+```
+p_m = r_m / n_m = (n_m + d_m) / (2 n_m)
+```
+
+The hidden set's composition, solved from our own submissions (§7.2), has `n_m` = 5 for Qwen and 3
+for the others, so `p_m` = 0.6 for Qwen, 2/3 for DeepSeek and 1/3 for Skywork and Olmo. E64's cutoff
+is that quantile of predicted difficulty over the 36 problems of `train-main-v2`, read as text only,
+with no label:
+
+```
+τ_m = quantile_{p_m} { D_m(p) : p ∈ the 36 train-main-v2 problems }
+```
+
+| Model | `p_m` | `τ_m` | Share of the 36 called robust |
+| --- | --- | --- | --- |
+| Qwen3.5-4B | 0.6 | 10.3858 | 0.61 |
+| Skywork-OR1-Math-7B | 1/3 | 9.9695 | 0.33 |
+| Olmo-3-7B-Think | 1/3 | 9.9438 | 0.33 |
+| DeepSeek-R1-0528-Qwen3-8B | 2/3 | 10.3925 | 0.67 |
+
+The reference is those 36 because the organizers' pipeline built them, the validation set and the
+test set. E61 drew its familiarity cutoffs from our own olympiad pool instead, and on the 36 they
+called 53% to 83% of problems robust against 33% to 67% intended (F-87, §6.10). The shares remain a
+measurement of the validation set, and the test's class prior may differ; §9 prices that exposure.
+
+Under batch scoring the same balance fixed a count rather than a share. The four balances sum to 0
 and the batch sizes sum to 14, which forces **every `n_m` to be odd**, so `⌈n_m/2⌉ = (n_m+1)/2` and
 
 ```
@@ -291,37 +337,101 @@ t_m = (d_m − 1) / 2        →   t = 0 for d = +1,   t = −1 for d = −1
 **The per-model counts are not hyperparameters.** They are the arithmetic consequence of a
 measurement, correct for *any* batch sizes consistent with that measurement. Enumerating all 56
 size assignments consistent with the balances and the 14-case total: this rule calls exactly the
-true robust count in **56 of 56**, and the plain median split in **0 of 56** (F-63).
+true robust count in **56 of 56**, and the plain median split in **0 of 56** (F-63). With one
+problem per call there is no batch to count in, so the count acts only in §4.6's batch method; the
+share is what survives the per-problem protocol.
 
-### 4.3 The algorithm, complete
+### 4.3 Training data, and what is not in it
+
+| | |
+| --- | --- |
+| Problems | **497** olympiad problems (OlympiadBench, AMC, AIME): E55's problems that have a reference answer in our pool and are not `train-main-v2` rows (E62) |
+| Target | Difficulty `y(p)`: the mean over two Qwen3.5-4B samples of `log min(completion tokens, 32,768)`. Organizers' decoding (temperature 1.0, top-k 40, top-p 0.95), a prompt that allows "no solution", vLLM on T4 pairs in fp16. Correctness is not used |
+| Features | Each model's own E55 prompt states `h_ℓ(p)`, extracted on T4s in bf16 by the extractor the submission reuses (system prompt SHA-1 `9021e9d4`) |
+| Fit | Per model and layer: standardise, then `RidgeCV` over nine alphas from `10^1` to `10^5` (efficient leave-one-out); refitted on all 497 for shipping |
+| Robustness labels | **None.** No label of any kind enters the fit |
+
+Qwen3.5-4B was the only model E62 sampled, so its lengths are the target for all four models; each
+reads that difficulty from its own internals. How well it does so, without labels (gate D1: 5-fold
+CV Spearman of predicted against observed difficulty, at least 0.30 to pass): Qwen 0.786, Skywork
+0.771, Olmo 0.788, DeepSeek 0.768.
+
+The target is censored at the cap: 194 of the 497 problems have at least one sample there and 141
+have both, so the top of the target is flat at
+`log 32768 = 10.397`. Qwen's and DeepSeek's cutoffs, 10.386 and 10.393, sit in that region, where
+the target cannot rank problems. E66 lifted the cap to 64k and did worse on the labelled rows
+(§6.12).
+
+Labels touch the method in two places, both fixed before the fit: the **direction**, easier =
+robust, from an exploratory reading of the official rows (F-76: shorter reasoning traces went with
+robust labels, AUC 0.714 [0.446, 0.935]); and the **shares** of §4.2, from the validation balances.
+The first is a real limitation, because the official rows are also where E64 was gated (§7.5,
+§11.2).
+
+### 4.4 The algorithm, complete
 
 ```
-are_robust(m, P):
-    if m not in SPLIT_MODELS:        return [CONSTANT[m]] * |P|
+are_robust(m, P, reasoning_effort="default"):          # |P| = 1 under per-problem scoring
+    if m has no arrays:                      return [CONSTANT[m]] * |P|
     try:
-        s   ← one forward pass per p ∈ P under model m        # no generation
-        π   ← argsort(s)                                      # ascending: familiar first
-        c   ← clamp( ceil(|P|/2) + t_m , 0, |P| )
-        return [ j ≤ c for j in rank(π) ]
-    except (Exception, SystemExit):                           # tokenizer guard raises SystemExit
+        μ, σ, w, b, τ ← the arrays for m                       # plain NumPy, no pickled estimator
+        tok, LM       ← load m, or reuse it if the last call loaded m
+        for p in P:
+            h   ← mean-pooled prompt states of p at every layer  # one forward pass, no generation
+            D   ← mean over ℓ of  w_ℓ · (h_ℓ − μ_ℓ)/σ_ℓ + b_ℓ
+            ŷ_p ← (D ≤ τ)
+        return [bool(ŷ_p) for p in P]
+    except (Exception, SystemExit):                            # the tokenizer guard raises SystemExit
         return [CONSTANT[m]] * |P|
 ```
 
-`CONSTANT[m] = (d_m > 0)`, the best constant for that model. The fallback is not decoration: it is
-what keeps a batch valid if weights are missing, a tokenizer fails its round-trip guard, or the
-worker OOMs, and an invalid batch scores zero with no visible traceback.
+`CONSTANT[m] = (d_m > 0)`: `True` for Qwen and DeepSeek, `False` for the other two and for any model
+outside the four. These are the per-model constants (`e27f`), so a call that fails answers as the
+constants do. The fallback is not decoration: it is what keeps a call valid if weights are missing,
+a tokenizer fails its round-trip guard, or the worker OOMs, and an invalid answer scores zero with
+no visible traceback. The checkpoint stays loaded while consecutive calls name the same model and is
+evicted when the model changes.
 
-### 4.4 Learned parameters: none
+### 4.5 What is fitted, and what ships
 
-The shipped artifact is a 3.3 KB ZIP holding 6.3 KB of source, and contains **no fitted estimator, no training data, no
-weights**. Its only free quantities are the four balances, and those are measurements of the
-evaluation distribution rather than parameters fitted to features. This matters for §9.
+The ZIP (`dist/solution-e64-difficulty-small.zip`, 5.2 MB, SHA-256 `665f86dd…`) holds `solution.py`,
+the tokenizer guard, the baseline system prompt, `small.txt` and the per-layer arrays as compressed
+NumPy. It contains **no training data, no labels and no weights**, and no pickled estimator to break
+across library versions. What is fitted is each model's per-layer standardisation and ridge, learned
+from an unlabelled difficulty target; what is measured is four cutoffs. Before writing the ZIP the
+builder applies the shipped arithmetic to E55's stored states for all 548 problems of all four models,
+and refuses if any prediction drifts from the offline value by 1e-3 or more. On the four real
+checkpoints, the ZIP's own states computed on GPU match the training states to 2.0e-06 (§7.5).
+
+### 4.6 The batch method it replaced
+
+Until 15 October each model's problems arrived as one batch, and our best method used that. One
+forward pass over the **bare** problem text gives the mean token negative log-likelihood:
+
+```
+s_i = − (1/|t(p_i)|) Σ_k log P_m( t_k | t_{<k} ),      t(p_i) = tokens of p_i
+```
+
+No generation, no chat template, no system prompt, truncation at 2048 tokens (which never fires:
+the longest official problem is 609 to 667 tokens, depending on the tokenizer). Rank ascending —
+**familiar first** — and call the first `c_m` problems robust, with `c_m` the count of §4.2:
+
+```
+π = argsort(s),        ŷ_{π_j} = 1  iff  j ≤ c_m
+```
+
+It had **no learned parameters**: a 3.3 KB ZIP holding 6.3 KB of source, with no fitted estimator,
+no training data and no weights. Its only free quantities were the four balances, measurements of
+the evaluation distribution rather than parameters fitted to features. It scored 12/14 (`e27k`,
+§7.1). With one problem per call it calls `⌈1/2⌉ + t_m` problems robust, which is the per-model
+constants (§7.4), and its statistic made into an absolute per-problem threshold stays at the
+constants too (§6.10).
 
 ---
 
 ## 5. Experimental programme
 
-More than forty experiments in eight lanes. Full registry in `experiments.md`; what follows is
+More than forty experiments in nine lanes. Full registry in `experiments.md`; what follows is
 what each lane was *for*, and what it returned.
 
 | Lane | Question | Experiments | Verdict |
@@ -334,6 +444,7 @@ what each lane was *for*, and what it returned.
 | F — external | Do other robustness datasets transfer? | E34, E35, E37, E38, E49 | Real labels found; ranking does not transfer; runtime gate fails, then the official-row gate |
 | G — arithmetic | What do the leaderboard numbers force? | Probes, E40, E41, E50 | The decisive lane, and the cheapest; it ends by solving the hidden set |
 | H — mechanism | What decides a label, and do our models show it? | E51, E52, E52b | An impossible added premise decides olympiad labels; the models answer through it |
+| I — per problem | What makes an absolute decision, one problem per call? | E54, E55, E57, E61, E63–E66 | Familiarity stays at the constants; difficulty read from the prompt reaches 10/14, and reverses on MATH |
 
 ---
 
@@ -368,10 +479,15 @@ reporting things that never worked.
 | 15 | Budget-path score, re-extracted on the evaluation path, ranks the official rows | Problem AUC **0.659**, passing its gate | Half-rank balanced accuracy **0.521** against a pre-registered > 0.55 | `eval_e49_official.py` | 6.6 |
 | 16 | One forward pass predicts which problems a model answers an impossible premise on | — | **No positive class**: Qwen flagged 2 of 130 rewrite samples, Skywork 0 of 274 | `eval_e52.py` | 6.9 |
 | 17 | A signal we hold beats the constants as an absolute per-problem rule | Budget path qualifies by rule: Putnam 0.598, GSM-Plus 0.564 | Calls every official row spurious, and 60 calls need at least 496 min against 50 | `eval_e54_per_problem.py` | 7.4 |
+| 18 | Familiarity, as an absolute per-problem threshold, beats the constants | E61b passes DeepSeek MATH, 0.624 [0.545, 0.697]; E63 expects 10.29 of 14 | **Board 8, 9 and 9 of 14** against the constants' 9; E61b reverses on the official rows, 0.329 [0.136, 0.481] | `eval_e61.py`, `eval_e63.py` | 6.10 |
+| 19 | Easier = robust holds beyond the official rows | AUC 0.883 on the 34 official rows; 10/14 on the board | **AUC 0.346 [0.246, 0.447]** on DeepSeek's MATH rows, where familiarity scores 0.683 | `eval_e65.py` | 6.11 |
+| 20 | A difficulty target not cut off at 32k ranks the official rows better | Censoring 0.284 → 0.087; CV Spearman 0.78–0.80 | **AUC 0.808** against E64's 0.883, decisions 26/34 against 28/34 | `eval_e66.py` | 6.12 |
 
 Entries 13 and 14 are the last two attempts on the reversal, and §6.7 reports why they could
 not have succeeded. Entry 12 is the one we cannot explain at all, and §6.8 treats it separately.
-Entry 16 is the one that explains the most, and §6.9 reports it.
+Entry 16 is the one that explains the most, and §6.9 reports it. Entries 18 to 20 came after the
+per-problem change of 15 October: the first is why the batch statistic could not be kept, the other
+two are what the submitted method does not do.
 
 ### 6.1 The shipped baseline is at chance
 
@@ -549,6 +665,10 @@ gate scored 12/14.
 practical reason we stopped selecting methods offline and started reasoning about the evaluation
 distribution's arithmetic directly (§7).
 
+Per problem the picture changed with the population rather than the gate. The official rows ranked
+E64 first among the per-problem candidates and the board agreed; DeepSeek's MATH rows ranked it last
+(§7.5, §9).
+
 ### 6.9 The family that decides the label: the models answer through an impossible premise
 
 §6.2 located the family that decides olympiad labels. E52 measured it on our own models, from
@@ -591,18 +711,84 @@ sized its cache as full attention on all 32 layers, 20,288 tokens on a T4 pair, 
 of one problem need about 33k, so every session died before reaching a rewrite (F-78). The Olmo tilt
 therefore rests on its measured balance alone.
 
+### 6.10 Familiarity per problem: three calibrations, none above the constants
+
+After 15 October the batch ranking could not act, so E61 asked whether its statistic could make an
+absolute decision: robust iff the scored model's mean token NLL on the bare problem is at or below a
+threshold fixed on unlabelled problems, under a protocol committed before any threshold (F-86).
+Everything checkable before the board passed. The ZIP's NLL equals the stored reference values to
+the bit on all four real checkpoints (max abs diff 0.0); the candidate E61b, cut at the `p_m`
+quantile of E55's 548 problems, passes DeepSeek MATH at 0.624 [0.545, 0.697] balanced accuracy; and
+sixty one-problem calls with model loads take 180 s on T4s. On the 34 official rows it reverses with
+an interval below 0.5, 0.329 [0.136, 0.481], which the protocol fixed as reported only. The board
+read **8/14** for the control E61a (below E54's AMC median) and **9/14** for E61b: the constants.
+
+**Why** (F-87). The reference set was the wrong population. On the organizers' 36 problems, E61b's
+cutoffs call 78% (Qwen), 83% (DeepSeek), 56% (Skywork) and 53% (Olmo) robust, against 60%, 67%, 33%
+and 33% intended. If the hidden problems are drawn from those 36 and their labels follow
+familiarity inside each batch, as E50 recovered, E61a expects 9.10 and E61b 9.28: the observed 8 and
+9. The same model sets the family's ceiling: the best cutoff or constant per model expects
+**10.30**, because the batch ranking's 12 came from relative information inside a batch, which
+one-problem calls remove by design. E63 recalibrated E61's cutoffs on the 36 (Qwen at its constant),
+expected 10.29, and read **9/14**. Per-problem familiarity has read 8, 9 and 9: under no calibration
+we tried does it beat the constants on the hidden set.
+
+### 6.11 The submitted score reverses on DeepSeek's MATH rows
+
+E64 (§4) was gated on the 34 official rows, the population its direction came from. Its protocol
+dropped a check on DeepSeek's Hendrycks MATH rows because E55 holds no states for those problems.
+E65 found them in an earlier run, `e1b-stagea-deepseek`, extracted with the same extractor, system
+prompt, chat template, 2048-token limit, mean pooling and bf16, and scored E64's shipped DeepSeek
+arithmetic on them, unrefitted, under a protocol committed before any score on those rows (F-89).
+
+| Score, DeepSeek's 137 MATH rows (36 robust, older label rule) | Value |
+| --- | --- |
+| **Gate: AUC of −(predicted difficulty)**, lower bound above 0.5 to pass | **0.346 [0.246, 0.447]: fail** |
+| AUC of −(mean NLL), familiarity, same rows | 0.683 [0.582, 0.780] |
+| E64's decisions at DeepSeek's cutoff | every row called robust; balanced 0.500 |
+| Spearman, predicted difficulty against mean NLL | −0.340 |
+
+On MATH, easier problems are the *spurious* ones, with an interval wholly below 0.5. E64's decisions
+are unaffected only because every MATH problem falls below an olympiad cutoff. The result did not
+change what ships, because E64's rule was its board read, but it does change what E64 can be said to
+measure; §9 takes that up.
+
+### 6.12 A less censored target ranks the official rows worse
+
+E64's target is flat at the 32k cap on 194 of its 497 problems, and Qwen's and DeepSeek's cutoffs
+sit in that flat region (§4.3). E66 re-sampled those 194 with Qwen at a 65,536-token cap (sixteen
+Kaggle kernels, seed 66, k = 2, 3.5 to 7.4 hours each) and refitted E64 unchanged on the new target
+(F-90). Its protocol, committed before any sample, let it replace E64 only by matching or beating it
+on every measurement that existed:
+
+| Gate | E66 | E64 | Result |
+| --- | --- | --- | --- |
+| G1: share of the 497 with both samples at the cap (at most 0.142) | **0.087** (43) | 0.284 (141) | pass |
+| G2: 5-fold CV Spearman, every model (at least 0.30) | **0.78–0.80** | 0.77–0.79 | pass |
+| G3: AUC of −(predicted difficulty), 34 official rows (at least E64's) | **0.808** [0.571, 1.000] | 0.883 | **fail** |
+| G4: accuracy of the shipped decisions, same rows (at least E64's) | **26/34** (0.765) | 28/34 (0.824) | **fail** |
+
+The new target removes most of the censoring and fits slightly better without labels; it does not
+rank the labelled rows better. The cap still binds: 28.6% of the 388 new samples reached 65,536
+tokens. The loss is on Qwen's rows (exploratory: AUC 0.875 to 0.812, decisions 11/12 to 9/12), and
+DeepSeek's MATH check is unchanged at 0.345. The 34 rows cannot separate 0.808 from 0.883 — the
+intervals overlap almost entirely — so this does not show that resolution above 32k hurts. It shows
+that the structural argument for E66 did not survive the only labelled check. The rule was strict on
+purpose (an equally good E66 fails G3 or G4 about half the time), and it applied: E66 was not
+uploaded, and E64 stays.
+
 ---
 
 ## 7. What worked
 
 ### 7.1 The leaderboard series
 
-Twenty uploads, each designed to answer one question rather than to climb; the constant probes of
-§4.2 come on top.
+Twenty uploads under batch scoring, each designed to answer one question rather than to climb; the
+constant probes of §4.2 come on top, and the four per-problem uploads since 15 October are in §7.5.
 
 | Score | | Submission | What it established |
 | --- | --- | --- | --- |
-| **0.86** | 12/14 | `e27k` | Ranking + derived counts. **The incumbent** |
+| **0.86** | 12/14 | `e27k` | Ranking + derived counts. **The batch incumbent** |
 | 0.79 | 11/14 | `e27m/n/o/p` | Every single-step neighbour of `e27k` loses exactly one case |
 | 0.71 | 10/14 | `e27e` | The ranking alone, median split |
 | 0.71 | 10/14 | `e27h` | DeepSeek's split alone — **the whole gain is one model's** |
@@ -617,9 +803,9 @@ Twenty uploads, each designed to answer one question rather than to climb; the c
 says the ranking carries information and is pointing the wrong way. Shipping its exact opposite
 produced 10/14 the next day.
 
-![The leaderboard series as a ladder, from 12/14 down to 4/14](figures/fig2_leaderboard_ladder.svg)
+![The leaderboard series as a ladder: batch uploads from 12/14 down to 4/14, then the per-problem uploads from 10/14 down to 8/14](figures/fig2_leaderboard_ladder.svg)
 
-**Figure 2.** Each upload was designed to answer one question rather than to climb. The two reference lines are the whole strategic picture: nothing below 7 beats answering `False` everywhere, and nothing below 9 beats the best constants, so only the top two rows contain per-problem information.
+**Figure 2.** Each upload was designed to answer one question rather than to climb. Top: the twenty batch uploads. Bottom: the four per-problem uploads since 15 October and `e27k`'s automatic re-score. The two reference lines are the whole strategic picture: nothing below 7 beats answering `False` everywhere, and nothing below 9 beats the best constants, so only a bar that crosses the constants line carries information about individual problems: five rows of the top panel, and `e64` alone in the bottom one.
 
 
 ### 7.2 Why the counts were the real gain
@@ -666,9 +852,9 @@ the method's own direction.
 **Figure 3.** The exact distribution of the score when the ranking is replaced by chance but the counts are kept, averaged over all 56 batch compositions consistent with the measured balances. Correct counts alone are worth about a case over all-False (8.05 against 7). The observed 12 sits in the 0.052 bar: P(score ≥ 12) = 0.055.
 
 
-### 7.3 Mechanical audit of the incumbent
+### 7.3 Mechanical audit of the batch incumbent
 
-Before freezing, we audited the shipped artifact on GPU (E39, F-62):
+Before the batch freeze, we audited `e27k`'s artifact on GPU (E39, F-62):
 
 | | Result |
 | --- | --- |
@@ -695,7 +881,7 @@ labels" were "a sort of overfitting". Our counts are exactly that, and so is eve
 **What happens to `e27k`.** With one problem a call it calls `ceil(1/2) + t` problems robust: one for
 Qwen and DeepSeek, none for Skywork and Olmo, which are the per-model constants. Its re-scored entry
 reads **0.64**, the constants' 9/14. `e27f`, the constants alone, makes identical per-problem predictions
-without loading a model, so it is what we submit now.
+without loading a model, so it was what we submitted until E64 replaced it on 26 October (§7.5).
 
 **Does anything we hold work per problem?** E54 (F-80) scored every held signal as an absolute rule,
 with thresholds fixed from unlabelled data or the signal's own training data, against five labelled
@@ -715,13 +901,65 @@ measured T4 generation rates put sixty one-problem calls at no less than 496 min
 three times faster, against a 50-minute allowance (F-81). The first run of E54 recomputed that predictor's threshold and scored 0.680 on Putnam;
 the protocol fixed E36's recorded threshold instead (0.598), and the higher number is not used.
 
-**What is ready instead.** The labels that decide this task are about noticing an impossible premise at
+**What was built for better labels.** The labels that decide this task are about noticing an impossible premise at
 a 100k-token budget (§6.2, §6.9), which our hardware cannot generate; a collaborator with more compute
 is generating them. A per-problem probe for that day is pre-registered (E57) and built: E55 extracted
 one-pass features for 548 candidate problems on all four models (F-81), and the submission template
 reproduces those features **bit for bit** on all four real checkpoints at 0.7-1.4 s a call on a T4
 (F-82). It ships only if it beats the constants on held-out problems and does not reverse on the
-official rows; otherwise the constants stay.
+official rows. It has not shipped; E55's features are what E64, below, learned from.
+
+### 7.5 Difficulty: our first per-problem read above the constants
+
+Every per-problem read we hold, beside each rule's offline balanced accuracy on the two labelled
+populations (any constant scores 0.5):
+
+| Score | | Submission | Rule | Official rows (34) | DeepSeek MATH (142; E64: 137) |
+| --- | --- | --- | --- | --- | --- |
+| **0.71** | **10/14** | **`e64-difficulty`** (1010961, 26 Oct) | Easier = robust, cutoffs at `p_m` on the 36 (§4) | **0.729** (accuracy 0.824) | 0.500: every row called robust |
+| 0.64 | 9/14 | `e63-official-quantile` (1010959, 26 Oct) | Familiar = robust, cutoffs at `p_m` on the 36; Qwen `True` | 0.400 | 0.631 |
+| 0.64 | 9/14 | `e61b-quantile` (1007215, 21 Oct) | Familiar = robust, cutoffs at `p_m` on E55's 548 | 0.329 | 0.624 |
+| 0.64 | 9/14 | `e27k` re-scored (990659) | The per-model constants (§7.4) | 0.463 (accuracy 0.529) | 0.500 |
+| 0.57 | 8/14 | `e61a-amc-median` (1007214, 21 Oct) | Familiar = robust, below E54's AMC median | 0.458 | 0.638 |
+
+**The read.** Uploaded on 26 October, E63 first so that the board would end on the candidate, E64
+scored **10/14 = 0.71** (submission 1010961): one case above the constants, and our first
+per-problem read above 9. It moved us from 27th to 12th of 93 teams with a small-track score (11
+above, 15 tied at 0.71). Two earlier upload attempts that evening never received a score and are not
+reads. Under the rule fixed in its protocol before either read, which replaces the constants at
+10/14 or better, **E64 is the ZIP we submit through the organizers' Google Form**, from which the
+prizes are decided on new problems: `dist/solution-e64-difficulty-small.zip`, SHA-256 `665f86dd…`.
+
+**What it rests on offline.** Every check was fixed in `protocols/E64_PROTOCOL.md` before any fit:
+
+| Check | Result |
+| --- | --- |
+| D1: label-free fit, CV Spearman, every model (at least 0.30) | 0.768–0.788: pass |
+| D2: AUC of −(predicted difficulty) on the 34 official rows (at least 0.60) | **0.883 [0.687, 1.000]**: pass |
+| The shipped decisions on the same rows (reported only) | accuracy 0.824 (balanced 0.729), against the constants' 0.529 (0.463) |
+| C1: the ZIP's states on the four real checkpoints against the training states | max abs diff 2.0e-06: pass |
+| C5: 60 one-problem calls, model loads included, on a T4 pair (under 5 minutes) | 172 s: pass |
+| C6: `run_local.py --small` | coverage 1.0, 0 invalid: pass |
+
+Two readings were computed after D2 and are exploratory. **It is not length.** Predicted difficulty
+correlates about 0.6 with the problem's log length, but length alone scores AUC 0.529 on the same
+rows, and the part of predicted difficulty that length does not explain still scores 0.846. **It
+holds model by model:** Qwen 0.875 (12 rows), Olmo 0.929 (9), DeepSeek 0.905 (10); Skywork's 3 rows
+are too few. Qwen, the model familiarity could never move, is among the strongest.
+
+**What it does not establish.** The 34 rows are not a clean holdout: they are where the direction
+came from (F-76), and every labeller since E24b has been scored on them. One case of 14 is weak
+evidence on its own. And on the one other labelled population we hold, the direction reverses
+(§6.11). What the read adds is direction rather than size: one problem at a time, the hidden set
+ranked difficulty above familiarity, 10 against 8, 9 and 9, which is the order the official rows
+predicted and DeepSeek MATH did not.
+
+**Running in the evaluation runtime.** The Codabench run, on the organizers' GPU runner, had coverage
+1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there
+rather than the fallback. The Docker load test in the competition image was waived by the owner on
+27 October, because Docker Desktop has not started on our build machine since 21 October (E64
+amendment 4); §14.1 records what our earlier Docker test covered. E66 (§6.12) failed two of its gates
+and was never uploaded, so the board ends on E64.
 
 ---
 
@@ -747,7 +985,7 @@ rather than an argument against it. The rebuild starts by rewriting the file fro
 section whose producer is missing from the step list is deleted rather than left stale — and the
 command still reports success. On 1 October an audit found **18 of 37 sections** in that state,
 accumulated one experiment at a time by authors who upserted a section and never registered it.
-Every section — 40 as of this draft — is now covered, and `scripts/check_results_coverage.py` asserts the invariant and fails
+Every section — 50 as of this draft — is now covered, and `scripts/check_results_coverage.py` asserts the invariant and fails
 when a producer is removed (F-73).
 
 **Two-rule discipline.** The `absolute_accuracy_decay` and `maxdrop` rules are never aggregated for
@@ -761,73 +999,75 @@ four uploads to diagnose (F-21).
 
 ## 9. Generalization
 
-The competition rewards generalization explicitly. Our claim is narrow and, we think, defensible.
+The competition rewards generalization explicitly. This section was first written for the batch
+method, whose argument was that it had nothing to overfit. The method we now submit fits parameters,
+so the argument has to be made again, and the evidence on it is mixed.
 
-**A correction first.** This section was written while validation was scored in batches. Under the
-per-problem protocol the final test uses (§7.4), the counts it defends cannot act, and the organizers
-judged that kind of reliance on batch label balance to be overfitting. What follows about the
-*ranking* still holds; what it says about the *counts* describes a policy that no longer runs.
+**What E64 fits, and what it cannot overfit.** It fits a per-layer ridge from each model's prompt
+states to a difficulty target, and no robustness label enters the fit (§4.3). It therefore cannot
+overfit the labels the way lanes B and F did — a signal selected on 29 template clusters that
+reverses on an independent population (§6.5). What labels did choose is small and stated: the
+direction, from an exploratory reading of the 34 official rows (F-76), and four shares from the
+validation balances (§4.2). The fit itself generalizes without labels: out-of-fold Spearman 0.768 to
+0.788 in every model. And it is architecture-agnostic in the sense that matters: the same code reads
+difficulty from four checkpoints of four families, 4B to 8B, each from its own states, and on all
+four real checkpoints the ZIP's states match the training states to 2.0e-06 (§7.5).
 
-**The shipped method has nothing to overfit.** It contains no fitted estimator and no training
-data. Its inputs are the scoring model's own likelihoods — available for any autoregressive model,
-any tokenizer, any architecture — and four integers measured from the evaluation distribution. There
-is no feature selection step, no layer choice, no threshold tuned on held-out data, because there is
-no training step at all. The failure mode that killed lanes B, E-offline and F — *a signal selected
-on 29 clusters that reverses on an independent population* — cannot occur, because nothing is
-selected.
+**The direction does not generalize across populations** (F-89). Both one-pass signals, on both
+labelled populations and on the hidden board:
 
-**It is architecture-agnostic by construction.** The same six lines apply unchanged to any
-autoregressive model. We verified identical behaviour across four checkpoints from four different
-families, 4B to 8B (E39).
+| Population | Familiarity: familiar = robust | Difficulty: easier = robust |
+| --- | --- | --- |
+| DeepSeek, Hendrycks MATH (137 rows, older label rule) | AUC **0.683** [0.582, 0.780] | AUC **0.346** [0.246, 0.447] |
+| Official `train-main-v2` rows (34) | AUC 0.358 (F-74) | AUC **0.883** [0.687, 1.000] |
+| Hidden validation, one problem per call | 8, 9 and 9 of 14 (E61a, E61b, E63) | **10 of 14** (E64) |
+| Hidden validation, batch structure (E50) | familiar = robust inside every batch | not measured |
 
-**And the model-specific surface is smaller than it looks.** The policy loads the model being
-scored, which implies the ranking is model-specific information. Measured, it is almost not: across
-the 193 problems all four models scored, their familiarity rankings agree at mean pairwise Spearman
-**0.821**, and **0.748 within length deciles** where length cannot drive it; each model sits 0.893
-to 0.957 against the consensus of all four (F-68). The four models rank the same problems in
-essentially the same order.
+Both signals flip between the two labelled populations, and they flip together. Harder problems are
+more familiar to every model: predicted difficulty and mean NLL correlate at −0.35 to −0.50 over
+E55's 548 problems and at −0.340 on the MATH rows. So on MATH familiar = robust, and harder = robust
+comes with it; on the official rows easier = robust, and familiar = spurious comes with it. No fixed
+direction of either score holds on both. **E64 reads the structure of the population its direction
+was taken from, and that is not yet robustness that generalizes.**
 
-This is the same shape the robustness *label* has (§1.2): a property of the problem, not of the
-pair. So the ranking generalizes for the reason problem properties do, and **the only genuinely
-model-specific quantity in the method is the robust count** — four integers, measured rather than
-fitted. That is a smaller surface to defend than "a per-model likelihood model", and it is the
-precise sense in which this method has little to overfit.
+The hidden set does not settle which population it resembles. Read as batches, the familiarity
+ranking ordered every DeepSeek, Skywork and Olmo case correctly (§7.2). Read one problem at a time,
+difficulty beat familiarity by one case. The two are not strictly in conflict — the batch structure
+is about relative familiarity inside a batch, and an absolute familiarity cutoff has a ceiling of
+about 10.3 (§6.10) — but one case of 14 is weak evidence, and it is the whole of the evidence that
+the hidden problems behave like the official rows. What favours E64 for the private test is
+structural rather than measured: the official rows, the validation set and the test set were built
+by the same pipeline (F-87), and our MATH rows were not.
 
-It also implies a cheaper variant — rank once, apply per-model counts, a fourfold reduction in
-test-time cost — which we did not build. It is a different policy with no leaderboard evidence, the
-freeze was close, and F-62 had already shown this family moves under changes that look harmless.
-We report it as an implication rather than shipping it.
+**What carried over from the batch method.** The four models' familiarity rankings agree at mean
+pairwise Spearman **0.821** across the 193 problems all four scored, **0.748 within length deciles**,
+and each model sits 0.893 to 0.957 against the consensus of all four (F-68). This is the same shape
+the robustness label has (§1.2): a property of the problem, not of the pair. It is consistent with
+E64's use of one model's difficulty for all four, and with the per-model results of §7.5, where the
+difficulty learned from Qwen's traces ranks DeepSeek's and Olmo's official rows at least as well as
+Qwen's.
 
-**Its assumptions are stated and testable.** The method assumes (i) familiar problems are more
-robust, and (ii) the per-model balances `d_m` hold. Assumption (ii) is directly measurable for five
-submissions, and we re-measured it twelve days later with all four values reproducing exactly
-(F-64). Assumption (i) is the contested one — see §11.1.
+**Its assumptions are stated and testable.** E64 assumes (i) easier problems are more robust on the
+test population, and (ii) the per-model shares hold. Assumption (ii) rests on balances measured
+twice, twelve days apart, with all four values reproducing exactly (F-64). Assumption (i) is the
+contested one: it holds on the official rows and the per-problem board, and fails on MATH (§6.11,
+§11.1).
 
-**What does not generalize, and we say so — with the size of the exposure.** The counts are
-measured on the *validation* set; the prizes are scored on a private test set of 30 problems whose
-class prior may differ. F-67 quantifies what that costs. A policy calling `c` of `n` robust with an
+**What does not generalize, and we say so — with the size of the exposure.** The shares are measured
+on the *validation* set; the prizes are scored on a private test set of 30 problems whose class prior
+may differ. For the batch counts F-67 quantified the cost: a policy calling `c` of `n` robust with an
 uninformative ranking scores `c(2r/n − 1) + n − r`, linear in `c`, so lowering `c` by one gains
-`1 − 2r/n` cases: **the crossover is a robust share of exactly 0.5, independent of batch size.**
+`1 − 2r/n` cases, and **the crossover is a robust share of exactly 0.5, independent of batch size.**
+The same arithmetic bears on E64's cutoffs. The exposure sits on the two models our sources disagree
+about: the validation probes make Skywork and Olmo spurious-leaning, so E64 calls a third of their
+problems robust, while the organizers' own labelled split makes both majority robust, at 0.667 and
+0.778. If the private shares match the official split, those two cutoffs are too strict.
 
-Two consequences. Qwen and DeepSeek have zero tilt, so they contribute nothing whatever their prior
-does — **the entire difference between `e27k` and `e27e` rides on two models**. And those two are
-the ones our sources disagree about: the validation probes make Skywork and Olmo spurious-leaning,
-while the organizers' own labelled split makes both majority robust, at 0.667 and 0.778. If the
-private shares matched the official split, the tilts would cost about 0.89 cases rather than gain
-roughly one.
-
-So the choice is not "0.86 against 0.71" — that compares scores on the set where `e27k` is right by
-construction. It is a **symmetric bet on whether two models stay spurious-leaning**, worth about a
-case either way.
-
-One half of that bet now has independent support. On the perturbation family that decides
-olympiad labels, Skywork never flagged the contradiction in 274 samples while Qwen stopped to reason
-about it
+One half of that bet has independent support. On the perturbation family that decides olympiad
+labels, Skywork never flagged the contradiction in 274 samples while Qwen stopped to reason about it
 (§6.9, F-77) — the same ordering the validation balances give, reached on a different population by
 a different measurement. The Olmo half has no such evidence; the attempt to measure it could not run
-on our hardware (F-78). Under the batch protocol we shipped `e27k`, because the balances were the only
-measurement anyone had. Under the per-problem protocol both `e27k` and `e27e` reduce to constants, and
-we submit `e27f`, the constants themselves (§7.4).
+on our hardware (F-78).
 
 ---
 
@@ -837,7 +1077,8 @@ Ties break on average runtime over three repeated trials, so this is a scored ax
 
 | Method | Per-problem cost | Measured |
 | --- | --- | --- |
-| **Shipped (`e27k`)** | 1 forward pass, ~10² tokens | **334 s / 4 models / 144 scorings**, incl. cold loads |
+| **Shipped (`e64-difficulty`)** | 1 forward pass per call, prompt states at every layer; checkpoint reused across calls | **172 s for 60 one-problem calls, 4 models**, incl. loads, T4×2; read-out ~2 ms a call (F-88) |
+| Batch method (`e27k`) | 1 forward pass, ~10² tokens | 334 s / 4 models / 144 scorings, incl. cold loads |
 | Trace uncertainty (E2f) | greedy generation, 4,096 tokens | ~3.3× slower in bf16 than fp16 on T4 |
 | Answer agreement (E14) | k rewrites × full generation | **28,000 tokens/problem**; at chance |
 | Budget-path features (E36/E37) | 4 token budgets per problem | **5,293 s for one model** — failed its gate |
@@ -845,8 +1086,10 @@ Ties break on average runtime over three repeated trials, so this is a scored ax
 | Per-problem probe template (E57) | 1 forward pass per call, model cached | **0.68-1.43 s per call** on T4, all four models (F-82) |
 
 Three orders of magnitude separate the top and bottom rows. The shipped method never generates a
-token: it reads the problem once and returns a number. The dominant cost is loading the checkpoint,
-which the harness pays regardless.
+token: it reads the problem once, pools its states and returns a number. The dominant cost is
+loading the checkpoint, which the harness pays regardless: in E64's GPU check each model's load and
+fifteen calls took 26.67 to 55.19 s, and the ridge read-out about 2 ms a call. The per-problem
+protocol allows 1 h 10 min for the whole run.
 
 Costed consistently — forward passes and generated tokens per problem, converted at rates measured
 on our own hardware, over 120 pairs — **two of the methods this project pursued for weeks could not
@@ -868,10 +1111,10 @@ length of a problem statement, on every pair.
 
 ### 11.1 The contradiction
 
-The shipped direction — **familiar problems are robust** — holds on DeepSeek's 142 MATH instances
+The batch method's direction — **familiar problems are robust** — holds on DeepSeek's 142 MATH instances
 and on the hidden validation set repeatedly. It **reverses** on the 34 official olympiad rows, where
 the same split scores 0.353 against 0.706 for always-robust (F-58), a result we re-confirmed with
-the shipped artifact itself (F-62: agreement 0.22–0.40 against an always-robust floor of 0.67–0.78,
+the batch artifact itself (F-62: agreement 0.22–0.40 against an always-robust floor of 0.67–0.78,
 part of which is mechanical, since a median split cannot reproduce a 70%-robust prior).
 
 The hypothesis we could not test: `train-main-v2` holds **published** problems — 2025 AIME I appears
@@ -889,9 +1132,13 @@ status drove the reversal, those two numbers should straddle 0.5.
 That is not a refutation. At n = 8 the mirrored interval is [0.000, 0.833], and the indicator is
 one-sided: absence from a four-dataset pool is not evidence of being unpublished. But the leading
 explanation has now been tested on the only partition the data supports and did not separate. A
-clean test needs per-problem publication dates, which nothing available to us has (F-59). **It no longer
-decides what we ship** — §4.2's count argument settles `e27k` over `e27e` without reference to the
-ranking's direction — but it remains the most interesting open question in the project.
+clean test needs per-problem publication dates, which nothing available to us has (F-59).
+
+**It now bears on what we ship.** E64 takes the official rows' side: easier = robust, which on those
+rows means familiar = spurious. And E65 shows the same contradiction for difficulty, holding on the
+official rows and reversing on MATH (§6.11, §9). So the contradiction is not about familiarity alone.
+It is about which population the test set resembles, and it remains the most interesting open
+question in the project.
 
 §6.2 now offers a candidate mechanism, untested. If a spurious olympiad label usually means the model
 answered through an added contradiction, then a problem the model recognises is exactly one where it
@@ -907,9 +1154,13 @@ explanation.
 - **Sample size dominates everything.** Fourteen validation cases, 33 labelled problems, 82 rows.
   Power ran 14% to 53% across the lanes we closed (§6.7). Most of our negative results are
   underpowered, and we say so rather than presenting them as settled.
-- **The counts are measured on the validation set, not the test set.** §9 prices the exposure: the
-  tilts are a symmetric bet worth about a case either way, and they could cost 0.89 cases if the
-  private class shares match the official split instead.
+- **The shares are measured on the validation set, not the test set.** §9 prices the exposure:
+  under batch scoring the tilts were a symmetric bet worth about a case either way, and could cost
+  0.89 cases if the private class shares matched the official split instead. E64's cutoffs carry the
+  same balances.
+- **The submission's direction was chosen on the rows it was gated on.** F-76's exploratory reading
+  of the 34 official rows suggested easier = robust, and D2 then scored E64 on the same rows. The one
+  other labelled population we hold reverses it (§6.11).
 - **One competition is not a general law.** The offline/online inversion (§6.8) is a real
   observation on this task. We cannot say whether it is a property of this task, of 14-case
   evaluation, or of our own gates.
@@ -917,8 +1168,9 @@ explanation.
   At 33 labelled problems a feature search over thousands of sparse features has no statistical
   power, and our template-cluster bootstrap would reject anything it found. A deliberate omission,
   not an oversight.
-- **The forward-pass path is verified on separate hardware, not in the competition image.** §14.1
-  covers what the container check does and does not establish.
+- **The submission was not run in the competition image.** The Docker test was waived for E64
+  (§7.5); its evidence of running in the evaluation runtime is the Codabench run itself. §14.1 covers
+  what our earlier container check, of `e27k`, does and does not establish.
 - **The deciding family was measured narrowly.** §6.2's per-family table rests on 7 eligible
   problems, and §6.9 used public AMC rewrites rather than the organizers' expert ones, two of the
   four models, and a 16k cap against their 100k. Its direction is clear; its size on the test set is
@@ -951,7 +1203,7 @@ problems with a missing premise instead of declining them, which is the out-of-b
 saw in Qwen. Neither work connects the behaviour to a robustness label, which is the connection this
 competition's rule makes.
 
-**Contamination and membership inference.** Our shipped statistic is a membership-inference score
+**Contamination and membership inference.** Our batch statistic is a membership-inference score
 used for a different purpose. Mean token NLL is the oldest such signal; *Min-K%* (Shi et al., 2023)
 averages the lowest-probability tokens, *Min-K%++* (Zhang et al., 2024) normalises it per token, and
 the zlib-compression ratio is from Carlini et al.'s training-data extraction work (2021), with the
@@ -990,7 +1242,8 @@ signals into null results (§6.5).
 
 **Where this work sits.** We contribute no new interpretability *technique*, and that is not the
 claim. The claim is methodological and it is unfavourable to the field's usual practice: on this
-task, a predictor with no fitted parameters beat every fitted one we built, and the offline metrics
+task, under batch scoring a predictor with no fitted parameters beat every fitted one we built, under
+per-problem scoring the one method above the constants fits no robustness label, and the offline metrics
 interpretability research routinely selects on were *anti-correlated* with held-out performance
 (§6.8). Both are statements about how interpretability methods should be validated, not about a new
 way to read a model.
@@ -1043,8 +1296,23 @@ python train/report_e55.py
 python train/train_e57_probe.py --synthetic   # plumbing; real labels: --labels <file>
 python submission/test_e57_parity.py          # the submission's features equal the training features
 
+# The submission (§4, §7.5): fit, gates D1-D3, cutoffs and arrays, then the ZIP.
+# Needs E55's features (runs/e55-features-*) and E62's base records (runs/e62-qwen-*)
+python train/eval_e64.py
+python submission/make_e64.py     # checks the shipped arithmetic on 548 x 4, writes dist/solution-e64-difficulty-small.zip
+python scripts/e64_gpu_bundle.py --verify     # C1 parity on the GPU states, after `kaggle_followup.py output e64-gpu-check`
+cd getting-started; python -m uv run scripts/run_local.py ../dist/solution-e64-difficulty-small.zip --small; cd ..
+
+# Per-problem familiarity (§6.10), E64 on MATH (§6.11), the 64k-cap refit (§6.12)
+python train/eval_e61.py
+python train/eval_e63.py
+python train/eval_e65.py
+python train/eval_e66.py
+
 # Rebuild every submission ZIP, deterministically
-python submission/make_e27.py     # 13 candidates incl. the incumbent
+python submission/make_e64.py     # the submission
+python submission/make_e61.py     # E61a, E61b and E63
+python submission/make_e27.py     # 13 batch candidates incl. e27k and e27f
 python submission/make_e28.py     # rank successors
 python submission/make_probes.py  # the 5 constant probes
 ```
@@ -1057,10 +1325,21 @@ uploaded from a clone without rebuilding. Kernels are exported to `kernels/` exa
 any run can be rebuilt if a Kaggle account disappears. The failure table in §6 names the script
 behind each rejected lane.
 
-### 14.1 The shipped artifact, verified in the competition image
+### 14.1 The submission's evidence, and the earlier container check
 
-The organizers must be able to reproduce the result from this report alone, so the shipped ZIP was
-run inside `Dockerfile.competition` itself, with networking disabled (E42, F-65, F-66).
+**E64.** The ZIP rebuilds byte for byte from `submission/make_e64.py` (SHA-256 `665f86dd…`), and the
+builder refuses to write it unless the shipped arithmetic reproduces the offline predictions on all
+548 problems of all four models. On the four real checkpoints the ZIP's own forward pass gives states
+within 2.0e-06 of the training states, and sixty one-problem calls take 172 s on a T4 pair
+(`kernels/runs/e64-gpu-check-Nipun/`). It was **not** run in the competition image: Docker Desktop
+has not started on our build machine since 21 October, and the owner waived the test (E64
+amendment 4). The evidence that it runs in the evaluation runtime is the Codabench run on the
+organizers' GPU runner: coverage 1.0, 0 invalid predictions, and a read different from the
+constants', so the model path ran rather than the fallback.
+
+**The earlier container check, of `e27k`.** The organizers must be able to reproduce the result from
+this report alone, so the batch submission was run inside `Dockerfile.competition` itself, with
+networking disabled (E42, F-65, F-66).
 
 The first run **failed, and both failures were in our test harness rather than the submission** —
 an exact-match comparison against `torch.__version__` that could never succeed on a CUDA wheel
@@ -1091,8 +1370,14 @@ were identical across two machines.
 
 Four claims, in the order the report makes them.
 
-**1. A training-free robustness predictor, with its only free parameters derived rather than tuned, and
-the record of how it stopped working.** It scored 12/14 on the hidden validation set by ranking a
+**1. A per-problem robustness predictor that fits no robustness label, and the training-free batch
+predictor it replaced.** The submission reads predicted difficulty from one forward pass — a
+per-layer ridge from each model's prompt states to Qwen's reasoning length on 497 unlabelled olympiad
+problems — and cuts it at a share derived in closed form from each model's measured class balance
+(§4). One problem per call it read 10/14, our first per-problem read above the constants, and it
+ranks the organizers' 34 labelled rows at AUC 0.883. It also reverses on our MATH rows, at AUC 0.346,
+so we claim it as the best per-problem rule we found, not as robustness that generalizes (§7.5, §9).
+Before it, a predictor with no fitted parameter at all scored 12/14 under batch scoring by ranking a
 batch on the scoring model's own likelihoods and fixing each model's robust count by a closed-form identity in the measured class
 balance (§4.2). The rule calls the exactly correct count in 56 of 56 batch compositions consistent
 with the measurement, where the plain median split does so in 0 of 56. Under the per-problem protocol
@@ -1105,9 +1390,9 @@ organizers judged a form of overfitting. Supporting this:
   counts alone explain (§7.2);
 - **two structural results about the task**: robustness is a property of the problem rather than
   the (model, problem) pair (§1.2); and the familiarity *signal* is a problem property too, so the
-  only model-specific quantity in the method is four measured integers (§9).
+  only model-specific quantity in the batch method is four measured integers (§9).
 
-**2. Seventeen documented negative results, the mechanism behind them, and the power analysis that says
+**2. Twenty documented negative results, the mechanism behind them, and the power analysis that says
 what they do and do not establish.** Several carry independent-population confirmations, and several
 reached AUC 0.73–0.87 before the test that rejected them (§6). The mechanism is that our training
 labels and the competition's are decided by different perturbation families: domain rewording on
@@ -1226,7 +1511,7 @@ dropped. Where the arXiv preprint and the peer-reviewed venue fall in different 
 ## Appendix A — Experiment index
 
 `experiments.md` carries the full registry with configuration and outcome for every experiment.
-`PROGRESS.md` carries findings F-1…F-82 with the evidence for each. `RESULTS.md` carries 42
+`PROGRESS.md` carries findings F-1…F-90 with the evidence for each. `RESULTS.md` carries 50
 generated metric tables, all covered by `scripts/regenerate_results.py`.
 
 ## Appendix B — Open questions
@@ -1242,3 +1527,6 @@ generated metric tables, all covered by `scripts/regenerate_results.py`.
    offline gates?
 5. Does a model recognising a problem make it more likely to answer through an added contradiction
    (§11.1)? This is the mechanism the reversal needs, and it is testable on public rewrites.
+6. Why do familiarity and difficulty both flip between DeepSeek's MATH rows and the official rows,
+   and which side does the private test take (§9)? A labelled olympiad population that shares no
+   problem with the 34 official rows would answer the first half.

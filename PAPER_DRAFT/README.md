@@ -14,19 +14,25 @@ Main Track content — no sections, results or `LF-n` findings. See that track's
 
 Fifteen sections, a verified reference list and two appendices. They answer different questions:
 
-- **New to the project?** §1 (the task and why it is hard), §4 (what we actually ship), §7 (what
-  worked), §13 (what we would do differently). That is the manual.
+- **New to the project?** §1 (the task and why it is hard), §4 (what we submit: `e64-difficulty`,
+  predicted difficulty from one forward pass), §7 (what worked), §13 (what we would do differently).
+  That is the manual.
 - **Want the evidence?** §6 is the failures, one subsection per lane, each with the test that
   killed it. It is the longest section on purpose — the writeup prize is awarded partly on negative
-  results, and we have seventeen.
+  results, and we have twenty. §6.10-6.12 are the per-problem ones: familiarity stays at the
+  constants (E61, E63), E64 reverses on DeepSeek MATH (E65), and a 64k-cap refit fails its gates (E66).
 - **Want what changed on 15 October?** §7.4: per-problem scoring turned our 12/14 into the constants'
-  9/14, and the per-problem probe that is ready for the collaborator's labels.
+  9/14. §7.5: E64 reads 10/14 per problem (submission 1010961, 12th of 93) and is the Google Form ZIP.
+- **Want the open problem?** §9: familiarity and difficulty both flip between DeepSeek's MATH rows and
+  the official rows, and the hidden board sides with each depending on how it is read.
 - **Want the explanation?** §6.2 and §6.9: our training labels and the competition's are decided
   by different perturbation families, and on the competition's the models answer through an
   impossible premise.
-- **Want the method?** §4.2 is the one piece of real formalism: the per-model robust count in
-  closed form, `t = (d − 1)/2`, derived from a measured class balance rather than tuned. It acts only inside a batch,
-  so the per-problem protocol removes it (§7.4).
+- **Want the method?** §4.1-4.5 is E64: a per-layer ridge from prompt states to Qwen's log trace
+  length on 497 unlabelled problems, averaged over layers, cut at each model's share. §4.2 is the one
+  piece of real formalism: the share `p_m = (n_m + d_m)/(2 n_m)` and the batch count `t = (d − 1)/2`,
+  both derived from a measured class balance rather than tuned. The count acts only inside a batch;
+  the share sets E64's cutoffs. §4.6 is the batch method it replaced.
 - **Judging it?** §9 generalization, §10 efficiency, §15 contributions.
 
 ## Figures
@@ -43,7 +49,7 @@ submission artifacts at the competition's library versions, and matplotlib is no
 | Figure | Section | What it shows |
 | --- | --- | --- |
 | `fig1_layer_curve` | §6.1 | Every layer beats the honestly nested probe. The gap is the selection artifact |
-| `fig2_leaderboard_ladder` | §7.1 | All 20 uploads, with the chance and constants-ceiling lines |
+| `fig2_leaderboard_ladder` | §7.1 | All 24 scored uploads in two panels (20 batch, then 4 per problem plus `e27k`'s re-score), with the chance and constants lines |
 | `fig3_null_distribution` | §7.2 | Correct counts alone score 8.05; the observed 12 is at p = 0.055 |
 | `fig4_inversion` | §6.8 | Offline AUC against leaderboard score — the relation runs backwards |
 
@@ -62,6 +68,15 @@ Item 1 is done; item 2 is still open.
    0.5005 baseline figure (the artifact's own per-layer mean, not nested selection, which gives 0.552),
    the artifact size (a 3.3 KB ZIP of 6.3 KB source), the longest problem (609-667 tokens by tokenizer,
    from E23's records) and the upload count (20). Re-audit after any edit that adds a number.
+
+   **Re-audited 27 October** for the E61-E66 update (§4 rewritten for E64; §6.10-6.12, §7.5 and the
+   per-problem parts of the abstract, §1.3, §9, §10, §11, §14, §15 new). Every numeric token on the
+   441 added lines was matched to `RESULTS.md`, `PROGRESS.md`, `PLAN.md`, `submission/README.md`, a
+   protocol or `kernels/runs/e64-gpu-check-Nipun/result.json`; the 15 lines whose numbers come from
+   more than one source (mostly composite tables) were checked cell by cell. No error found. One
+   source mismatch was found and not copied: `PROGRESS.md` Finding 89 places E64's D3 correlations
+   (−0.35 to −0.50) on the official rows, but `train/eval_e64.py` computes them over E55's 548
+   problems, which is what §9 says.
 2. **The author list is incomplete.** One name is filled in. Add co-authors, affiliations, and a
    licence for the repository.
 
