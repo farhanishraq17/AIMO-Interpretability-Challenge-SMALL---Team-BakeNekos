@@ -12,7 +12,8 @@ Team workspace for the **AIMO Interpretability Challenge (NeurIPS 2026)**, enter
   per-model constants (`e27f`, 0.64), and is the Form ZIP under its pre-registered rule (`submission/make_e64.py`).
   `e27k`'s 0.86 was the old batch protocol; per problem it collapses to the constants. Read `PLAN.md` §13 first:
   the final-push plan, E61/E63 (familiarity per problem, 8-9/14), E64 (difficulty), E65 (E64 reverses on MATH) and
-  E66 (64k-cap refit, failed its ship rule on 27 Oct; E64 stays).
+  E66 (64k-cap refit, failed its ship rule on 27 Oct; E64 stays). `train/explain_e64.py` (Findings 91-93, 28 Oct)
+  opens E64 up: the official rows' noise, its MATH reversal (one perturbation family) and what the ridge reads.
 - **This repository is the Small Models Track only.** The Main Track (adds `gpt-oss-120b`) lives in
   its own repository, `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-LARGE---Team-BakeNekos`;
   nothing here depends on it, the two only share the Kaggle accounts, and its `LF-n` findings are

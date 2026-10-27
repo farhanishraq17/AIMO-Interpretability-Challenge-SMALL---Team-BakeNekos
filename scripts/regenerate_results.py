@@ -102,6 +102,9 @@ STEPS = [
     ["train/eval_e65.py"],
     # E66: E64 refitted on the 64k-cap target. CPU (~5 min); needs the e1b, e55, e62, e64 and e66 runs.
     ["train/eval_e66.py"],
+    # E64 explained: noise of the official rows, the MATH reversal, what the ridge reads. CPU (~30 min); needs the
+    # e1b, e55, e62 and e64 runs and the pinned MATH tables in the HF cache.
+    ["train/explain_e64.py"],
 ]
 
 

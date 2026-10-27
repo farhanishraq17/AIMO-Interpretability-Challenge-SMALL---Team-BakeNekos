@@ -1289,3 +1289,68 @@ Fixed in `protocols/E66_PROTOCOL.md` before any sample was drawn. E64's fit, unc
 Reported only: E65's check with the new DeepSeek arrays, AUC 0.345 [0.246, 0.448] on DeepSeek's 137 MATH rows (E64: 0.346).
 
 **G1-G4: fail.** G5 (contract) and G6 (board) are run after this; the ship rule is the protocol's §6.
+
+## E64 explained: noise, MATH and what the ridge reads
+
+Exploratory, computed after E64-E66 were read; nothing here is a gate or changes what ships. E64's fit and arrays are used unchanged unless a row says otherwise. AUCs on the 34 official small-track rows unless stated; intervals are row bootstraps (2,000 draws, seed 64).
+
+### How far the official AUC moves when the method does not
+
+E64's fit on a different target or a random subset of its 497 problems; held-out Spearman is on the problems left out, mean over 5 draws (seed 67).
+
+| fit | held-out Spearman | official AUC |
+| --- | --- | --- |
+| all 497, both samples (E64) | - | 0.883 |
+| all 497, first sample only | - | 0.904 |
+| all 497, second sample only | - | 0.846 |
+| 125 problems | 0.742 | 0.815 (sd 0.082, range 0.675-0.900) |
+| 250 problems | 0.738 | 0.852 (sd 0.095, range 0.696-0.933) |
+| 375 problems | 0.806 | 0.850 (sd 0.076, range 0.704-0.917) |
+
+### Why E64 reverses on DeepSeek's MATH rows
+
+E65's 137 rows (E64's shipped DeepSeek arithmetic, older label rule). `domain` = the family was run on the problem, including inside aggregate rows.
+
+| rows | n | robust share | AUC, easier = robust | AUC, familiar = robust |
+| --- | --- | --- | --- | --- |
+| all | 137 | 0.26 | 0.346 [0.246, 0.448] | 0.683 [0.581, 0.780] |
+| `domain` run | 98 | 0.12 | | |
+| **`domain` never run** | 39 | 0.62 | **0.672 [0.492, 0.842]** | 0.506 [0.311, 0.700] |
+
+Which problems got `domain`: AUC 0.738 from E64's easier-ness, 0.325 from familiarity; share by MATH level L1 0.88, L2 0.74, L3 0.73, L4 0.71, L5 0.45. Spearman of E64's predicted difficulty with the MATH level: 0.416.
+
+Variants that lowered accuracy, as stored in DeepSeek's MATH tables (failures only), that keep none of the original's numbers: distract 0.22 of 59, domain 0.60 of 272, rename 0.00 of 4, rephrase 0.35 of 20, typos 0.00 of 4.
+
+### What the ridge reads
+
+Single layers, each fitted alone (E64's fit on one layer), grouped by relative depth; CV Spearman on E64's folds, official AUC of the band's layers averaged.
+
+| depth | layers (4 models) | CV Spearman | official AUC |
+| --- | --- | --- | --- |
+| 0.00-0.10 | 15 | 0.694 | 0.812 |
+| 0.10-0.25 | 21 | 0.722 | 0.854 |
+| 0.25-0.50 | 32 | 0.772 | 0.896 |
+| 0.50-0.75 | 32 | 0.782 | 0.904 |
+| 0.75-0.90 | 17 | 0.763 | 0.879 |
+| 0.90-1.00 | 15 | 0.751 | 0.921 |
+
+Best single layer per model (depth qwen 0.47, skywork 0.64, olmo 0.47, deepseek 0.61): CV Spearman 0.801, official AUC 0.875. E64 (all layers averaged): official AUC 0.883.
+
+| top principal components per layer | CV Spearman | official AUC |
+| --- | --- | --- |
+| 1 | 0.450 | 0.554 |
+| 5 | 0.631 | 0.758 |
+| 20 | 0.753 | 0.858 |
+| 50 | 0.758 | 0.879 |
+
+The four models' predictions on the 51 problems outside the fit: pairwise Spearman 0.926 to 0.956 (min to mean).
+
+| text surrogate of the same target | CV Spearman | official AUC |
+| --- | --- | --- |
+| 12 hand features (size, share of mathematics, topic words) | 0.523 | 0.700 |
+| word 1-2-gram tf-idf, ridge | 0.603 | 0.871 |
+
+Hand-feature weights (standardized): log_chars +0.60, log_words -0.41, number_theory +0.13, extremal +0.13, geometry +0.12, share_math -0.11.
+Tf-idf words for short traces: log, 20, that log, miles, what, 16, that satisfies, let, 40, interior, the value, compute, let compute, that 20, 75. For long traces: cdots, ldots, irreducible fraction, irreducible, least, find, possible, text, 000, side, 1000, april, integer, 999, and is. Spearman of the tf-idf score with E64's (mean of models) outside the fit: 0.546.
+
+The hand features explain R2 qwen 0.50, skywork 0.49, olmo 0.48, deepseek 0.49 of E64's score over the 548 E55 problems; the rest scores official AUC 0.642.

@@ -1111,6 +1111,21 @@ deadline (15 Nov) is after the submission deadline, so it can run past the freez
 | 1 Nov, 12:55 UTC | Codabench closes |
 | 2 - 15 Nov | E62 analysis; technical report and open-source repository |
 
+### 13.6a 28 Oct: E64 opened up (Findings 91-93); E64 stays
+
+`train/explain_e64.py`, CPU, exploratory. Nothing in it changes the Form ZIP.
+
+- **No refit can be shown to beat E64 on the 34 official rows.** The training draw alone moves their AUC by about 0.08
+  (F-91), so no further refit of E64 goes to the Form before 1 Nov.
+- **E65's MATH reversal is mostly perturbation assignment.** The `domain` family decides MATH labels and was run mostly
+  on easy problems. Where it never ran (39 problems), E64 points the official rows' way (0.672) and familiarity has no
+  signal (F-92). This goes into the report as the explanation of §11.1's MATH half.
+- **The white-box account (F-93):** a 20-50-dimensional difficulty subspace present at every depth, read alike by all
+  four models, about half explained by surface features. Vocabulary alone ranks the official rows as well, but fits
+  unlabelled olympiad problems much worse.
+- **Open for the report (2-15 Nov), optional:** a steering run on Qwen would test whether that subspace *causes* longer
+  reasoning. It needs its own pre-registration and GPU time after the quota reset on 31 Oct.
+
 ### 13.7 Housekeeping in `Secrets.env` (owner)
 
 - Replace the Shafeen and MalihaMehnaj tokens (both rejected) and fill Tamim1's empty one.

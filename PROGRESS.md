@@ -2881,6 +2881,87 @@ sat in that flat region. Sixteen Kaggle kernels re-sampled those 194 with Qwen a
   needs re-uploading. Reported only: E66's arrays pass the contract arithmetic (548 problems x 4 models, max diff
   3.7e-06) and the GPU-state check (1.7e-06). No ZIP is kept.
 
+**91. The 34 official rows cannot rank refits of E64: with the method unchanged, the training draw alone moves their
+AUC by about 0.08.** (`train/explain_e64.py`, exploratory, written 28 Oct after E66. RESULTS, "E64 explained: noise,
+MATH and what the ridge reads".)
+
+E64's fit, untouched, refitted on random subsets of its own 497 problems (five draws each, seed 67) and on one-sample
+targets:
+
+| fit | held-out Spearman (label-free) | official AUC |
+| --- | --- | --- |
+| 125 problems | 0.742 | 0.815 (sd 0.082, range 0.675-0.900) |
+| 250 problems | 0.738 | 0.852 (sd 0.095, range 0.696-0.933) |
+| 375 problems | 0.806 | 0.850 (sd 0.076, range 0.704-0.917) |
+| all 497, first sample only / second only / both (E64) | - | 0.904 / 0.846 / **0.883** |
+
+- **E64's 0.883 is a good draw from its own method**, whose subsets average about 0.85. E66's 0.808 sits inside the
+  same range: Finding 90 shows E66 did not beat E64, not that it is worse.
+- **Any non-inferiority gate on these rows is mostly a coin toss** between refits of one method, as E66 §6 anticipated.
+  More problems improve the label-free fit; nothing measured here moves the official AUC beyond its noise.
+- **Use:** no further refit of E64 is worth a Form replacement before 1 Nov. Choices between variants of one method
+  should rest on label-free fit and on populations other than these 34 rows.
+
+**92. E64's reversal on MATH is carried by one perturbation family. On the 39 MATH problems the `domain` family never
+touched, easier = robust (AUC 0.672) and familiarity has no signal (0.506), as on the official rows.**
+(`train/explain_e64.py`, exploratory and post hoc, 28 Oct. RESULTS, same section.)
+
+E65's 137 DeepSeek MATH rows, E64's shipped arithmetic, MATH levels from `EleutherAI/hendrycks_math` (pinned revision):
+
+| rows | n | robust | AUC, easier = robust | AUC, familiar = robust |
+| --- | --- | --- | --- | --- |
+| all (E65) | 137 | 0.26 | 0.346 [0.246, 0.448] | 0.683 [0.581, 0.780] |
+| `domain` run (alone or inside an aggregate row) | 98 | 0.12 | | |
+| **`domain` never run** | **39** | **0.62** | **0.672 [0.492, 0.842]** | 0.506 [0.311, 0.700] |
+
+- **`domain` decides the MATH label** (F-51 found it breaks 86% of solved rows): 12% of the problems it touched are
+  robust against 62% of the rest.
+- **It went to the easiest problems.** It was run on 88% of MATH level 1 and 45% of level 5; E64's easier-ness
+  predicts which problems got it at AUC 0.738. That assignment alone makes easier look spurious on MATH, and makes
+  familiar look robust (familiarity predicts *not* getting `domain`: AUC 0.325).
+- **E64 does read difficulty there.** Its predicted difficulty correlates 0.416 (Spearman) with MATH's human-graded
+  level, on a population it never saw.
+- **Many of the `domain` failures are not answer-preserving as stored.** Of the 272 distinct `domain` variants that
+  lowered DeepSeek's accuracy, 60% contain none of the original's numbers (`distract` 22%, `rephrase` 35%): "What is
+  the value of 513^2 - 487^2?" became a question about seats with no number in it. The tables keep failing variants
+  only, and we cannot see whether the model was shown more text than is stored, so this is a concern about the
+  family on MATH, not a measurement of it.
+- **What it means.** Finding 89's "both signals flip between the populations, together" is mostly how one family was
+  assigned on MATH, not something about robustness. With it set aside, difficulty points the same way on all three
+  populations we hold: the official rows (0.883), MATH (0.672) and the hidden set read per problem (10/14). Familiarity's
+  MATH signal disappears with it, which removes the MATH half of the paper's open contradiction (§11.1); the batch
+  board's familiar = robust (E50) remains. **Caveats:** post hoc, chosen after E65 was read, 39 problems, and the
+  interval touches 0.49.
+
+**93. What E64 reads: a difficulty subspace present at every depth, read alike by all four models, about half
+explained by surface features, and matched on the official rows by vocabulary alone.** (`train/explain_e64.py`,
+exploratory, 28 Oct. RESULTS, same section.)
+
+- **Every depth carries it, mid-depth best.** One layer fitted alone, averaged by depth band: CV Spearman 0.694 in the
+  first tenth (the mean token embedding: a weighted bag of tokens) rising to 0.782 at half to three quarters depth;
+  official AUC 0.81 to 0.92 across bands. Each model's best single layer sits at depth 0.47-0.64; picked on the same
+  folds, those layers fit slightly better than E64's average (mean CV 0.801 against 0.768-0.788) and rank the official
+  rows the same (0.875 against 0.883).
+- **It is not one direction.** The same fit on each layer's top principal components: 1 component 0.450 / 0.554
+  (CV Spearman / official AUC), 5 components 0.631 / 0.758, 20 components 0.753 / 0.858, 50 components 0.758 / 0.879.
+  Difficulty lives in a 20-50-dimensional subspace of the high-variance directions, not on a single axis.
+- **The four models read the same thing.** On the 51 E55 problems outside the fit, their predictions agree at pairwise
+  Spearman at least 0.926 (mean 0.956): four architectures, each from its own states, give one ranking.
+- **Surface features explain about half.** Twelve hand features (size, share of mathematics, topic words) fit the
+  target at CV Spearman 0.523 and score official AUC 0.700; they explain R2 0.48-0.50 of E64's own score, and the rest
+  still scores 0.642. Size dominates the hand fit (characters up, prose words down), but length alone scores 0.529
+  (F-88).
+- **Vocabulary alone matches E64 on the official rows, not off them.** A word tf-idf ridge on the same label-free target
+  scores official AUC **0.871** but fits held-out olympiad problems at CV Spearman 0.603 against E64's 0.78, and agrees
+  with E64 at only 0.546. The 34 rows cannot separate the two (F-91); the 497 unlabelled problems can, and favour the
+  hidden states. Its words are readable: long traces go with AIME answer formats and enumeration ("irreducible
+  fraction", "1000", "least", "integers", floor brackets, ellipses), short traces with direct computation
+  ("compute", "what is", "value of", "log").
+- **Use:** none for the Form. No white-box replacement beats E64 on any measurement, and the vocabulary model is worse
+  where it can be told apart. For the report this is the white-box account of the black box: E64 reads the problem's
+  kind of task from prompt states, in many directions at once, alike across models, and more precisely than its words
+  alone. Whether that subspace *causes* longer reasoning is untested; a steering run would test it.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

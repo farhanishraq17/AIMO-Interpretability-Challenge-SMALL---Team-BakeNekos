@@ -38,7 +38,10 @@ prompt states to how long Qwen3.5-4B reasons on 497 unlabelled olympiad problems
 label anywhere in the fit, and a per-model cutoff set by the measured balances. Scored one problem per
 call it reads **10/14 = 0.71**, our first per-problem read above the constants, 12th of 93 teams (§4,
 §7.5). Its direction, easier problems robust, holds on the organizers' labelled rows (AUC 0.883) and
-**reverses** on our MATH rows (AUC 0.346), where familiarity does the opposite (§9). **Second**,
+**reverses** on our MATH rows (AUC 0.346), where familiarity does the opposite (§9). The reversal is
+carried by one perturbation family that went mostly to MATH's easiest problems: on the 39 MATH problems
+it never touched, the direction matches the organizers' rows (AUC 0.672) and familiarity has no signal
+(§6.11, exploratory). **Second**,
 nothing transferred from our labelled MATH data to the olympiad distribution the competition scores,
 and we can say why twice over. In mechanism: the two label sources are decided by different
 perturbation families — domain rewording on MATH, where it breaks 86% of solved rows, and on
@@ -753,6 +756,27 @@ are unaffected only because every MATH problem falls below an olympiad cutoff. T
 change what ships, because E64's rule was its board read, but it does change what E64 can be said to
 measure; §9 takes that up.
 
+**Where the reversal comes from** (F-92; exploratory, chosen after the gate was read). One family,
+`domain`, decides the MATH label (§6.2): 12% of the 98 problems it was run on are robust, against 62%
+of the 39 it never touched. And it was not run at random. It reached 88% of MATH's level-1 problems
+and 45% of level 5, and E64's own easier-ness predicts which problems got it at AUC 0.738. That
+assignment alone makes easier look spurious on MATH, and familiar look robust. On the untouched
+problems the two signals behave as on the official rows:
+
+| DeepSeek MATH rows | n | Robust | Easier = robust | Familiar = robust |
+| --- | --- | --- | --- | --- |
+| All (E65) | 137 | 0.26 | 0.346 [0.246, 0.448] | 0.683 [0.581, 0.780] |
+| **`domain` never run** | **39** | **0.62** | **0.672 [0.492, 0.842]** | 0.506 [0.311, 0.700] |
+
+E64 does read difficulty on MATH: its prediction correlates 0.416 with the human-graded MATH level, on
+problems it never saw. And many of the family's failures are not answer-preserving as stored: of the
+272 distinct `domain` variants that lowered DeepSeek's accuracy, 60% contain none of the original's
+numbers ("What is the value of 513² − 487²?" becomes a question about seats, with no number in it),
+against 22% for `distract`. The tables keep only failing variants, and we cannot see whether the model
+was shown more than is stored, so we report this as a concern about the family on MATH rather than a
+measurement of it. The subset was chosen after the gate was read, holds 39 problems, and its interval
+touches 0.49.
+
 ### 6.12 A less censored target ranks the official rows worse
 
 E64's target is flat at the 32k cap on 194 of its 497 problems, and Qwen's and DeepSeek's cutoffs
@@ -947,6 +971,37 @@ rows, and the part of predicted difficulty that length does not explain still sc
 holds model by model:** Qwen 0.875 (12 rows), Olmo 0.929 (9), DeepSeek 0.905 (10); Skywork's 3 rows
 are too few. Qwen, the model familiarity could never move, is among the strongest.
 
+**What the ridge reads** (F-93, exploratory). We opened the fitted score up in four ways, each with
+E64's fit unchanged except where stated:
+
+| Probe | Label-free fit (CV Spearman) | Official AUC |
+| --- | --- | --- |
+| E64: every layer, averaged | 0.768–0.788 | 0.883 |
+| Single layers fitted alone, first tenth of depth (from the mean token embedding) | 0.694 | 0.812 |
+| Single layers fitted alone, half to three quarters of depth | 0.782 | 0.904 |
+| Top 1 / 5 / 20 / 50 principal components per layer | 0.450 / 0.631 / 0.753 / 0.758 | 0.554 / 0.758 / 0.858 / 0.879 |
+| 12 hand features: size, share of mathematics, topic words | 0.523 | 0.700 |
+| Word tf-idf, ridge on the same target | 0.603 | 0.871 |
+
+Four things follow. The signal is in every layer, already in the mean token embedding, and best at
+mid-depth. It is not one direction: a single principal component carries little, and twenty to fifty
+are needed, so difficulty is a subspace of the high-variance directions rather than an axis. The four
+models read it alike: on the 51 problems outside the fit their predictions agree at pairwise Spearman
+at least 0.926. And words carry much of it: hand features explain about half of E64's score (R² 0.48–
+0.50), and a word tf-idf model on the same unlabelled target ranks the official rows almost as well
+(0.871) while fitting held-out olympiad problems much worse (0.603 against 0.78). Its words are
+readable: long traces go with AIME answer formats and enumeration ("irreducible fraction", "1000",
+"least", "integers", ellipses), short ones with direct computation ("compute", "what is", "value
+of"). The two scores agree at only 0.546, so the 34 rows cannot tell them apart. The 497 unlabelled
+problems can, and they favour the hidden states. No white-box version beats E64 on any measurement,
+so nothing here changes what ships.
+
+**How precise the 34 rows are** (F-91). E64's fit, unchanged, on random subsets of its 497 problems
+scores 0.815 ± 0.082 (125 problems), 0.852 ± 0.095 (250) and 0.850 ± 0.076 (375) on the official rows
+over five draws each, and 0.904 or 0.846 when the target uses only the first or only the second
+sample. E64's 0.883 is a good draw from its own method, and E66's 0.808 (§6.12) lies inside the same
+range. A non-inferiority gate on these rows is close to a coin toss between refits of one method.
+
 **What it does not establish.** The 34 rows are not a clean holdout: they are where the direction
 came from (F-76), and every labeller since E24b has been scored on them. One case of 14 is weak
 evidence on its own. And on the one other labelled population we hold, the direction reverses
@@ -1019,6 +1074,7 @@ labelled populations and on the hidden board:
 | Population | Familiarity: familiar = robust | Difficulty: easier = robust |
 | --- | --- | --- |
 | DeepSeek, Hendrycks MATH (137 rows, older label rule) | AUC **0.683** [0.582, 0.780] | AUC **0.346** [0.246, 0.447] |
+| Same, the 39 problems the `domain` family never touched (F-92, post hoc) | AUC 0.506 [0.311, 0.700] | AUC **0.672** [0.492, 0.842] |
 | Official `train-main-v2` rows (34) | AUC 0.358 (F-74) | AUC **0.883** [0.687, 1.000] |
 | Hidden validation, one problem per call | 8, 9 and 9 of 14 (E61a, E61b, E63) | **10 of 14** (E64) |
 | Hidden validation, batch structure (E50) | familiar = robust inside every batch | not measured |
@@ -1029,6 +1085,13 @@ E55's 548 problems and at −0.340 on the MATH rows. So on MATH familiar = robus
 comes with it; on the official rows easier = robust, and familiar = spurious comes with it. No fixed
 direction of either score holds on both. **E64 reads the structure of the population its direction
 was taken from, and that is not yet robustness that generalizes.**
+
+The second row qualifies that. MATH's flip is carried by one perturbation family, `domain`, which
+decides the MATH label and was run mostly on MATH's easiest problems (§6.11). On the 39 problems it
+never touched, difficulty points the official rows' way and familiarity has no signal. With that
+family set aside, the direction "easier = robust" holds on every population we hold, read per problem:
+the official rows, MATH and the hidden set. That subset was chosen after E65 was read and is small,
+so this is a reason to expect E64's direction to transfer, not a demonstration that it does.
 
 The hidden set does not settle which population it resembles. Read as batches, the familiarity
 ranking ordered every DeepSeek, Skywork and Olmo case correctly (§7.2). Read one problem at a time,
@@ -1139,6 +1202,13 @@ rows means familiar = spurious. And E65 shows the same contradiction for difficu
 official rows and reversing on MATH (§6.11, §9). So the contradiction is not about familiarity alone.
 It is about which population the test set resembles, and it remains the most interesting open
 question in the project.
+
+**Its MATH half has an explanation that needs no theory of robustness** (F-92, exploratory). On MATH
+the label is decided by whether the `domain` family was run on a problem, and that family went
+mostly to the easiest, least familiar problems. On the 39 MATH problems it never touched, familiarity
+scores 0.506 and difficulty 0.672, the official rows' pattern. What remains of the contradiction is
+the hidden set read as batches (E50: familiar = robust inside every batch), which we cannot
+inspect problem by problem.
 
 §6.2 now offers a candidate mechanism, untested. If a spurious olympiad label usually means the model
 answered through an added contradiction, then a problem the model recognises is exactly one where it
@@ -1308,6 +1378,9 @@ python train/eval_e61.py
 python train/eval_e63.py
 python train/eval_e65.py
 python train/eval_e66.py
+
+# E64 explained (§6.11, §7.5): noise of the 34 rows, the MATH reversal by family, layers, rank, text surrogates (~30 min)
+python train/explain_e64.py
 
 # Rebuild every submission ZIP, deterministically
 python submission/make_e64.py     # the submission
@@ -1511,7 +1584,7 @@ dropped. Where the arXiv preprint and the peer-reviewed venue fall in different 
 ## Appendix A — Experiment index
 
 `experiments.md` carries the full registry with configuration and outcome for every experiment.
-`PROGRESS.md` carries findings F-1…F-90 with the evidence for each. `RESULTS.md` carries 50
+`PROGRESS.md` carries findings F-1…F-93 with the evidence for each. `RESULTS.md` carries 51
 generated metric tables, all covered by `scripts/regenerate_results.py`.
 
 ## Appendix B — Open questions
