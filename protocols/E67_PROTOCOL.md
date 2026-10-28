@@ -1,6 +1,6 @@
 # E67: does E64's difficulty direction cause longer reasoning? A steering test of Finding 93
 
-Status: **pre-registered 28 October 2026, 07:50 UTC, before any E67 sample is drawn.** Report experiment: it decides
+Status: **pre-registered 28 October 2026, 07:45 UTC (commit `3836304`), before any E67 sample is drawn.** Report experiment: it decides
 no submission and touches neither the Form ZIP (E64 stays) nor Codabench. Code: `datagen/perturb/e67_pool.py`
 (direction and problems), `datagen/perturb/steer.py` (sampling with the push), `scripts/e67_gpu_bundle.py` (kernels
 `e67-a` to `e67-d`; `e67-timing` ran first, §6), `train/eval_e67.py` (gates; written and run on synthetic records
