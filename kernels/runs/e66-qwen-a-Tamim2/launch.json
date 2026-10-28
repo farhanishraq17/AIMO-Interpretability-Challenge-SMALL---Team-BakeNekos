@@ -1,0 +1,30 @@
+{
+  "job": "e66-qwen-a",
+  "account": "Tamim2",
+  "ref": "duneak47/aimo-small-e66-qwen-a",
+  "source_sha256": {
+    "datagen/perturb/sample.py": "d82ecb2d4616681c3d71b0ead6b27e6ffe717b57037641628c899e4834b3e7e6",
+    "datagen/perturb/answers.py": "10d240d3db4d6b13863b43559b907b8dc4c3d9bc8a87e97d3fd1311db0946b05",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be",
+    "data/e66/pool.parquet": "c7cfb3573c2234ddd22911ae06ba64d6dec846238a88a3b58ef2aa0fd82229c5",
+    "protocols/E66_PROTOCOL.md": "9a35ec2bb728a1db627886df6b6655022bbb69e1cb33ddba0c2e6ed274b95e69"
+  },
+  "kernel_sha256": "731cb006c760e7768368a264c6ee973422e706d15dbdfd47dbd7ccf7bfec9baf",
+  "submitted_at": "2026-10-26T22:21:54.246806+00:00",
+  "metadata": {
+    "id": "duneak47/aimo-small-e66-qwen-a",
+    "title": "aimo-small-e66-qwen-a",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

@@ -1195,3 +1195,196 @@ On the labelled rows, self-labels agree with the official labels on 0.296; `e27f
 | olmo | 1 of 64 | 20 of 64 |
 
 **Exploratory, post hoc on the same 27 rows (decides nothing).** The per-row detection rate as a score for the official label: AUC 0.675, 95% problem-bootstrap CI [0.505, 0.860].
+
+## E61: familiarity as a per-problem threshold
+
+Rules fixed in `protocols/E61_PROTOCOL.md` before this table was computed. Balanced accuracy of the per-problem decisions, 95% problem-bootstrap interval (2,000 draws, seed 61); any constant scores 0.5. E61a: below E54's 75-problem AMC median. E61b: at or below the p_m quantile of E55's 548 unlabelled problems.
+
+| population | rows | robust | E61a | E61b |
+| --- | --- | --- | --- | --- |
+| P1 official rows | 34 | 0.71 | 0.458 [0.143, 0.682] (acc 0.441) | 0.329 [0.136, 0.481] (acc 0.382) |
+| P2 DeepSeek MATH | 142 | 0.27 | 0.638 [0.552, 0.726] (acc 0.683) | 0.624 [0.545, 0.697] (acc 0.535) |
+
+| model | p_m | E61b threshold | E61a threshold | E61a's quantile in R | R within 0.01 nats of E61b |
+| --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 0.600 | 1.4934 | 1.2685 | 0.394 | 0.013 |
+| `Skywork/Skywork-OR1-Math-7B` | 0.333 | 1.8658 | 2.0123 | 0.405 | 0.011 |
+| `allenai/Olmo-3-7B-Think` | 0.333 | 1.4405 | 1.5790 | 0.418 | 0.027 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.667 | 1.8888 | 1.5377 | 0.414 | 0.016 |
+
+**C2 (E61b on DeepSeek MATH, interval lower bound above 0.5): pass** (0.624 [0.545, 0.697]). C3 and C4 are reported only. C1, C5 and C6 are decided on the ZIP.
+
+## E63: familiarity cutoffs on the organizers' problems
+
+Fixed in `protocols/E63_PROTOCOL.md` before this table was computed. Expected board scores assume the hidden problems are drawn from the 36 `train-main-v2` problems with labels following familiarity inside each batch (E50); 6000 draws, seed 63.
+
+| model | intended share robust | E61b's share on the 36 | E61a's share on the 36 | E63 cutoff |
+| --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 0.60 | 0.78 | 0.58 | constant `True` |
+| `Skywork/Skywork-OR1-Math-7B` | 0.33 | 0.56 | 0.56 | 1.5825 |
+| `allenai/Olmo-3-7B-Think` | 0.33 | 0.53 | 0.58 | 1.2887 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.67 | 0.83 | 0.58 | 1.6613 |
+
+| rule | expected board score | qwen | skywork | olmo | deepseek |
+| --- | --- | --- | --- | --- | --- |
+| E61a (board 8) | **9.10** | 2.42 | 2.18 | 2.12 | 2.38 |
+| E61b (board 9) | **9.28** | 2.51 | 2.18 | 2.23 | 2.36 |
+| E63 | **10.29** | 3.00 | 2.43 | 2.43 | 2.43 |
+| constants | **9.00** | 3.00 | 2.00 | 2.00 | 2.00 |
+| ceiling: best cutoff or constant per model | **10.30** | 3.00 | 2.44 | 2.43 | 2.43 |
+
+| population | rows | robust | E63 balanced accuracy |
+| --- | --- | --- | --- |
+| P1 official rows (reported only) | 34 | 0.71 | 0.400 [0.172, 0.579] (acc 0.441) |
+| P2 DeepSeek MATH (C2) | 142 | 0.27 | 0.631 [0.538, 0.719] (acc 0.627) |
+
+**C2: pass.** C3 reported only; C1 and C5 carry from E61 (identical solution code).
+
+## E64: predicted difficulty as the per-problem score
+
+Fixed in `protocols/E64_PROTOCOL.md` before any fit. Target: Qwen's mean log trace length (cap 32k) on E62's 497 problems. Score: per-layer ridge from each model's own E55 prompt states, averaged over layers; lower = robust.
+
+| model | D1 CV Spearman (gate >= 0.30) | D3 Spearman with mean NLL | cutoff (p_m quantile, official 36) | share of the 36 called robust |
+| --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 0.786 | -0.351 | 10.3858 | 0.61 |
+| `Skywork/Skywork-OR1-Math-7B` | 0.771 | -0.504 | 9.9695 | 0.33 |
+| `allenai/Olmo-3-7B-Think` | 0.788 | -0.416 | 9.9438 | 0.33 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.768 | -0.404 | 10.3925 | 0.67 |
+
+**D2 (gate: AUC >= 0.60), official rows:** AUC 0.883 [0.687, 1.000] on 34 rows.
+
+Reported only (amendment 2): the shipped decisions on the same 34 rows score accuracy 0.824 (balanced 0.729); the per-model constants 0.529 (balanced 0.463).
+
+**Gates: D1 pass, D2 pass.** D4 (DeepSeek MATH) is not computable: E55 holds no prompt states for those problems (amendment 1).
+
+## E65: E64's difficulty on DeepSeek MATH
+
+Fixed in `protocols/E65_PROTOCOL.md` before any score was computed on these rows. E64's shipped DeepSeek arithmetic (nothing refitted) on `e1b-stagea-deepseek`'s prompt states for DeepSeek's Hendrycks MATH instances: 137 rows, 36 robust, older label rule. 95% row-bootstrap intervals (2,000 draws, seed 65).
+
+| score | value |
+| --- | --- |
+| **gate: AUC of -(predicted difficulty)** | **0.346 [0.246, 0.447]** |
+| AUC of -(mean NLL), E61's statistic, same rows | 0.683 [0.582, 0.780] |
+| E64's decisions at DeepSeek's cutoff (10.3925): balanced accuracy | 0.500 [0.500, 0.500] (accuracy 0.263; 1.00 called robust) |
+| Spearman, predicted difficulty vs mean NLL | -0.340 |
+
+**Gate (lower bound above 0.5): fail.**
+
+## E66: E64 refitted on a 64k-cap target
+
+Fixed in `protocols/E66_PROTOCOL.md` before any sample was drawn. E64's fit, unchanged, on a new target: the 194 problems E62 sampled at the 32k cap re-sampled by Qwen at a 65,536-token cap (seed 66, k = 2), the other 303 keep E62's target. 497 problems in the fit, 0 dropped for lacking two samples.
+
+**G1 (label-free, gate <= 0.142):** 0.087 of the 497 have both samples at the cap (E64: 141/497 = 0.284). pass. Reported: 0.286 of the 388 new samples reach 65,536 tokens.
+
+| model | G2 CV Spearman (gate >= 0.30) | D3 Spearman with mean NLL | cutoff (E64's share, official 36) | share of the 36 called robust | of the 36, decisions that differ from E64 |
+| --- | --- | --- | --- | --- | --- |
+| `Qwen/Qwen3.5-4B` | 0.804 | -0.326 | 10.6538 | 0.61 | 6 |
+| `Skywork/Skywork-OR1-Math-7B` | 0.786 | -0.497 | 10.0750 | 0.33 | 0 |
+| `allenai/Olmo-3-7B-Think` | 0.800 | -0.400 | 10.0351 | 0.33 | 0 |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | 0.781 | -0.408 | 10.6836 | 0.67 | 8 |
+
+**G3 (official AUC, gate >= E64's 0.8833):** 0.8083 [0.571, 1.000] on 34 rows. fail.
+**G4 (official decisions, gate >= E64's 0.8235):** accuracy 0.7647 (26/34). fail.
+
+Reported only: E65's check with the new DeepSeek arrays, AUC 0.345 [0.246, 0.448] on DeepSeek's 137 MATH rows (E64: 0.346).
+
+**G1-G4: fail.** G5 (contract) and G6 (board) are run after this; the ship rule is the protocol's §6.
+
+## E64 explained: noise, MATH and what the ridge reads
+
+Exploratory, computed after E64-E66 were read; nothing here is a gate or changes what ships. E64's fit and arrays are used unchanged unless a row says otherwise. AUCs on the 34 official small-track rows unless stated; intervals are row bootstraps (2,000 draws, seed 64).
+
+### How far the official AUC moves when the method does not
+
+E64's fit on a different target or a random subset of its 497 problems; held-out Spearman is on the problems left out, mean over 5 draws (seed 67).
+
+| fit | held-out Spearman | official AUC |
+| --- | --- | --- |
+| all 497, both samples (E64) | - | 0.883 |
+| all 497, first sample only | - | 0.904 |
+| all 497, second sample only | - | 0.846 |
+| 125 problems | 0.742 | 0.815 (sd 0.082, range 0.675-0.900) |
+| 250 problems | 0.738 | 0.852 (sd 0.095, range 0.696-0.933) |
+| 375 problems | 0.806 | 0.850 (sd 0.076, range 0.704-0.917) |
+
+### Why E64 reverses on DeepSeek's MATH rows
+
+E65's 137 rows (E64's shipped DeepSeek arithmetic, older label rule). `domain` = the family was run on the problem, including inside aggregate rows.
+
+| rows | n | robust share | AUC, easier = robust | AUC, familiar = robust |
+| --- | --- | --- | --- | --- |
+| all | 137 | 0.26 | 0.346 [0.246, 0.448] | 0.683 [0.581, 0.780] |
+| `domain` run | 98 | 0.12 | | |
+| **`domain` never run** | 39 | 0.62 | **0.672 [0.492, 0.842]** | 0.506 [0.311, 0.700] |
+
+Which problems got `domain`: AUC 0.738 from E64's easier-ness, 0.325 from familiarity; share by MATH level L1 0.88, L2 0.74, L3 0.73, L4 0.71, L5 0.45. Spearman of E64's predicted difficulty with the MATH level: 0.416.
+
+Variants that lowered accuracy, as stored in DeepSeek's MATH tables (failures only), that keep none of the original's numbers: distract 0.22 of 59, domain 0.60 of 272, rename 0.00 of 4, rephrase 0.35 of 20, typos 0.00 of 4.
+
+### What the ridge reads
+
+Single layers, each fitted alone (E64's fit on one layer), grouped by relative depth; CV Spearman on E64's folds, official AUC of the band's layers averaged.
+
+| depth | layers (4 models) | CV Spearman | official AUC |
+| --- | --- | --- | --- |
+| 0.00-0.10 | 15 | 0.694 | 0.812 |
+| 0.10-0.25 | 21 | 0.722 | 0.854 |
+| 0.25-0.50 | 32 | 0.772 | 0.896 |
+| 0.50-0.75 | 32 | 0.782 | 0.904 |
+| 0.75-0.90 | 17 | 0.763 | 0.879 |
+| 0.90-1.00 | 15 | 0.751 | 0.921 |
+
+Best single layer per model (depth qwen 0.47, skywork 0.64, olmo 0.47, deepseek 0.61): CV Spearman 0.801, official AUC 0.875. E64 (all layers averaged): official AUC 0.883.
+
+| top principal components per layer | CV Spearman | official AUC |
+| --- | --- | --- |
+| 1 | 0.450 | 0.554 |
+| 5 | 0.631 | 0.758 |
+| 20 | 0.753 | 0.858 |
+| 50 | 0.758 | 0.879 |
+
+The four models' predictions on the 51 problems outside the fit: pairwise Spearman 0.926 to 0.956 (min to mean).
+
+| text surrogate of the same target | CV Spearman | official AUC |
+| --- | --- | --- |
+| 12 hand features (size, share of mathematics, topic words) | 0.523 | 0.700 |
+| word 1-2-gram tf-idf, ridge | 0.603 | 0.871 |
+
+Hand-feature weights (standardized): log_chars +0.60, log_words -0.41, number_theory +0.13, extremal +0.13, geometry +0.12, share_math -0.11.
+Tf-idf words for short traces: log, 20, that log, miles, what, 16, that satisfies, let, 40, interior, the value, compute, let compute, that 20, 75. For long traces: cdots, ldots, irreducible fraction, irreducible, least, find, possible, text, 000, side, 1000, april, integer, 999, and is. Spearman of the tf-idf score with E64's (mean of models) outside the fit: 0.546.
+
+The hand features explain R2 qwen 0.50, skywork 0.49, olmo 0.48, deepseek 0.49 of E64's score over the 548 E55 problems; the rest scores official AUC 0.642.
+
+## E67: steering E64's difficulty direction
+
+Fixed in `protocols/E67_PROTOCOL.md` before any sample. Qwen3.5-4B, E62's base recipe at a 16,384-token cap, k = 2 per condition; the push is added at hidden-state index 15 to every prompt token during prefill. 60 of 60 problems complete. Outcome: each problem's mean log(min(tokens, cap)); 95% paired problem-bootstrap intervals.
+
+| contrast | change in mean log trace length | gate | result |
+| --- | --- | --- | --- |
+| +2 sigma along u, minus no push | -0.003 [-0.114, +0.111] | G1: above 0 | fail |
+| -2 sigma along u, minus no push | -0.004 [-0.122, +0.113] | G2: below 0 | fail |
+| +2 sigma along random r, minus no push | +0.062 [-0.047, +0.167] | G3: contains 0 | pass |
+| +2 minus -2 along u | +0.001 [-0.099, +0.111] | reported | |
+
+Sanity (S): E64's Qwen read of the steered E55 prompt states, minus the unsteered read (log-token units).
+
+| push | layers past the steered one (S) | all layers averaged |
+| --- | --- | --- |
+| plus | +0.187 [+0.186, +0.187] | +0.129 [+0.129, +0.130] |
+| minus | -0.186 [-0.187, -0.186] | -0.129 [-0.130, -0.129] |
+| random | +0.012 [+0.011, +0.012] | +0.006 [+0.006, +0.006] |
+
+**S: pass.** Unsteered read against E64's offline predictions (fp16 here, bf16 in E55): max abs diff 0.003.
+
+| condition | accuracy | cap hit | declined | geometric mean tokens |
+| --- | --- | --- | --- | --- |
+| minus | 0.950 | 0.083 | 0.000 | 7,141 |
+| zero | 0.933 | 0.075 | 0.000 | 7,168 |
+| plus | 0.958 | 0.092 | 0.000 | 7,149 |
+| random | 0.933 | 0.083 | 0.000 | 7,627 |
+
+Exploratory, added after the gates were read: were trace length to follow E64's read of the steered states one-for-one, +2 minus -2 along u would be +0.258 (every layer averaged) to +0.373 (past the steered layer); observed +0.001 [-0.099, +0.111]. E64's in-sample slope of observed on predicted length over E62's 497 problems is 1.19, so one-for-one is the smaller expectation.
+
+Run time: 22.3 GPU-process hours, median 21.9 min a problem; 11.8 Kaggle session-hours for the four kernels.
+
+**Gates: G1 fail, G2 fail, G3 pass, S pass.**

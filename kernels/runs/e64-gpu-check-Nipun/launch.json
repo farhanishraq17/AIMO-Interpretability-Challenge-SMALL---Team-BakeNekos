@@ -1,0 +1,26 @@
+{
+  "job": "e64-gpu-check",
+  "account": "Nipun",
+  "ref": "nowshintabassumnipun/aimo-small-e64-gpu-check",
+  "source_sha256": {
+    "e64/solution.py": "45bb8611dafa442508a02d76815f1487167f90710d9c04f46fbeb8b20ea83511",
+    "e64/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "e64/system_prompt.txt": "72283c58f504d7c3d32d66066fcb06aecc20d14e93136cd6b1589f7f3ce7b002",
+    "problems.json": "8b9e6f2ddb325f13ccf8772117943a0b8547c9f87c9cc978e6be3021c9e58abf"
+  },
+  "kernel_sha256": "476d28bfec04a5a81d6ea2902f707b15e151bbca0531bad8763ee976502eb2b9",
+  "submitted_at": "2026-10-22T12:39:16.771057+00:00",
+  "metadata": {
+    "id": "nowshintabassumnipun/aimo-small-e64-gpu-check",
+    "title": "aimo-small-e64-gpu-check",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

@@ -2717,6 +2717,293 @@ caps, base and consistent-premise records.
   for the collaborator's run: `premise_variants.py` (free models, resumable, key rotation),
   `sample.py --allow-no-solution`, `eval_e52.grade`.
 
+**86. E61: `e27k`'s familiarity statistic as an absolute per-problem threshold passes every check it can
+pass before the board: exact NLL parity on the four real checkpoints, DeepSeek MATH above chance, three
+minutes for sixty calls. On the 34 official rows it reverses, now with an interval below 0.5.**
+(`protocols/E61_PROTOCOL.md`, committed `606cf9b` before any threshold; `train/eval_e61.py`; GPU check on
+Nipun, 21 Oct, 12 minutes, `kernels/runs/e61-gpu-check-Nipun/result.json`. RESULTS, "E61: familiarity as a
+per-problem threshold".)
+
+Robust iff the scored model's mean token NLL on the bare problem is at or below a threshold fixed on
+unlabelled problems. E61b (the candidate) takes the `p_m` quantile of E55's 548 problems, `p_m` from the probe
+balances (Qwen 0.6, DeepSeek 2/3, Skywork and Olmo 1/3); E61a (the control) is E54's frozen S1.
+
+| check | result |
+| --- | --- |
+| C1 parity, E55's stored NLL vs the ZIP's, five problems per real checkpoint | **max abs diff 0.0** on all four |
+| C2 E61b on DeepSeek MATH (142) | **0.624 [0.545, 0.697]: pass** (E61a 0.638 [0.552, 0.726]) |
+| C3 official rows (34), reported only | E61a 0.458 [0.143, 0.682]; **E61b 0.329 [0.136, 0.481]** |
+| C4 thresholds, reported only | E54's AMC medians sit at the 0.39-0.42 quantile of R for every model; 1-3% of R lies within 0.01 nats of an E61b threshold |
+| C5 sixty one-problem calls, loads included, T4 pair | **180 s: pass** (limit 300); native bools; an unknown model returns `False` |
+| C6 contract | `run_local.py --small`: coverage 1.0, 0 invalid for both ZIPs. **Docker not run:** the daemon failed to start on this machine |
+
+- **The arithmetic is settled.** The submission's NLL equals the reference values to the bit on the real
+  models, so a threshold drawn from them means what it says on the evaluation path, up to Blackwell's bf16.
+- **The reversal on the official rows is the sharpest it has been.** At E61b's thresholds familiar official
+  problems are spurious more often than chance allows. The protocol fixed C3 as reported only, because the
+  owner chose the familiarity direction on the board and MATH evidence (§12.3), so it does not block the
+  board read. It is the strongest evidence yet that what familiarity predicts depends on the population,
+  and the report should say so whatever the board shows.
+- **AMC 2023 is more familiar to every model than the reference as a whole.** E54's thresholds, drawn from
+  those 75 problems, would call only about 40% of R robust, so E61a is a stricter rule than its "median"
+  name suggests.
+- **Two tooling bugs fixed on the way.** The capability check probed a dataset that now answers 401 to
+  everyone, so four healthy accounts (Mazharul, Simanta01, Simanta02, Tamim3: 2x T4 each) read as having no
+  internet; it now probes a model the kernels download. `load_accounts` returned Tamim1's empty token, and
+  `kaggle_live_logs.py` then scrubbed the empty string between every character of the log; empty tokens
+  are now dropped where they are read.
+- **The board reads (21 Oct; Docker skipped by the owner, amendment 1): E61a 8/14 (0.57, submission 1007214),
+  E61b 9/14 (0.64, submission 1007215)**, read from the public leaderboard API and mapped by upload order (E61a was
+  uploaded first, as the protocol fixed). E61b equals the per-model constants; the control loses a case. The absolute
+  thresholds do not carry the batch ranking's 12/14 to the hidden problems: their NLLs sit on a different scale from
+  the 548 reference problems, or the gains and losses cancel. A one-case difference on 14 cases is noise, so neither
+  read separates the rules from the constants.
+- **The protocol contradicts itself at exactly 9/14.** §5 ships E61b at "at least 9/14"; §6 reads "9/14 or below" as
+  the threshold failing to transfer, with `e27f` shipping. The owner decides which governs (amendment 2). Against E61b
+  at a tie: no gain on the board, a significant reversal on the official rows (C3), a slower run where ties break on
+  runtime, and no Docker run yet.
+
+**87. Why E61 failed, and the ceiling of per-problem familiarity: E61's cutoffs came from the wrong population, and
+even perfectly calibrated cutoffs expect about 10.3 of 14, not 12.** (`protocols/E63_PROTOCOL.md`, committed `989cd4c`
+before any threshold; `train/eval_e63.py`. RESULTS, "E63: familiarity cutoffs on the organizers' problems".)
+
+- **The reference was the wrong population.** E55's 548 problems are mostly OlympiadBench. The organizers' own 36
+  `train-main-v2` problems, built by the pipeline that built validation and test, are more familiar to every model
+  and about twice as long. On those 36, E61b's cutoffs call 78% (Qwen), 83% (DeepSeek), 56% (Skywork) and 53% (Olmo)
+  robust, against 60%, 67%, 33% and 33% intended.
+- **That explains the reads.** With hidden batches drawn from the 36 and labels following familiarity inside each
+  batch as E50 recovered, E61a is expected at 9.10 and E61b at 9.28; the board gave 8 and 9.
+- **The ceiling, under the same model:** the best cutoff (or constant) per model expects **10.30**. DeepSeek, Skywork
+  and Olmo gain about 0.43 each over their constants; on Qwen no cutoff beats `True`. The batch ranking's 12/14 used
+  relative information inside a batch, which one-problem calls remove by design. **No per-problem familiarity rule can
+  be expected to reach 12/14**, and the model behind this number is the optimistic one (perfect order inside each
+  batch).
+- **E63** (`dist/solution-e63-official-quantile-small.zip`): E61's quantiles over the 36 official problems, Qwen at its
+  constant. Expected 10.29. C2 passes (DeepSeek MATH 0.631 [0.538, 0.719]); C6's local contract passes; C3, reported
+  only, 0.400 [0.172, 0.579] on the official rows. One upload; it replaces `e27f` only at 10/14 or better.
+- **Board, 26 Oct (submission 1010959): 9/14 (0.64), equal to the constants**, below the 10.29 expected. Per-problem
+  familiarity has now read 8 (E61a), 9 (E61b) and 9 (E63): it does not beat the constants on the hidden set under
+  any calibration we have tried. `e27f` is not replaced by E63.
+
+**88. E64: difficulty, read from one forward pass, predicts the organizers' labels where familiarity reverses: AUC
+0.883 [0.687, 1.000] on the 34 official rows, with no robustness label in training.** (`protocols/E64_PROTOCOL.md`,
+committed `5f3fd30` before any fit; `train/eval_e64.py`. RESULTS, "E64: predicted difficulty as the per-problem score".)
+
+Target: Qwen's mean log trace length on E62's 497 olympiad problems (none of them official). For every model, a
+per-layer ridge from its own E55 prompt states to that target, averaged over layers; easier = robust; cutoffs at E61's
+`p_m` quantiles of the 36 official problems.
+
+| check | result |
+| --- | --- |
+| D1 (gate >= 0.30): CV Spearman, predicted vs observed difficulty | Qwen 0.786, Skywork 0.771, Olmo 0.788, DeepSeek 0.768: **pass** |
+| D2 (gate >= 0.60): AUC on the 34 official rows | **0.883 [0.687, 1.000]: pass** |
+| D3: Spearman with mean NLL | -0.35 to -0.50: harder problems are *more* familiar |
+| reported only (amendment 2): the shipped decisions on the 34 rows | accuracy **0.824** (balanced 0.729), against the constants' 0.529 (0.463) |
+| C6 | coverage 1.0, 0 invalid |
+| C1, C5 (GPU, amendment 3; Nipun, `kernels/runs/e64-gpu-check-Nipun/`) | the ZIP's states on the four real checkpoints, read out locally: max abs diff **2.0e-06**; 60 calls with loads **172 s**; read-out about 2 ms a call: **pass** |
+
+- **It is not length.** Predicted difficulty correlates about 0.6 with log length, but length alone scores AUC 0.529 on
+  the same rows, and the part of predicted difficulty that length does not explain still scores 0.846 (exploratory,
+  computed after D2 was read).
+- **It holds model by model** (exploratory): Qwen 0.875 (12 rows), Olmo 0.929 (9), DeepSeek 0.905 (10); Skywork's 3
+  rows are too few. Qwen, the model familiarity could never move, is among the strongest.
+- **It resolves §12.3's contradiction on the official rows.** Familiar problems there are the hard, long ones, which
+  is why familiarity reversed (D3).
+- **What the board may say.** The batch ranking's evidence ran the other way (familiar = robust, p about 0.05 on 14
+  cases). E64 leans against familiarity, so its read is a real test between the two; the pre-registered rule ships it
+  at 10/14 or better.
+- **Board, 26 Oct (submission 1010961, uploaded after E63): 10/14 (0.71)**, one case above the constants and the
+  first per-problem read above 9. Rank 12 of 93 teams with a small-track score (11 above, 15 tied at 0.71). Under
+  the pre-registered rule **E64 replaces `e27f` as the Form ZIP**; the owner waived the Docker test on 27 Oct
+  (E64 amendment 4: the Codabench run itself had coverage 1.0, 0 invalid, and a read off the constants). One case of 14 is
+  weak evidence on its own; what it adds is direction: on the hidden set, read one problem at a time, difficulty
+  beat familiarity (10 against 8, 9 and 9), the order the official rows predicted and DeepSeek MATH (Finding 89) did
+  not.
+
+**89. E65: E64's difficulty score reverses on DeepSeek's MATH rows: AUC 0.346 [0.246, 0.447], where familiarity still
+scores 0.683.** (`protocols/E65_PROTOCOL.md`, committed `91726c5` before any score on these rows; `train/eval_e65.py`.
+RESULTS, "E65: E64's difficulty on DeepSeek MATH".)
+
+E64's amendment 1 dropped its MATH check because E55 has no states for those problems; `e1b-stagea-deepseek` has them in
+the same format (extractor, prompt, chat template, 2048 tokens, mean pooling, bf16). E64's shipped DeepSeek arithmetic,
+unrefitted, on DeepSeek's 137 Hendrycks MATH rows (36 robust, older label rule):
+
+| score | value |
+| --- | --- |
+| gate (lower bound above 0.5): AUC of -(predicted difficulty) | **0.346 [0.246, 0.447]: fail** |
+| AUC of -(mean NLL), same rows | 0.683 [0.582, 0.780] |
+| E64's decisions at DeepSeek's cutoff | every row called robust (balanced 0.500): MATH sits below an olympiad cutoff |
+| Spearman, predicted difficulty vs mean NLL | -0.340 |
+
+- **Both signals flip between the two labelled populations, and together.** Harder problems are more familiar in both
+  (Spearman -0.34 here, -0.35 to -0.50 on the official rows). On MATH familiar = robust (0.683), so harder = robust
+  (0.654); on the 34 official rows easier = robust (0.883), so familiar = spurious. No fixed direction of either score
+  holds on both, so E64 reads one population's structure, not robustness that generalizes.
+- **The hidden set sided with MATH so far.** E50's board structure (familiar = robust inside every batch) is the third
+  population, built by the organizers' pipeline like the official rows. Two of three populations ran against E64. Its
+  board read remained the decisive test, and the expected read was below 10/14. **The read, 26 Oct, was 10/14**
+  (Finding 88): per problem, the hidden set sides with the official rows.
+- **Use (E65 §5):** E64's ship rule is unchanged (Form at 10/14 or better on the board). If Codabench is still
+  unreachable on 27 Oct, the recommendation is `e27f`, not E64. Codabench has refused connections from outside our
+  network too since 22 Oct (`ECONNREFUSED` from a remote fetch on 24 Oct), so the outage is theirs.
+
+**90. E66: lifting the 32k cap from E64's target sharpens the label-free fit but ranks the official rows worse (AUC
+0.808 against 0.883, decisions 26/34 against 28/34). Two gates fail, so E64 stays the Form ZIP.**
+(`protocols/E66_PROTOCOL.md`, committed `5720e7a` before any sample; amendment 1 before any fit; `train/eval_e66.py`.
+RESULTS, "E66: E64 refitted on a 64k-cap target".)
+
+E64's target is flat at log(32768) on the 194 of 497 problems where Qwen hit the cap, and Qwen's and DeepSeek's cutoffs
+sat in that flat region. Sixteen Kaggle kernels re-sampled those 194 with Qwen at a 65,536-token cap (seed 66, k = 2;
+26-27 Oct, 3.5-7.4 h each, all exit 0). Every problem got both samples. E64's fit, unchanged, on the new target:
+
+| gate | E66 | E64 | result |
+| --- | --- | --- | --- |
+| G1: share of the 497 with both samples at the cap (<= 0.142) | **0.087** (43) | 0.284 (141) | pass |
+| G2: 5-fold CV Spearman, every model (>= 0.30) | **0.78-0.80** | 0.77-0.79 | pass |
+| G3: AUC of -(predicted difficulty), 34 official rows (>= E64's) | **0.808** [0.571, 1.000] | 0.883 | **fail** |
+| G4: shipped decisions' accuracy, same rows (>= E64's) | **26/34** (0.765) | 28/34 (0.824) | **fail** |
+
+- **The cap still binds.** 28.6% of the 388 new samples reached 65,536 tokens, and 43 problems hit it twice: Qwen
+  writes past 64k on about a fifth of these problems.
+- **The loss is on Qwen's rows.** Per model (exploratory): Qwen AUC 0.875 to 0.812 and decisions 11/12 to 9/12; Olmo
+  0.929 to 0.786 with the same 7/9; DeepSeek 0.905 to 0.857 with the same 8/10; Skywork unchanged. On the 36 official
+  problems, Qwen changes 6 decisions and DeepSeek 8; Skywork and Olmo none (their cutoffs sit below the old cap). Two
+  spurious Qwen problems move under the cutoff. One of them, `b62d28d3…`, *is* the cutoff: E64's share for Qwen
+  (0.6 of 36) is an exact order statistic, so one official problem always sits on it, and the shipped arithmetic
+  calls it robust by 1e-6. Called the other way, the count would be 27/34. That still fails.
+- **MATH is unchanged.** E65's check with the new DeepSeek arrays scores 0.345 [0.246, 0.448] (E64: 0.346).
+- **What it means.** The new target removes most of the censoring and fits slightly better without labels. It does not
+  rank the official rows better. The 34 rows cannot separate 0.808 from 0.883 (the intervals overlap almost entirely),
+  so this does not show that resolution above 32k hurts. It shows that the structural argument for E66 did not survive
+  the only labelled check. The rule was strict on purpose (§6: an equally good E66 fails G3 or G4 about half the
+  time), and it applies.
+- **Use (§6):** E64 stays in the Google Form. E66 never reached the board (G6 runs only after G1-G5 pass), so nothing
+  needs re-uploading. Reported only: E66's arrays pass the contract arithmetic (548 problems x 4 models, max diff
+  3.7e-06) and the GPU-state check (1.7e-06). No ZIP is kept.
+
+**91. The 34 official rows cannot rank refits of E64: with the method unchanged, the training draw alone moves their
+AUC by about 0.08.** (`train/explain_e64.py`, exploratory, written 28 Oct after E66. RESULTS, "E64 explained: noise,
+MATH and what the ridge reads".)
+
+E64's fit, untouched, refitted on random subsets of its own 497 problems (five draws each, seed 67) and on one-sample
+targets:
+
+| fit | held-out Spearman (label-free) | official AUC |
+| --- | --- | --- |
+| 125 problems | 0.742 | 0.815 (sd 0.082, range 0.675-0.900) |
+| 250 problems | 0.738 | 0.852 (sd 0.095, range 0.696-0.933) |
+| 375 problems | 0.806 | 0.850 (sd 0.076, range 0.704-0.917) |
+| all 497, first sample only / second only / both (E64) | - | 0.904 / 0.846 / **0.883** |
+
+- **E64's 0.883 is a good draw from its own method**, whose subsets average about 0.85. E66's 0.808 sits inside the
+  same range: Finding 90 shows E66 did not beat E64, not that it is worse.
+- **Any non-inferiority gate on these rows is mostly a coin toss** between refits of one method, as E66 §6 anticipated.
+  More problems improve the label-free fit; nothing measured here moves the official AUC beyond its noise.
+- **Use:** no further refit of E64 is worth a Form replacement before 1 Nov. Choices between variants of one method
+  should rest on label-free fit and on populations other than these 34 rows.
+
+**92. E64's reversal on MATH is carried by one perturbation family. On the 39 MATH problems the `domain` family never
+touched, easier = robust (AUC 0.672) and familiarity has no signal (0.506), as on the official rows.**
+(`train/explain_e64.py`, exploratory and post hoc, 28 Oct. RESULTS, same section.)
+
+E65's 137 DeepSeek MATH rows, E64's shipped arithmetic, MATH levels from `EleutherAI/hendrycks_math` (pinned revision):
+
+| rows | n | robust | AUC, easier = robust | AUC, familiar = robust |
+| --- | --- | --- | --- | --- |
+| all (E65) | 137 | 0.26 | 0.346 [0.246, 0.448] | 0.683 [0.581, 0.780] |
+| `domain` run (alone or inside an aggregate row) | 98 | 0.12 | | |
+| **`domain` never run** | **39** | **0.62** | **0.672 [0.492, 0.842]** | 0.506 [0.311, 0.700] |
+
+- **`domain` decides the MATH label** (F-51 found it breaks 86% of solved rows): 12% of the problems it touched are
+  robust against 62% of the rest.
+- **It went to the easiest problems.** It was run on 88% of MATH level 1 and 45% of level 5; E64's easier-ness
+  predicts which problems got it at AUC 0.738. That assignment alone makes easier look spurious on MATH, and makes
+  familiar look robust (familiarity predicts *not* getting `domain`: AUC 0.325).
+- **E64 does read difficulty there.** Its predicted difficulty correlates 0.416 (Spearman) with MATH's human-graded
+  level, on a population it never saw.
+- **Many of the `domain` failures are not answer-preserving as stored.** Of the 272 distinct `domain` variants that
+  lowered DeepSeek's accuracy, 60% contain none of the original's numbers (`distract` 22%, `rephrase` 35%): "What is
+  the value of 513^2 - 487^2?" became a question about seats with no number in it. The tables keep failing variants
+  only, and we cannot see whether the model was shown more text than is stored, so this is a concern about the
+  family on MATH, not a measurement of it.
+- **What it means.** Finding 89's "both signals flip between the populations, together" is mostly how one family was
+  assigned on MATH, not something about robustness. With it set aside, difficulty points the same way on all three
+  populations we hold: the official rows (0.883), MATH (0.672) and the hidden set read per problem (10/14). Familiarity's
+  MATH signal disappears with it, which removes the MATH half of the paper's open contradiction (§11.1); the batch
+  board's familiar = robust (E50) remains. **Caveats:** post hoc, chosen after E65 was read, 39 problems, and the
+  interval touches 0.49.
+
+**93. What E64 reads: a difficulty subspace present at every depth, read alike by all four models, about half
+explained by surface features, and matched on the official rows by vocabulary alone.** (`train/explain_e64.py`,
+exploratory, 28 Oct. RESULTS, same section.)
+
+- **Every depth carries it, mid-depth best.** One layer fitted alone, averaged by depth band: CV Spearman 0.694 in the
+  first tenth (the mean token embedding: a weighted bag of tokens) rising to 0.782 at half to three quarters depth;
+  official AUC 0.81 to 0.92 across bands. Each model's best single layer sits at depth 0.47-0.64; picked on the same
+  folds, those layers fit slightly better than E64's average (mean CV 0.801 against 0.768-0.788) and rank the official
+  rows the same (0.875 against 0.883).
+- **It is not one direction.** The same fit on each layer's top principal components: 1 component 0.450 / 0.554
+  (CV Spearman / official AUC), 5 components 0.631 / 0.758, 20 components 0.753 / 0.858, 50 components 0.758 / 0.879.
+  Difficulty lives in a 20-50-dimensional subspace of the high-variance directions, not on a single axis.
+- **The four models read the same thing.** On the 51 E55 problems outside the fit, their predictions agree at pairwise
+  Spearman at least 0.926 (mean 0.956): four architectures, each from its own states, give one ranking.
+- **Surface features explain about half.** Twelve hand features (size, share of mathematics, topic words) fit the
+  target at CV Spearman 0.523 and score official AUC 0.700; they explain R2 0.48-0.50 of E64's own score, and the rest
+  still scores 0.642. Size dominates the hand fit (characters up, prose words down), but length alone scores 0.529
+  (F-88).
+- **Vocabulary alone matches E64 on the official rows, not off them.** A word tf-idf ridge on the same label-free target
+  scores official AUC **0.871** but fits held-out olympiad problems at CV Spearman 0.603 against E64's 0.78, and agrees
+  with E64 at only 0.546. The 34 rows cannot separate the two (F-91); the 497 unlabelled problems can, and favour the
+  hidden states. Its words are readable: long traces go with AIME answer formats and enumeration ("irreducible
+  fraction", "1000", "least", "integers", floor brackets, ellipses), short traces with direct computation
+  ("compute", "what is", "value of", "log").
+- **Use:** none for the Form. No white-box replacement beats E64 on any measurement, and the vocabulary model is worse
+  where it can be told apart. For the report this is the white-box account of the black box: E64 reads the problem's
+  kind of task from prompt states, in many directions at once, alike across models, and more precisely than its words
+  alone. Whether that subspace *causes* longer reasoning is untested; a steering run would test it.
+
+**94. E67: pushing E64's difficulty direction into Qwen's prompt states moves E64's own read of the later layers and
+leaves the trace length where it was. G1 and G2 fail; the random control and the sanity check pass. At a
+natural-scale dose, the direction E64 reads is a correlate of how long Qwen thinks, not a lever on it.**
+(`protocols/E67_PROTOCOL.md`, committed `3836304` before any sample; `train/eval_e67.py`. RESULTS, "E67: steering
+E64's difficulty direction".)
+
+The direction is E64's Qwen ridge at hidden-state index 15 (depth 0.47, Qwen's best single layer in F-93), mapped back
+to raw state space. The push is 2 sigma along it, with sigma = 0.0719 the SD of E55's prompt states on that direction,
+so 2 sigma moves the layer's read by 1.091 log-tokens, two SDs of its spread between problems. It was added to every
+prompt token at prefill only, with a random direction of the same norm as control. Qwen3.5-4B ran under transformers
+with E62's base recipe, a 16k cap and k = 2 per condition, on 60 E62 problems centred on a predicted trace of half the
+cap. Four kernels ran on 28 Oct (Tamim2, Tamim3, Simanta02, Mazharul; 2.7-3.3 h each, all exit 0, 11.8
+session-hours), and all 60 problems are complete.
+
+| gate | contrast: change in mean log trace length | result |
+| --- | --- | --- |
+| G1 (above 0) | +2 sigma along u, minus no push: **-0.003 [-0.114, +0.111]** | **fail** |
+| G2 (below 0) | -2 sigma along u, minus no push: **-0.004 [-0.122, +0.113]** | **fail** |
+| G3 (contains 0) | +2 sigma along a random direction, minus no push: +0.062 [-0.047, +0.167] | pass |
+| S (later layers move) | E64's read of layers 16-32 on the steered E55 prompt: +0.187 (plus), -0.186 (minus), +0.012 (random) | pass |
+
+- **The push reaches the computation, but the length does not follow.** Past the steered layer, E64's own read moves by
+  ±0.19 log-tokens, almost identically on every problem. Geometric-mean trace lengths are 7,141 tokens (minus), 7,168
+  (none) and 7,149 (plus). Exploratory, computed after the gates: if length followed E64's read one-for-one, +2 minus
+  -2 would be +0.258 to +0.373. The observed +0.001 [-0.099, +0.111] excludes even the smaller figure, and
+  one-for-one is the conservative expectation, since observed length rises 1.19 per unit of E64's read over E62's 497
+  problems.
+- **Nothing broke.** Accuracy is 0.93-0.96 in every condition, cap hits 7.5-9.2%, and no answer was declined. The random
+  push, if anything, lengthened (+0.062, interval across 0), so a push of this norm is not neutral in general. Along
+  E64's direction it does nothing measurable either way.
+- **Caveats.** One layer, one dose, one model, prefill only. The pushed direction is the ridge's single read-out
+  direction, while F-93 places difficulty in a 20-50-dimensional subspace. The push is small in absolute terms: 2 sigma
+  = 0.144, against a mean prompt state of norm 5.50 at that layer. A larger push, or the whole subspace, might act.
+  This shows that E64's direction at the between-problem scale is not a lever. It does not show that the subspace is
+  inert.
+- **What it means (§5's second case).** The model's later layers register the push, and E64 reads them as harder or
+  easier, but Qwen does not think longer or shorter. E64 reads a correlate of difficulty that the model does not use
+  along that direction to set its reasoning length. This fits F-93's account, where much of the read is the kind of
+  task, legible from vocabulary: a description of the problem, not a control signal for the trace. For the report this
+  is the white-box causal check, and it is negative.
+- **Use:** none for the Form (E64 stays).
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

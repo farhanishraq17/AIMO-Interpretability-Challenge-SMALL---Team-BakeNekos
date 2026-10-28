@@ -90,6 +90,23 @@ STEPS = [
     ["train/eval_e58.py", "--experiment", "e59"],
     # E60: premise-level contradictions; needs the e60 runs, data/e60/ and E59's result.
     ["train/eval_e58.py", "--experiment", "e60"],
+    # E61: familiarity as a per-problem threshold. CPU; needs the e23, e54 and e55 runs.
+    ["train/eval_e61.py"],
+    # E62: familiarity against contradiction detection, Qwen. CPU; needs the e62 runs, data/e62/ and the e55 runs.
+    ["train/eval_e62.py"],
+    # E63: E61 recalibrated on the organizers' problems. CPU; needs the e23, e54, e55 runs and E61's thresholds.
+    ["train/eval_e63.py"],
+    # E64: predicted difficulty from one forward pass. CPU (~5 min); needs the e55 and e62 runs.
+    ["train/eval_e64.py"],
+    # E65: E64's difficulty on DeepSeek MATH. CPU; needs the e1b and e64 runs.
+    ["train/eval_e65.py"],
+    # E66: E64 refitted on the 64k-cap target. CPU (~5 min); needs the e1b, e55, e62, e64 and e66 runs.
+    ["train/eval_e66.py"],
+    # E64 explained: noise of the official rows, the MATH reversal, what the ridge reads. CPU (~30 min); needs the
+    # e1b, e55, e62 and e64 runs and the pinned MATH tables in the HF cache.
+    ["train/explain_e64.py"],
+    # E67: E64's difficulty direction steered into Qwen at prefill. CPU (seconds); needs the e64 and e67 runs, data/e67/.
+    ["train/eval_e67.py"],
 ]
 
 

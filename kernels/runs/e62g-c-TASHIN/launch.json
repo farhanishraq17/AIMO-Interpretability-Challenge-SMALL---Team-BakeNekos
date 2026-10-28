@@ -1,0 +1,28 @@
+{
+  "job": "e62g-c",
+  "account": "TASHIN",
+  "ref": "tashintahir/aimo-small-e62g-c",
+  "source_sha256": {
+    "datagen/perturb/premise_variants.py": "e9b10b97425143eee6f9b79476b5484f419660e0ae5ff28fda0ea220d2d400b8",
+    "datagen/perturb/transforms.py": "bc925640cde89b288af940d9ea0d301147240f05c29af0b85a6e062bcde68b7a",
+    "data/e62/eligible.parquet": "b7e42fd884a337643756d75f7db2824affa9c3fd3164a2384cc8515c2d1dafab",
+    "protocols/E62_PROTOCOL.md": "119954ef7f8177c9ecbe3b5276f5b708b35e3f9fefb01330286ffe359932c3e9",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be"
+  },
+  "kernel_sha256": "af988bbba6daed7585b350bab64c9b4df50956cca2e05fed992e0612e952c786",
+  "submitted_at": "2026-10-28T10:09:15.562734+00:00",
+  "metadata": {
+    "id": "tashintahir/aimo-small-e62g-c",
+    "title": "aimo-small-e62g-c",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

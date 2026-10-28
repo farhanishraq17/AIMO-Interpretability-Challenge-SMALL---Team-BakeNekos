@@ -1,0 +1,21 @@
+{
+  "job": "capability-check",
+  "account": "Mazharul",
+  "ref": "v01ds3nt1n3l/aimo-small-capability-check",
+  "source_sha256": {},
+  "kernel_sha256": "3ce70be2cd88fc9f1990d7283dae1e8fe59475ac83a3b47614f3377c9713e0db",
+  "submitted_at": "2026-10-20T23:35:07.351256+00:00",
+  "metadata": {
+    "id": "v01ds3nt1n3l/aimo-small-capability-check",
+    "title": "aimo-small-capability-check",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

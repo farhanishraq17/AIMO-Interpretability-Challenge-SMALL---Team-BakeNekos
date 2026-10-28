@@ -6,7 +6,7 @@
 
 | Date | Event |
 | --- | --- |
-| 29 Sep 2026 | Plan last updated. **Start at §12: the handover note and current decisions.** |
+| 21 Oct 2026 | Plan last updated. **Start at §13: the final push under per-problem evaluation.** §12 is the history behind it. |
 | 1 Nov 2026, 12:55 UTC | Codabench submissions close (about 6.5 weeks away) |
 | 15 Nov 2026 | Technical report and open-source code due |
 | 11/12 Dec 2026 | NeurIPS workshop |
@@ -921,3 +921,213 @@ the collaborator's compute can run. **The submission is `e27f`** unless their ga
 generated free on OpenRouter. Qwen and Olmo now flag a quarter to a third of them (from almost none), but a robust
 label needs every sample flagged, and only 2 of 27 rows were. Gate failed (kappa 0.045). The variant was a real part
 of the gap; the 100k budget is the part left, and it needs the collaborator's GPUs.
+
+
+---
+
+## 13. Final push (21 October to 1 November): per-problem leaderboard and prize
+
+**This section supersedes §12.4-12.8 as the plan.** Those sections remain the record of why.
+
+### 13.1 Where we stand, in cases
+
+The board is still 14 cases: every score is a multiple of 1/14, so one case is 7.1 points.
+
+| Board, 21 Oct | Cases | Teams |
+| --- | --- | --- |
+| 1.00 | 14 | 1 |
+| 0.93 | 13 | 3 |
+| 0.86 | 12 | 1 |
+| 0.79 | 11 | 3 |
+| 0.71 | 10 | 13 |
+| **0.64, us (rank 22)** | **9** | us and others |
+
+Our 0.64 is `e27k` re-scored per problem, which collapses to the per-model constants (Finding 79);
+`e27f` gives the same predictions without loading a model. E50 solved the hidden set's structure
+(Finding 75), and that fixes what each family of method can score:
+
+| Model | Cases | Robust | Labels, most familiar first | Constant | Familiarity, `e27k`'s counts |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 5 | 3 | R S R S R, or S R R S R | `True`: 3 | 3 |
+| DeepSeek | 3 | 2 | R R S | `True`: 2 | **3** |
+| Skywork | 3 | 1 | R S S | `False`: 2 | **3** |
+| Olmo-3-Think | 3 | 1 | R S S | `False`: 2 | **3** |
+| **Total** | 14 | 7 | | **9 (0.64)** | **12 (0.86)** |
+
+- **The familiarity ranking is worth three cases, but only if it can act per problem.** It cannot
+  as a batch rank any more. It can as an absolute threshold on the same statistic: E61, below.
+- **12 of 14 is the ceiling of every method we hold that generalizes.** Qwen's ranking gets 3 of 5,
+  the same as its constant, and nothing we have measured moves a Qwen case.
+- **13 or 14 needs per-case information about Qwen.** We could build it (Finding 75 names the swap)
+  and it would say nothing about new problems; the owner rejected it on 14 Oct and it is not in this
+  plan. The prize is decided on new problems and variants, from the ZIP sent through the
+  organizers' Google Form, not from this board.
+- **Some of the board above us may not be methods.** `train-main-v2` revision `25e45665` still holds
+  7 labelled validation cells (Qwen 3, Olmo 3, DeepSeek 1; Finding 75). Using it is evaluation
+  leakage. Every script here pins `23791d9b`; keep it that way.
+
+### 13.2 Resources on 21 Oct
+
+**Kaggle**, from `scripts/kaggle_quota.py` (hours this week; every quota resets **Sat 24 Oct
+00:00 UTC**, and the next reset, 31 Oct, comes after the freeze):
+
+| State | Aliases | GPU hours left |
+| --- | --- | --- |
+| Fresh, GPU verified on 28 Sep | Nipun, Tamim2 | 30 each |
+| Fresh, GPU not verified | Mazharul, Simanta02; Tamim3 (passed 28 Sep, later lost notebook access) | 30 each |
+| Partly used | Simanta01 22.6, Arifin 10.0, Labib 4.9 | 37.5 |
+| Spent until Saturday | ISHRAQ, DIDHITI, TASHIN, SALAM, Eshad, Mashrafi, Samin, Nasif | under 3.1 each |
+| Never push | RSD (read-only, enforced); MUBAMAN (CPU only, no internet since 18 Oct) | — |
+| Token rejected (HTTP 401) | Shafeen (value is not a `KGAT_` token), MalihaMehnaj, Tamim1 (empty) | — |
+
+About 180 GPU-hours are reachable before Saturday and about 480 from Saturday to the freeze.
+
+**LLM APIs** (`Secrets.env`; status read 21 Oct, values never printed): two OpenRouter free-tier
+keys, both live (E60's generator already rotates through them), and one Gemini key, live, listing
+46 models including `gemini-2.5-pro` and `gemini-2.5-flash`. None of them can run at evaluation,
+which is offline; they write and check variants for offline experiments only.
+
+**The binding constraint is not compute.** Labels whose agreement with the official ones can be
+tested on rows we have not already used are the constraint, and GPU hours cannot make them. Four
+labellers have failed against the same 27-34 official rows (E24b, E58, E59, E60). So most of the
+fleet's hours this week go to checks and to one report experiment (E62), not to a new labeller.
+
+### 13.3 E61: the familiarity ranking as a per-problem threshold (the one submission bet)
+
+**Question.** Does the statistic that won the batch board (the scored model's mean token NLL over
+the bare problem, Finding 62) keep its value when the decision is an absolute threshold fixed on
+unlabelled data, one problem per call?
+
+| Item | Choice, fixed in `protocols/E61_PROTOCOL.md` before any threshold is computed |
+| --- | --- |
+| Score | Mean token NLL, bare text, computed by the E57 template (parity 0.0 with E55 on all four checkpoints, Finding 82) |
+| Reference set | E55's 548 unlabelled problems (official 36, ReliableMath, olympiad pool), scored by each model on the evaluation path |
+| Threshold, E61b (the candidate) | Robust iff NLL at or below the `p_m` quantile of model `m`'s reference NLLs, with `p_m = (n_m + d_m) / 2n_m` from the probe balances already used by the constants (Finding 64): Qwen 0.60, DeepSeek 0.67, Skywork 0.33, Olmo 0.33 |
+| Threshold, E61a (control) | E54's S1 exactly as frozen: below the 75-problem AMC reference median (qwen 1.269, skywork 2.012, olmo 1.579, deepseek 1.538). No new choice at all |
+| Fallback | Any failure inside a call returns that model's constant, as `e27f` does |
+| Not allowed | State carried across calls (online calibration on the test problems), threshold search on the board, a per-model choice between E61 and the constant made from board reads |
+
+**Checks before any upload**, all fixed now:
+
+| Check | Pass |
+| --- | --- |
+| C1 parity | ZIP features equal E55's on all four checkpoints (GPU check, `scripts/e57_gpu_bundle.py` pattern) |
+| C2 home population | DeepSeek MATH (142): balanced accuracy CI lower bound above 0.5 at E61b's DeepSeek threshold (E54's S1 reached 0.638 [0.549, 0.726]) |
+| C3 official rows | Reported only. The batch split reverses there (§12.3), and the owner has already decided on the board and MATH evidence |
+| C4 threshold stability | Reported: E61b's quantiles against E54's medians, and the share of reference problems within 0.01 nats of each threshold (the bf16-on-Blackwell margin) |
+| C5 runtime | 60 one-problem calls, loads included, under 5 minutes on a T4 pair |
+| C6 contract | `run_local.py --small`: coverage 1.0, 0 invalid; `submission/docker_load_test.py` passes in the competition image |
+
+**Board reads: two, E61a first and E61b last,** so the board keeps showing the candidate
+(`Force_Latest_Multiple`). A read is a veto, never a selector.
+
+**Ship rule (decides the Google Form ZIP on 27 Oct):** E61b replaces `e27f` if C1, C2, C5 and C6
+pass and its board read is at least `e27f`'s 9/14. Otherwise `e27f` ships. E61a's score is reported
+whatever it is; it does not change the choice.
+
+**What each read means.** 12/14: the absolute threshold reproduces the batch ranking on every model.
+10-11: it reproduces it on some; with C2 passing, still a gain over 9. 9 or below: the threshold does
+not transfer to the hidden problems' NLL scale (they may be less familiar than the published reference
+set), and `e27f` ships.
+
+**Cost:** CPU for C2-C4 and the build, about 1 GPU-hour for C1/C5, two uploads.
+
+**Status, 21 Oct (Finding 86):** pre-registered at `606cf9b`. C1, C2 and C5 pass, C6's local contract passes;
+Docker skipped (amendment 1). C3, reported only: E61b scores 0.329 [0.136, 0.481] on the official rows. **Board: E61a
+8/14, E61b 9/14, equal to the constants.** §5 and §6 disagree at exactly 9/14; the owner decides the Form ZIP.
+
+**E63 (Finding 87):** E61 drew its cutoffs from the wrong population; recalibrated on the organizers' 36 problems
+(Qwen at its constant) it expects 10.3/14, which is also the ceiling of any per-problem familiarity cutoff. Built and
+checked; one upload pending. Beyond 10.3 needs a different per-problem signal.
+
+**E64 (Finding 88), 22 Oct: that signal.** Difficulty read from one forward pass (ridge from prompt states to Qwen's log
+trace length on E62's 497 problems) scores AUC 0.883 on the 34 official rows and its decisions 0.824 against the
+constants' 0.529, with no robustness label in training. Every check passes (fit, official rows, GPU parity, timing,
+contract). **Upload E63, then E64, as soon as Codabench is reachable.** E64 is the preferred Form ZIP at 10/14 or
+better; the Docker test is still owed before the Form.
+
+**E65 (Finding 89), 24 Oct: E64 reverses on DeepSeek MATH** (AUC 0.346 [0.246, 0.447]; familiarity 0.683 there). Both
+signals flip between populations, and the hidden board sides with MATH so far, so E64's read is now expected below
+10/14. Its ship rule stands for the board read; if Codabench (down for everyone since 22 Oct) is still unreachable on
+27 Oct, the Form recommendation is `e27f`. Upload order stays E63 first, then E64 (the owner's decision, 26 Oct).
+
+**Board reads, 26 Oct (Codabench back at 09:58 UTC): E63 9/14 (0.64), E64 10/14 (0.71).** E64 is the first
+per-problem method above the constants and moves us from 27th to 12th of 93 (11 teams above, 15 tied). Under its
+pre-registered rule **E64 is the Form ZIP**; the Docker load test was the one check left (deadline 1 Nov 12:55 UTC). The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, and the owner waived it on 27 Oct, as for E61 (`protocols/E64_PROTOCOL.md` amendment 4). **`dist/solution-e64-difficulty-small.zip` goes into the Google Form**, submitted by the owner. One case of 14 is weak evidence: the board now sides with the official rows against MATH, where
+on 21 Oct the batch ranking had sided the other way.
+
+**E66 (Finding 90), 27 Oct: closed, E64 stays.** E64 was refitted on a target re-sampled at a 64k cap for the 194
+capped problems. Censoring falls from 28% to 9% and the label-free fit improves slightly (G1, G2 pass). On the official
+rows it does worse: AUC 0.808 against 0.883, decisions 26/34 against 28/34 (G3, G4 fail). Under the pre-registered rule
+E64 remains the Form ZIP. E66 was not uploaded, so the board still ends on E64.
+
+### 13.4 E62: does a model miss contradictions on the problems it finds familiar? (report experiment)
+
+The one compute-heavy experiment worth running, and it is for the report, not the submission. It
+tests the mechanism behind §12.3's open contradiction: if a model answering from memory skips an
+added premise (Finding 76), then on problems it finds familiar it should flag contradictions less.
+
+| Item | Choice, fixed in `protocols/E62_PROTOCOL.md` before sampling |
+| --- | --- |
+| Problems | E55's 548, whose one-pass features already exist |
+| Variants | Two premise contradictions per problem written by `gemini-2.5-pro`, each checked blind by a second model (`gemini-2.5-flash` or an OpenRouter free model), E60's generator and checker |
+| Model | Qwen3.5-4B: the one that both flags contradictions (19 of 72 in E60) and carries the board's remaining errors. Olmo flags too, but samples at about 10 tokens/s on T4s (Finding 78) |
+| Sampling | E60's prompt that can decline, organizers' decoding, base k = 2 then contradictions k = 4 on eligible problems only, 32k cap |
+| Question | Spearman between per-problem detection rate and mean NLL, with a problem-bootstrap CI. Reported, not gated |
+| Cost | About 50-70 session-hours on fresh accounts, from Saturday's reset |
+
+**Why it cannot ship:** its labeller failed the official-row gate in E60 (kappa 0.045), and the only
+rows that could test a continuous version were already read there post hoc (AUC 0.675). The report
+deadline (15 Nov) is after the submission deadline, so it can run past the freeze.
+
+### 13.5 The loop every experiment goes through
+
+1. **Pre-register** in `protocols/`, commit, then compute. No number is read before the commit.
+2. **Quota and identity:** `scripts/kaggle_quota.py`; on any account not verified this month,
+   `scripts/kaggle_followup.py push capability-check --account <alias>` first.
+3. **Push** through the registry (`datagen/kaggle_launch.py` or `scripts/kaggle_followup.py`), then
+   `scripts/export_kernels.py`, committing only the kernels that changed.
+4. **Watch** with `scripts/kaggle_live_logs.py`: `RUNNING` does not prove a healthy worker.
+5. **Download and check provenance:** dtype, tokenizer round trip, non-finite count, prompt SHA-1.
+6. **Score** with the experiment's `train/` script into its RESULTS section; run
+   `scripts/check_results_coverage.py` after adding one.
+7. **Record:** a Finding in `PROGRESS.md`, the registry row here, the run in `docs/experiments.md`.
+8. **Package** only a candidate whose checks pass: `make_*.py`, `run_local.py --small`, Docker
+   load test, GPU check.
+9. **Board:** one read per candidate, recorded in `submission/README.md` the same day. The candidate
+   is uploaded last.
+10. `python scripts/check_staged_secrets.py`, then commit.
+
+### 13.6 Schedule
+
+| Date | Work |
+| --- | --- |
+| Wed 21 Oct | This plan. Pre-register E61. Capability checks on Mazharul, Simanta02, Tamim3 and Simanta01 |
+| Thu 22 Oct | Build E61 (thresholds from E55's features, `make_e61.py` on the E57 template). C2-C4 locally; C1 and C5 on Nipun or Tamim2; C6 in Docker |
+| Fri 23 Oct | Board: E61a, then E61b. Finding 86. Pre-register E62; generate and check its contradictions on the Gemini and OpenRouter keys |
+| Sat 24 - Mon 26 Oct | Quotas reset. E62 sampling on the fleet. Report drafting |
+| **Tue 27 Oct** | **Freeze:** the ship rule picks E61b or `e27f` |
+| Wed 28 - Fri 30 Oct | Three repeatability and timing runs of the frozen ZIP in the competition image; send it through the Google Form by 30 Oct and keep its SHA-256 with the confirmation |
+| 1 Nov, 12:55 UTC | Codabench closes |
+| 2 - 15 Nov | E62 analysis; technical report and open-source repository |
+
+### 13.6a 28 Oct: E64 opened up (Findings 91-93); E64 stays
+
+`train/explain_e64.py`, CPU, exploratory. Nothing in it changes the Form ZIP.
+
+- **No refit can be shown to beat E64 on the 34 official rows.** The training draw alone moves their AUC by about 0.08
+  (F-91), so no further refit of E64 goes to the Form before 1 Nov.
+- **E65's MATH reversal is mostly perturbation assignment.** The `domain` family decides MATH labels and was run mostly
+  on easy problems. Where it never ran (39 problems), E64 points the official rows' way (0.672) and familiarity has no
+  signal (F-92). This goes into the report as the explanation of §11.1's MATH half.
+- **The white-box account (F-93):** a 20-50-dimensional difficulty subspace present at every depth, read alike by all
+  four models, about half explained by surface features. Vocabulary alone ranks the official rows as well, but fits
+  unlabelled olympiad problems much worse.
+- **Open for the report (2-15 Nov), optional:** a steering run on Qwen would test whether that subspace *causes* longer
+  reasoning. It needs its own pre-registration and GPU time after the quota reset on 31 Oct.
+
+### 13.7 Housekeeping in `Secrets.env` (owner)
+
+- Replace the Shafeen and MalihaMehnaj tokens (both rejected) and fill Tamim1's empty one.
+- One line holds a bare token with no variable name, and the Hugging Face line uses `==` with quotes.
+  Neither breaks the loaders today; both are easy to misparse.
