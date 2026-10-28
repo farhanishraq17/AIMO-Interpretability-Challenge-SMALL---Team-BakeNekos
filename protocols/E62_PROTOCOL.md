@@ -103,3 +103,28 @@ At about five requests a problem that is four problems a day. So:
 every variant from here on; it is from a different family than the generator, as E60 required. Variants already kept
 under the MiniMax checker (problems done by 22 Oct) stay; the analysis reports the checker beside each problem, and
 the hand audit of §2 samples both.
+
+**4 (28 Oct, 08:30 UTC, before any variant from the new models exists and before any contradiction was sampled):
+generation on Kaggle, regenerated for every eligible problem.** At OpenRouter's free rate (about 50 requests a day
+after amendment 3) generation had covered 88 of the 300 eligible problems (`data/e62/eligible.parquet`) in a week,
+while the fleet had more than 300 GPU-hours of unused quota this week. So:
+
+- **generator: `Qwen/Qwen3-14B-AWQ`** (Qwen's own 4-bit release), thinking on, temperature 1.0; **checker:
+  `deepseek-ai/DeepSeek-R1-Distill-Llama-8B`**, quantised to 4 bits in flight by bitsandbytes, temperature 0.6, its
+  model card's setting (greedy decoding repeats itself). Each runs under vLLM 0.20.0 on one T4 of a Kaggle pair, with
+  a 16,384-token context and a 12,000-token completion budget; every other sampling setting is the model's own
+  generation config. The checker is Llama weights from another family than the generator, as E60 required. The
+  generator is a Qwen model, like the model sampled in §3: recorded as a limitation.
+- **Fallback, fixed now:** if the server log of `e62g-smoke` (two problems, run first, its variants never used) shows
+  the 14B cannot serve one 16k context on a T4, **`Qwen/Qwen3-8B-AWQ`** replaces it. That is decided from the server
+  log alone; of the smoke's output only request counts, parse failures and keep counts are read.
+- **All 300 eligible problems are regenerated** by these two models, so one generator and one checker produce every
+  variant used. The 160 OpenRouter variants (82 problems; Nemotron with the MiniMax or dots checker) move to
+  `data/e62/superseded/openrouter/` and are never sampled. Of them only counts and keep rates were read.
+- Prompts, insertion rule, keep rule, retry round and two variants a problem are unchanged
+  (`datagen/perturb/premise_variants.py`, which gains local endpoints, sharding and these two settings). The hand
+  audit of 30 kept variants (pass: at least 27 genuine contradictions) stands and comes before any sample is read.
+- Kernels: `scripts/e62_gen_bundle.py`, `e62g-a` to `e62g-j`, each running four generator processes on disjoint
+  slices of the eligible problems, on accounts with verified GPUs (never RSD, MUBAMAN or an account E67 holds).
+  Sampling (§3) is unchanged. **§5's stop date moves to 4 November 2026, 12:00 UTC:** whatever is complete then is the
+  population.

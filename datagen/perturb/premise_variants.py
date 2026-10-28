@@ -20,6 +20,10 @@ Every request and response is saved (`raw/*.jsonl`) for the report; the API key 
 `--generator gemini-2.5-pro --checker gemini-2.5-flash`), its key sent as a header, never in a URL. Writes `<out>/variants.parquet` in the sampler's variants format
 (category `contradict_premise`, `expected_answer` the original answer).
 
+E62 amendment 4 runs both models on Kaggle instead: `--generator-url`/`--checker-url` point a model at an
+OpenAI-compatible server (vLLM's, in `scripts/e62_gen_bundle.py`), which needs no key and no pacing, and
+`--num-shards/--shard-index` give each process its own slice of the pool.
+
 Run:  python datagen/perturb/premise_variants.py --pool data/e58/pool.parquet --out-dir data/e60
 """
 
@@ -50,6 +54,10 @@ URL = "https://openrouter.ai/api/v1/chat/completions"
 PACE_SECONDS = 4  # free models allow about 20 requests a minute
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GEMINI_PACE_SECONDS = 13  # the free tier's tightest per-minute limit, gemini-2.5-pro's, is 5 requests
+
+
+# Model name -> base URL of a local OpenAI-compatible server (amendment 4); filled from the command line.
+ENDPOINTS: dict[str, str] = {}
 
 
 class DailyLimit(Exception):
@@ -109,35 +117,43 @@ def gemini_key() -> str:
     raise SystemExit("no Gemini key in Secrets.env")
 
 
-def chat(keys: list[str], model: str, prompt: str, temperature: float, log) -> str:
-    """One completion, logged without the key: Gemini for `gemini-*`, else OpenRouter on the first key with quota."""
-    gemini = model.startswith("gemini-")
+def chat(keys: list[str], model: str, prompt: str, temperature: float, log, max_tokens: int = 32000) -> str:
+    """One completion, logged without the key: a local server if `model` has one, Gemini for `gemini-*`, else
+    OpenRouter on the first key with quota."""
+    local = ENDPOINTS.get(model)
+    gemini = model.startswith("gemini-") and not local
     if gemini:
         body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": temperature, "maxOutputTokens": 32000}}
+                "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens}}
     else:
         body = {"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": temperature,
-                "max_tokens": 32000}
+                "max_tokens": max_tokens}
     for attempt in range(6):
-        time.sleep(GEMINI_PACE_SECONDS if gemini else PACE_SECONDS)
-        key = gemini_key() if gemini else keys[0]
-        url, header = ((GEMINI_URL.format(model=model), {"x-goog-api-key": key}) if gemini
+        time.sleep(0 if local else GEMINI_PACE_SECONDS if gemini else PACE_SECONDS)
+        key = "" if local else gemini_key() if gemini else keys[0]
+        url, header = ((f"{local}/chat/completions", {}) if local
+                       else (GEMINI_URL.format(model=model), {"x-goog-api-key": key}) if gemini
                        else (URL, {"Authorization": f"Bearer {key}"}))
         request = urllib.request.Request(url, data=json.dumps(body).encode(),
                                          headers={**header, "Content-Type": "application/json"})
         try:
-            response = json.load(urllib.request.urlopen(request, timeout=900))
+            response = json.load(urllib.request.urlopen(request, timeout=3600 if local else 900))  # a T4 is slow
             if gemini:  # thought parts, if any, are not the answer
                 text = "".join(part.get("text", "") for part in response["candidates"][0]["content"]["parts"]
                                if not part.get("thought"))
             else:
-                text = response["choices"][0]["message"]["content"] or ""
+                message = response["choices"][0]["message"]
+                text = message["content"] or ""
+            # A local reasoning model's thinking arrives apart from its answer; it is kept for the audit.
+            thinking = None if gemini else message.get("reasoning_content") or message.get("reasoning")
             log.write(json.dumps({"model": model, "prompt": prompt, "temperature": temperature, "response": text,
+                                  **({"reasoning": thinking} if thinking else {}),
                                   "usage": response.get("usageMetadata" if gemini else "usage")}) + "\n")
             log.flush()
             return text
         except urllib.error.HTTPError as exc:
-            message = exc.read().decode(errors="replace").replace(key, "[REDACTED]")
+            message = exc.read().decode(errors="replace")
+            message = message.replace(key, "[REDACTED]") if key else message
             if gemini and exc.code == 429 and "perday" in message.lower():
                 raise DailyLimit(message[:200]) from None
             if exc.code == 429 and "per-day" in message.lower():
@@ -194,10 +210,18 @@ def main() -> None:
     parser.add_argument("--per-problem", type=int, default=2)
     parser.add_argument("--generator", default=GENERATOR)
     parser.add_argument("--checker", default=CHECKER)
+    parser.add_argument("--generator-url", help="local OpenAI-compatible base URL for the generator (amendment 4)")
+    parser.add_argument("--checker-url", help="local OpenAI-compatible base URL for the checker (amendment 4)")
+    parser.add_argument("--checker-temperature", type=float, default=0.0)
+    parser.add_argument("--max-tokens", type=int, default=32000)
+    parser.add_argument("--num-shards", type=int, default=1)
+    parser.add_argument("--shard-index", type=int, default=0)
     args = parser.parse_args()
 
-    keys = api_keys()
-    pool = pd.read_parquet(args.pool)
+    ENDPOINTS.update({m: u.rstrip("/") for m, u in ((args.generator, args.generator_url),
+                                                     (args.checker, args.checker_url)) if u})
+    keys = [] if args.generator in ENDPOINTS and args.checker in ENDPOINTS else api_keys()
+    pool = pd.read_parquet(args.pool).iloc[args.shard_index::args.num_shards]  # the pool is in problem_key order
     (args.out_dir / "raw").mkdir(parents=True, exist_ok=True)
     # One line per finished problem, so a run stopped by the daily limit resumes where it stopped.
     progress_path = args.out_dir / "raw" / "progress.jsonl"
@@ -211,13 +235,16 @@ def main() -> None:
             for row in pool.itertuples(index=False):
                 if row.pool_id in done:
                     continue
-                original = verdict(chat(keys, args.checker, CHECK_PROMPT.format(problem=row.problem), 0.0, check_log))
+                original = verdict(chat(keys, args.checker, CHECK_PROMPT.format(problem=row.problem),
+                                        args.checker_temperature, check_log, args.max_tokens))
                 mine, audit = [], []
                 for round_ in (1, 2):
-                    text = chat(keys, args.generator, GENERATION_PROMPT.format(problem=row.problem, answer=int(row.answer)), 1.0, gen_log)
+                    text = chat(keys, args.generator, GENERATION_PROMPT.format(problem=row.problem, answer=int(row.answer)),
+                                1.0, gen_log, args.max_tokens)
                     for condition in parse_conditions(text):
                         variant = insert(row.problem, condition["sentence"])
-                        said = verdict(chat(keys, args.checker, CHECK_PROMPT.format(problem=variant), 0.0, check_log))
+                        said = verdict(chat(keys, args.checker, CHECK_PROMPT.format(problem=variant),
+                                            args.checker_temperature, check_log, args.max_tokens))
                         ok = said == "CONTRADICTORY" and original == "SOLVABLE"
                         audit.append({"pool_id": row.pool_id, "round": round_, "sentence": condition["sentence"],
                                       "why_impossible": condition.get("why_impossible", ""), "checker_variant": said,
@@ -235,11 +262,16 @@ def main() -> None:
                 print(f"{row.pool_id}: original {original}, kept {len(mine)} of {len(audit)} checked", flush=True)
     except DailyLimit as exc:
         print(f"daily request limit reached ({exc}); rerun after it resets to resume", flush=True)
+    write_outputs(progress, args.out_dir)
+    print(f"{len(progress)} of {len(pool)} problems done -> {args.out_dir}")
+
+
+def write_outputs(progress: list[dict], out_dir: Path) -> None:
+    """`variants.parquet` (the sampler's input) and `audit.parquet` from the per-problem progress records."""
     kept = [v for p in progress for v in p["kept"]]
-    pd.DataFrame(kept).to_parquet(args.out_dir / "variants.parquet", index=False)
-    pd.DataFrame([a for p in progress for a in p["audit"]]).to_parquet(args.out_dir / "audit.parquet", index=False)
-    print(f"{len(progress)} of {len(pool)} problems done; {len(kept)} variants for "
-          f"{len({k['pool_id'] for k in kept})} problems -> {args.out_dir}")
+    pd.DataFrame(kept).to_parquet(out_dir / "variants.parquet", index=False)
+    pd.DataFrame([a for p in progress for a in p["audit"]]).to_parquet(out_dir / "audit.parquet", index=False)
+    print(f"{len(kept)} variants for {len({k['pool_id'] for k in kept})} problems", flush=True)
 
 
 if __name__ == "__main__":
