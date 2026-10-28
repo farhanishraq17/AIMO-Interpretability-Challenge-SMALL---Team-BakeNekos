@@ -131,3 +131,6 @@ while the fleet had more than 300 GPU-hours of unused quota this week. So:
   slices of the eligible problems, on accounts with verified GPUs (never RSD, MUBAMAN or an account E67 holds).
   Sampling (§3) is unchanged. **§5's stop date moves to 4 November 2026, 12:00 UTC:** whatever is complete then is the
   population.
+- **Rerun, 29 Oct (only counts read):** seven parts finished their 30 problems in 7.0-8.9 hours; `e62g-c`, `e62g-h`
+  and `e62g-i` reached the 9-hour guard with 27, 26 and 29 done. Their 8 unfinished problems are rerun, with the same
+  settings, by `e62g-rest` (four processes of two problems each); every finished record stands as written.
