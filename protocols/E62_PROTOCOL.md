@@ -118,6 +118,9 @@ while the fleet had more than 300 GPU-hours of unused quota this week. So:
 - **Fallback, fixed now:** if the server log of `e62g-smoke` (two problems, run first, its variants never used) shows
   the 14B cannot serve one 16k context on a T4, **`Qwen/Qwen3-8B-AWQ`** replaces it. That is decided from the server
   log alone; of the smoke's output only request counts, parse failures and keep counts are read.
+  **Applied 28 Oct, 08:50 UTC:** the first `e62g-smoke` (Arifin) stopped at start-up, before any request. Its
+  server log gives the 14B 1.68 GiB of KV cache on a T4 against the 2.5 GiB one 16k sequence needs (longest
+  servable context 10,976 tokens), so **`Qwen/Qwen3-8B-AWQ` is the generator** and the smoke is rerun with it.
 - **All 300 eligible problems are regenerated** by these two models, so one generator and one checker produce every
   variant used. The 160 OpenRouter variants (82 problems; Nemotron with the MiniMax or dots checker) move to
   `data/e62/superseded/openrouter/` and are never sampled. Of them only counts and keep rates were read.

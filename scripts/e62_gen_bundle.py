@@ -4,9 +4,9 @@ OpenRouter's free tier gave about 50 requests a day, so generation had covered 8
 Each kernel here serves two models through vLLM's OpenAI-compatible server, one per T4, and runs
 `datagen/perturb/premise_variants.py` against them unchanged except for its endpoints:
 
-* generator, GPU 0: `Qwen/Qwen3-14B-AWQ` (thinking on, temperature 1.0 as before). Its 9.3 GiB of weights leave a
-  T4 room for about one 16k-token sequence; if `smoke`'s server log shows it cannot hold one, `Qwen/Qwen3-8B-AWQ`
-  replaces it (amendment 4 fixes that rule before any variant is read);
+* generator, GPU 0: `Qwen/Qwen3-8B-AWQ` (thinking on, temperature 1.0 as before), amendment 4's fallback: the first
+  smoke showed `Qwen/Qwen3-14B-AWQ` leaves 1.68 GiB of KV cache on a T4, short of the 2.5 GiB one 16k sequence needs.
+  vLLM picks its AWQ kernel (awq_marlin runs on a T4);
 * checker, GPU 1: `deepseek-ai/DeepSeek-R1-Distill-Llama-8B`, 4-bit bitsandbytes so it fits a T4, a Llama-based model
   from another family, as E60 required (temperature 0.6, its model card's setting: greedy decoding loops).
 
@@ -33,9 +33,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "datagen" / "perturb"))
 from e52_gpu_bundle import HEADER, payload  # noqa: E402
 
-GENERATOR, CHECKER = "Qwen/Qwen3-14B-AWQ", "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+GENERATOR, CHECKER = "Qwen/Qwen3-8B-AWQ", "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
 SERVERS = [  # (GPU, port, vLLM server arguments)
-    (0, 8001, ["--model", GENERATOR, "--quantization", "awq", "--reasoning-parser", "qwen3"]),
+    (0, 8001, ["--model", GENERATOR, "--reasoning-parser", "qwen3"]),
     (1, 8002, ["--model", CHECKER, "--quantization", "bitsandbytes", "--reasoning-parser", "deepseek_r1"]),
 ]
 ENGINE = ["--dtype", "float16", "--max-model-len", "16384", "--gpu-memory-utilization", "0.90", "--max-num-seqs", "4"]
