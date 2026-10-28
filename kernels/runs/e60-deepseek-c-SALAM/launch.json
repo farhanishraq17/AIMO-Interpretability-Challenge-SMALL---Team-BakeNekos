@@ -1,0 +1,32 @@
+{
+  "job": "e60-deepseek-c",
+  "account": "SALAM",
+  "ref": "salam2026/aimo-small-e60-deepseek-c",
+  "source_sha256": {
+    "datagen/perturb/sample.py": "d82ecb2d4616681c3d71b0ead6b27e6ffe717b57037641628c899e4834b3e7e6",
+    "datagen/perturb/answers.py": "10d240d3db4d6b13863b43559b907b8dc4c3d9bc8a87e97d3fd1311db0946b05",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "data/e58/pool.parquet": "9b498581214ce5f31b973927d8d2d55450e3ae6ab316d17aca246af61c03b646",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be",
+    "data/e60/variants.parquet": "907df0fdf3f82f30c94bb00835cff8b7fe3af4284730622d0995ad7b3d2e7943",
+    "protocols/E60_PROTOCOL.md": "055f35f974f2488fe7f6b60a910a20a7298283f44f2e30a1d1d3c839b99990bc",
+    "e59_base/records.jsonl": "827a8c7d17d88aae215156c26fa61b248fe354f9de326bdfb4e5d3d18e0aeee6"
+  },
+  "kernel_sha256": "d5cb0bb233e39290e53f0fc944186df40654e48b56448fc9af0f853a9d430fd5",
+  "submitted_at": "2026-10-20T00:53:29.666225+00:00",
+  "metadata": {
+    "id": "salam2026/aimo-small-e60-deepseek-c",
+    "title": "aimo-small-e60-deepseek-c",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}
