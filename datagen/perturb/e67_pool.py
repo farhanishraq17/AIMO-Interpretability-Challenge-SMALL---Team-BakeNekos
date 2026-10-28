@@ -28,11 +28,15 @@ FEATURES = "runs/e55-features-qwen-*/e55-features-qwen/stagea-qwen/features.npz"
 OUT = ROOT / "data" / "e67"
 
 
-def capped_twice() -> list[str]:
-    records = [json.loads(line) for path in ROOT.glob(BASE) for line in path.read_text(encoding="utf-8").splitlines()
-               if line.strip()]
+def base_records() -> dict[str, dict]:
+    records = {(r := json.loads(line))["pool_id"].removeprefix("e62:"): r for path in ROOT.glob(BASE)
+               for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
     assert len(records) == 497, len(records)
-    return sorted(r["pool_id"].removeprefix("e62:") for r in records if r["n_hit_length"] == r["n_samples"] == 2)
+    return records
+
+
+def capped_twice() -> list[str]:
+    return sorted(k for k, r in base_records().items() if r["n_hit_length"] == r["n_samples"] == 2)
 
 
 def main() -> None:
@@ -59,6 +63,16 @@ def main() -> None:
     print(f"layer {LAYER}: sigma {sigma:.4f}, |w| {np.linalg.norm(w):.3f} (2 sigma moves the layer's prediction by "
           f"{2 * sigma * np.linalg.norm(w):.3f}); {len(capped)} capped twice dropped; {len(out)} problems, predicted "
           f"{out['predicted'].min():.2f}-{out['predicted'].max():.2f} -> {(OUT / 'pool.parquet').relative_to(ROOT)}")
+    # The protocol's description of the push and the population (§1-§2).
+    records = base_records()
+    every = np.array([records[k]["completion_tokens"] for k in pool["problem_key"]])
+    chosen = np.array([records[k]["completion_tokens"] for k in out["problem_key"]])
+    print(f"2 sigma = {2 * sigma:.3f} against a mean prompt state of norm {np.linalg.norm(X, axis=1).mean():.2f} at that layer; "
+          f"E62's median trace over the pool {np.median(every):,.0f} tokens; the {len(out)}: median {np.median(chosen):,.0f} "
+          f"(10th-90th percentile {np.percentile(chosen, 10):,.0f}-{np.percentile(chosen, 90):,.0f}), "
+          f"{int((chosen >= CAP).sum())} of {chosen.size} samples at or above {CAP:,}, E62 accuracy "
+          f"{np.mean([records[k]['n_correct'] / records[k]['n_samples'] for k in out['problem_key']]):.2f}, "
+          f"sources {out['source'].value_counts().to_dict()}")
 
 
 if __name__ == "__main__":

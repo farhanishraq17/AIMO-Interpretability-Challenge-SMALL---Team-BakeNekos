@@ -7,6 +7,23 @@ result is the numbered Finding in `PROGRESS.md`.
 
 Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
 
+### E67: done 28 Oct, G1 and G2 failed, G3 and S passed (Finding 94; protocol `protocols/E67_PROTOCOL.md`, committed `3836304` before any sample)
+
+Report experiment: E64's Qwen difficulty direction, ±2 sigma at hidden-state index 15, added to every prompt token at
+prefill, plus a random control. Qwen3.5-4B under transformers (`datagen/perturb/steer.py`), E62's base recipe, 16k cap,
+k = 2 per condition, 60 problems. `e67-timing` (Nipun, two excluded problems) ran first: v1 ran out of memory in sdpa's
+GQA path on T4s, which led to the grouped decode attention in `steer.py`; v2 measured 107.6 ms a step at batch 8.
+
+| Kernel | Account | Status |
+| --- | --- | --- |
+| `e67-a` | Tamim2 | complete, 2.7 h |
+| `e67-b` | Tamim3 | complete, 3.3 h |
+| `e67-c` | Simanta02 | complete, 2.9 h |
+| `e67-d` | Mazharul | complete, 2.9 h |
+
+Trace length did not move under the push (+2 sigma: -0.003 [-0.114, +0.111]; -2 sigma: -0.004 [-0.122, +0.113]),
+while E64's read past the steered layer moved ±0.19. Score with `python train/eval_e67.py`.
+
 ### E62: running from 21 Oct (report experiment; protocol `protocols/E62_PROTOCOL.md`, committed `aa4ae4a` before any variant or sample, amendment 1 at `cf9ab83`)
 
 Qwen base phase (k = 2, 32k cap, the prompt that can decline) in eight hash-ordered slices of the 497-problem pool,

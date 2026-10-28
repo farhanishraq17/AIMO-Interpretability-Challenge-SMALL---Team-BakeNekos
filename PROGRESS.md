@@ -2962,6 +2962,48 @@ exploratory, 28 Oct. RESULTS, same section.)
   kind of task from prompt states, in many directions at once, alike across models, and more precisely than its words
   alone. Whether that subspace *causes* longer reasoning is untested; a steering run would test it.
 
+**94. E67: pushing E64's difficulty direction into Qwen's prompt states moves E64's own read of the later layers and
+leaves the trace length where it was. G1 and G2 fail; the random control and the sanity check pass. At a
+natural-scale dose, the direction E64 reads is a correlate of how long Qwen thinks, not a lever on it.**
+(`protocols/E67_PROTOCOL.md`, committed `3836304` before any sample; `train/eval_e67.py`. RESULTS, "E67: steering
+E64's difficulty direction".)
+
+The direction is E64's Qwen ridge at hidden-state index 15 (depth 0.47, Qwen's best single layer in F-93), mapped back
+to raw state space. The push is 2 sigma along it, with sigma = 0.0719 the SD of E55's prompt states on that direction,
+so 2 sigma moves the layer's read by 1.091 log-tokens, two SDs of its spread between problems. It was added to every
+prompt token at prefill only, with a random direction of the same norm as control. Qwen3.5-4B ran under transformers
+with E62's base recipe, a 16k cap and k = 2 per condition, on 60 E62 problems centred on a predicted trace of half the
+cap. Four kernels ran on 28 Oct (Tamim2, Tamim3, Simanta02, Mazharul; 2.7-3.3 h each, all exit 0, 11.8
+session-hours), and all 60 problems are complete.
+
+| gate | contrast: change in mean log trace length | result |
+| --- | --- | --- |
+| G1 (above 0) | +2 sigma along u, minus no push: **-0.003 [-0.114, +0.111]** | **fail** |
+| G2 (below 0) | -2 sigma along u, minus no push: **-0.004 [-0.122, +0.113]** | **fail** |
+| G3 (contains 0) | +2 sigma along a random direction, minus no push: +0.062 [-0.047, +0.167] | pass |
+| S (later layers move) | E64's read of layers 16-32 on the steered E55 prompt: +0.187 (plus), -0.186 (minus), +0.012 (random) | pass |
+
+- **The push reaches the computation, but the length does not follow.** Past the steered layer, E64's own read moves by
+  ±0.19 log-tokens, almost identically on every problem. Geometric-mean trace lengths are 7,141 tokens (minus), 7,168
+  (none) and 7,149 (plus). Exploratory, computed after the gates: if length followed E64's read one-for-one, +2 minus
+  -2 would be +0.258 to +0.373. The observed +0.001 [-0.099, +0.111] excludes even the smaller figure, and
+  one-for-one is the conservative expectation, since observed length rises 1.19 per unit of E64's read over E62's 497
+  problems.
+- **Nothing broke.** Accuracy is 0.93-0.96 in every condition, cap hits 7.5-9.2%, and no answer was declined. The random
+  push, if anything, lengthened (+0.062, interval across 0), so a push of this norm is not neutral in general. Along
+  E64's direction it does nothing measurable either way.
+- **Caveats.** One layer, one dose, one model, prefill only. The pushed direction is the ridge's single read-out
+  direction, while F-93 places difficulty in a 20-50-dimensional subspace. The push is small in absolute terms: 2 sigma
+  = 0.144, against a mean prompt state of norm 5.50 at that layer. A larger push, or the whole subspace, might act.
+  This shows that E64's direction at the between-problem scale is not a lever. It does not show that the subspace is
+  inert.
+- **What it means (§5's second case).** The model's later layers register the push, and E64 reads them as harder or
+  easier, but Qwen does not think longer or shorter. E64 reads a correlate of difficulty that the model does not use
+  along that direction to set its reasoning length. This fits F-93's account, where much of the read is the kind of
+  task, legible from vocabulary: a description of the problem, not a control signal for the trace. For the report this
+  is the white-box causal check, and it is negative.
+- **Use:** none for the Form (E64 stays).
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

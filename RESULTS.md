@@ -1354,3 +1354,37 @@ Hand-feature weights (standardized): log_chars +0.60, log_words -0.41, number_th
 Tf-idf words for short traces: log, 20, that log, miles, what, 16, that satisfies, let, 40, interior, the value, compute, let compute, that 20, 75. For long traces: cdots, ldots, irreducible fraction, irreducible, least, find, possible, text, 000, side, 1000, april, integer, 999, and is. Spearman of the tf-idf score with E64's (mean of models) outside the fit: 0.546.
 
 The hand features explain R2 qwen 0.50, skywork 0.49, olmo 0.48, deepseek 0.49 of E64's score over the 548 E55 problems; the rest scores official AUC 0.642.
+
+## E67: steering E64's difficulty direction
+
+Fixed in `protocols/E67_PROTOCOL.md` before any sample. Qwen3.5-4B, E62's base recipe at a 16,384-token cap, k = 2 per condition; the push is added at hidden-state index 15 to every prompt token during prefill. 60 of 60 problems complete. Outcome: each problem's mean log(min(tokens, cap)); 95% paired problem-bootstrap intervals.
+
+| contrast | change in mean log trace length | gate | result |
+| --- | --- | --- | --- |
+| +2 sigma along u, minus no push | -0.003 [-0.114, +0.111] | G1: above 0 | fail |
+| -2 sigma along u, minus no push | -0.004 [-0.122, +0.113] | G2: below 0 | fail |
+| +2 sigma along random r, minus no push | +0.062 [-0.047, +0.167] | G3: contains 0 | pass |
+| +2 minus -2 along u | +0.001 [-0.099, +0.111] | reported | |
+
+Sanity (S): E64's Qwen read of the steered E55 prompt states, minus the unsteered read (log-token units).
+
+| push | layers past the steered one (S) | all layers averaged |
+| --- | --- | --- |
+| plus | +0.187 [+0.186, +0.187] | +0.129 [+0.129, +0.130] |
+| minus | -0.186 [-0.187, -0.186] | -0.129 [-0.130, -0.129] |
+| random | +0.012 [+0.011, +0.012] | +0.006 [+0.006, +0.006] |
+
+**S: pass.** Unsteered read against E64's offline predictions (fp16 here, bf16 in E55): max abs diff 0.003.
+
+| condition | accuracy | cap hit | declined | geometric mean tokens |
+| --- | --- | --- | --- | --- |
+| minus | 0.950 | 0.083 | 0.000 | 7,141 |
+| zero | 0.933 | 0.075 | 0.000 | 7,168 |
+| plus | 0.958 | 0.092 | 0.000 | 7,149 |
+| random | 0.933 | 0.083 | 0.000 | 7,627 |
+
+Exploratory, added after the gates were read: were trace length to follow E64's read of the steered states one-for-one, +2 minus -2 along u would be +0.258 (every layer averaged) to +0.373 (past the steered layer); observed +0.001 [-0.099, +0.111]. E64's in-sample slope of observed on predicted length over E62's 497 problems is 1.19, so one-for-one is the smaller expectation.
+
+Run time: 22.3 GPU-process hours, median 21.9 min a problem; 11.8 Kaggle session-hours for the four kernels.
+
+**Gates: G1 fail, G2 fail, G3 pass, S pass.**

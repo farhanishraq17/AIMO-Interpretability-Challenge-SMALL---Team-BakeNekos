@@ -996,6 +996,29 @@ of"). The two scores agree at only 0.546, so the 34 rows cannot tell them apart.
 problems can, and they favour the hidden states. No white-box version beats E64 on any measurement,
 so nothing here changes what ships.
 
+**Does the model use what the ridge reads?** (F-94, pre-registered as E67.) A readout is not a
+mechanism, so we steered. We took E64's Qwen ridge direction at layer 15, Qwen's best single layer,
+and added it to the residual stream at every prompt token during prefill. The push was ±2σ, where σ
+is the spread of E55's prompt states along that direction, so it moves the layer's read by two
+between-problem SDs. A random direction of the same norm served as control. We then sampled
+Qwen3.5-4B with E62's recipe (16k cap, two samples per condition) on 60 unlabelled olympiad problems
+whose predicted trace is about half the cap.
+
+| Push (minus no push) | Mean log trace length | E64's read, layers 16–32 |
+| --- | --- | --- |
+| +2σ along E64's direction | −0.003 [−0.114, +0.111] | +0.187 |
+| −2σ along E64's direction | −0.004 [−0.122, +0.113] | −0.186 |
+| +2σ along a random direction | +0.062 [−0.047, +0.167] | +0.012 |
+
+The push propagates: every later layer reads the prompt as harder or easier, almost identically on
+every problem. The trace length does not move. If length followed E64's own read one-for-one,
+pushing up rather than down would add 0.26–0.37 log-tokens, and the observed +0.001 [−0.099, +0.111]
+excludes that. Accuracy (0.93–0.96) and cap hits (7.5–9.2%) are flat across conditions, so the
+model was not damaged. Both pre-registered causal gates fail, and the control and sanity checks
+pass. At this dose, the direction E64 reads describes the problem and does not set how long Qwen
+reasons. Caveats: one layer, one direction, one model and one natural-scale dose. F-93 puts
+difficulty in a 20–50-dimensional subspace, and a larger or subspace-wide push is untested.
+
 **How precise the 34 rows are** (F-91). E64's fit, unchanged, on random subsets of its 497 problems
 scores 0.815 ± 0.082 (125 problems), 0.852 ± 0.095 (250) and 0.850 ± 0.076 (375) on the official rows
 over five draws each, and 0.904 or 0.846 when the target uses only the first or only the second
@@ -1381,6 +1404,11 @@ python train/eval_e66.py
 
 # E64 explained (§6.11, §7.5): noise of the 34 rows, the MATH reversal by family, layers, rank, text surrogates (~30 min)
 python train/explain_e64.py
+
+# E67, steering E64's direction in Qwen (§7.5): pool and direction, four Kaggle kernels, then the gates
+python datagen/perturb/e67_pool.py
+python scripts/kaggle_followup.py push e67-a --account <ALIAS>     # likewise e67-b, e67-c, e67-d; then `output`
+python train/eval_e67.py
 
 # Rebuild every submission ZIP, deterministically
 python submission/make_e64.py     # the submission

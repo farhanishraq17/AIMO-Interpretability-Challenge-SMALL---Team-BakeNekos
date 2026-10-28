@@ -1,10 +1,14 @@
 # E67: does E64's difficulty direction cause longer reasoning? A steering test of Finding 93
 
-Status: **pre-registered 28 October 2026, 07:45 UTC (commit `3836304`), before any E67 sample is drawn.** Report experiment: it decides
-no submission and touches neither the Form ZIP (E64 stays) nor Codabench. Code: `datagen/perturb/e67_pool.py`
-(direction and problems), `datagen/perturb/steer.py` (sampling with the push), `scripts/e67_gpu_bundle.py` (kernels
-`e67-a` to `e67-d`; `e67-timing` ran first, §6), `train/eval_e67.py` (gates; written and run on synthetic records
-before any sample). Any change after the first E67 sample is read is an amendment, dated in §9.
+Status: **pre-registered 28 October 2026, 07:45 UTC (commit `3836304`), before any E67 sample is drawn.** Report
+experiment: it decides no submission and touches neither the Form ZIP (E64 stays) nor Codabench. Code:
+`datagen/perturb/e67_pool.py` (direction and problems), `datagen/perturb/steer.py` (sampling with the push),
+`scripts/e67_gpu_bundle.py` (kernels `e67-a` to `e67-d`; `e67-timing` ran first, §6), `train/eval_e67.py` (gates;
+written and run on synthetic records before any sample). Any change after the first E67 sample is read is an
+amendment, dated in §9.
+
+**Result, 28 Oct (Finding 94): G1 and G2 fail, G3 and S pass. The push moves E64's own read of the later layers and
+leaves Qwen's trace length unchanged.**
 
 ## Motivation
 
@@ -38,7 +42,7 @@ whose two E62 base samples both hit the 32k cap, ranked by E64's Qwen predicted 
 (`runs/e64/predicted_difficulty.csv`); the **60 closest to log(8192) = 9.01**, a predicted trace of half E67's cap.
 
 The brief asked for mid predicted difficulty. The pool's middle cannot serve at a 16k cap: E62's median Qwen trace is
-21,752 tokens, so at the pool's median a lengthening push would be cut off by the cap. "Mid" is therefore taken
+21,751 tokens, so at the pool's median a lengthening push would be cut off by the cap. "Mid" is therefore taken
 relative to the cap, so a push either way has room. The 60: predicted difficulty 8.79-9.23; E62 traces median 7,168
 tokens (10th-90th percentile 4,020-11,329), 2 of their 120 E62 samples at or above 16k; E62 accuracy 0.98;
 OlympiadBench 51, AMC 8, AIME 1. Selecting on E62's lengths is selection on an independent earlier run; every
@@ -140,4 +144,6 @@ by any read. No other model is steered. The samples label nothing and enter no s
 
 ## 9. Amendments
 
-None.
+1. **28 Oct 2026, after the gates were read: a transcription correction, no design change.** §2 quoted E62's median
+   Qwen trace over the pool as 21,752 tokens; it is 21,751. `datagen/perturb/e67_pool.py` now prints every figure §1
+   and §2 quote, and re-running it leaves `data/e67/directions.npz` and `pool.parquet` byte-identical.

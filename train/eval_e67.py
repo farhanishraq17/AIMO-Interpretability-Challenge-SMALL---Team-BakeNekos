@@ -13,7 +13,10 @@ Finding 93 found what E64 reads: a difficulty subspace in the prompt states. A r
   intervals excluding 0.
 
 Reported only: E64's read averaged over every layer, +2 against -2, accuracy, cap hits and declined answers by
-condition, and the fp16 parity of the unsteered read against E64's offline predictions.
+condition, and the fp16 parity of the unsteered read against E64's offline predictions. Exploratory, added after the
+gates were read: the +2 against -2 change in length that E64's own read of the steered states would predict, were
+length to follow it one-for-one (E64's in-sample slope of observed on predicted length, also printed, says how
+conservative that is).
 
 Writes runs/e67/result.json and the `E67: steering E64's difficulty direction` section of RESULTS.md.
 
@@ -105,6 +108,14 @@ def main() -> None:
                            "cap_hit": float((tokens >= CAP).mean()), "declined": grades.count("detected") / len(grades),
                            "geometric_mean_tokens": float(np.exp(np.log(np.minimum(tokens, CAP)).mean()))}
     seconds = [found[k][0]["seconds"] for k in keys]
+    sessions = sum(json.loads(path.read_text())["end_to_end_seconds"] for path in ROOT.glob("runs/e67-[a-d]-*/e67-[a-d]/execution.json"))
+
+    # Exploratory (after the gates): what E64's read of the steered states predicts for plus - minus, one-for-one.
+    from eval_e64 import difficulty
+    target = difficulty()
+    slope = float(np.polyfit(offline.loc[target.index].to_numpy(), target.to_numpy(), 1)[0])
+    expected = {name: float((block[:, col["plus"]] - block[:, col["minus"]]).mean())
+                for name, block in (("all_layers", reads), ("past_layer", deeper))}
 
     enough = len(keys) >= MIN_PROBLEMS
     gates = {"G1": contrasts["plus"]["ci"][0] > 0, "G2": contrasts["minus"]["ci"][1] < 0,
@@ -132,7 +143,13 @@ def main() -> None:
               "| condition | accuracy | cap hit | declined | geometric mean tokens |", "| --- | --- | --- | --- | --- |"]
     lines += [f"| {c} | {v['accuracy']:.3f} | {v['cap_hit']:.3f} | {v['declined']:.3f} | {v['geometric_mean_tokens']:,.0f} |"
               for c, v in by_condition.items()]
-    lines += ["", f"Run time: {np.sum(seconds) / 3600:.1f} GPU-process hours, median {np.median(seconds) / 60:.1f} min a problem.",
+    lines += ["", "Exploratory, added after the gates were read: were trace length to follow E64's read of the steered states "
+              f"one-for-one, +2 minus -2 along u would be {expected['all_layers']:+.3f} (every layer averaged) to "
+              f"{expected['past_layer']:+.3f} (past the steered layer); observed {fmt(contrasts['plus_vs_minus'])}. E64's "
+              f"in-sample slope of observed on predicted length over E62's 497 problems is {slope:.2f}, so one-for-one is "
+              "the smaller expectation.",
+              "", f"Run time: {np.sum(seconds) / 3600:.1f} GPU-process hours, median {np.median(seconds) / 60:.1f} min a problem; "
+              f"{sessions / 3600:.1f} Kaggle session-hours for the four kernels.",
               "", f"**Gates: G1 {'pass' if gates['G1'] else 'fail'}, G2 {'pass' if gates['G2'] else 'fail'}, "
               f"G3 {'pass' if gates['G3'] else 'fail'}, S {'pass' if gates['S'] else 'fail'}.**"]
     body = "\n".join(lines)
@@ -140,7 +157,9 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "result.json").write_text(json.dumps({"n_problems": len(keys), "enough": enough, "contrasts": contrasts,
                                                  "sanity": sanity, "parity_max_abs": parity, "by_condition": by_condition,
-                                                 "gates": gates}, indent=2), encoding="utf-8")
+                                                 "gates": gates, "exploratory": {"expected_plus_vs_minus": expected,
+                                                                                 "calibration_slope": slope}},
+                                                indent=2), encoding="utf-8")
     y.to_csv(OUT / "log_length.csv")
     if not args.no_write:
         upsert_section(ROOT / "RESULTS.md", HEADING, body)

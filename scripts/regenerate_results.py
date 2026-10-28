@@ -105,6 +105,8 @@ STEPS = [
     # E64 explained: noise of the official rows, the MATH reversal, what the ridge reads. CPU (~30 min); needs the
     # e1b, e55, e62 and e64 runs and the pinned MATH tables in the HF cache.
     ["train/explain_e64.py"],
+    # E67: E64's difficulty direction steered into Qwen at prefill. CPU (seconds); needs the e64 and e67 runs, data/e67/.
+    ["train/eval_e67.py"],
 ]
 
 
