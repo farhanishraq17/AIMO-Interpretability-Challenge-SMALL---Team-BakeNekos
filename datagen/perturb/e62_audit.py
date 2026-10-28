@@ -3,8 +3,8 @@
 The keep rule trusts one checker model; §2 of `protocols/E62_PROTOCOL.md` asks whether a person agrees. `sheet` draws 30
 kept variants (seed 62) from `data/e62/variants.parquet` and writes `docs/e62_hand_audit.md`: each one's original
 problem, the inserted sentence, the generator's own reason, and a verdict line left `pending`. The auditor replaces it
-by `genuine` (the sentence contradicts what the problem states or implies, so it has no answer as written) or
-`not genuine: <why>`. `count` reads the verdicts back: the audit passes with at least 27 genuine.
+by `genuine: <why>` (the sentence contradicts what the problem states or implies, so it has no answer as written)
+or `not genuine: <why>`. `count` reads the verdicts back: the audit passes with at least 27 genuine.
 
 Run:  python datagen/perturb/e62_audit.py sheet ; python datagen/perturb/e62_audit.py count
 """
@@ -25,7 +25,9 @@ N, SEED, PASS = 30, 62, 27
 def sheet() -> None:
     e62 = ROOT / "data" / "e62"
     kept = pd.read_parquet(e62 / "variants.parquet").sample(N, random_state=SEED)
-    reasons = pd.read_parquet(e62 / "audit.parquet").set_index(["pool_id", "sentence"])["why_impossible"]
+    # A problem's two rounds can write the same sentence; the first reason is shown.
+    reasons = (pd.read_parquet(e62 / "audit.parquet").drop_duplicates(["pool_id", "sentence"])
+               .set_index(["pool_id", "sentence"])["why_impossible"])
     problems = pd.read_parquet(e62 / "eligible.parquet").set_index("pool_id")
     lines = [f"# E62 hand audit: {N} kept contradictions (seed {SEED})", "",
              f"Drawn by `datagen/perturb/e62_audit.py` from {len(pd.read_parquet(e62 / 'variants.parquet'))} kept "
@@ -43,7 +45,7 @@ def sheet() -> None:
 
 def count() -> None:
     verdicts = re.findall(r"^\*\*Verdict:\*\* (.+)$", SHEET.read_text(encoding="utf-8"), re.M)
-    genuine = sum(v.strip() == "genuine" for v in verdicts)
+    genuine = sum(v.startswith("genuine") for v in verdicts)
     pending = sum(v.strip() == "pending" for v in verdicts)
     print(f"{genuine} of {len(verdicts)} genuine, {pending} pending: "
           f"{'pending' if pending else 'pass' if genuine >= PASS else 'FAIL'} (pass: >= {PASS})")
