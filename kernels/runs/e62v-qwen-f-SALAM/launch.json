@@ -1,0 +1,32 @@
+{
+  "job": "e62v-qwen-f",
+  "account": "SALAM",
+  "ref": "salam2026/aimo-small-e62v-qwen-f",
+  "source_sha256": {
+    "datagen/perturb/sample.py": "d82ecb2d4616681c3d71b0ead6b27e6ffe717b57037641628c899e4834b3e7e6",
+    "datagen/perturb/answers.py": "10d240d3db4d6b13863b43559b907b8dc4c3d9bc8a87e97d3fd1311db0946b05",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be",
+    "data/e62/pool.parquet": "e234530e3b2fb401456eb89bb5b3c89801b9ccdf35d1aec073a9441bc7745242",
+    "data/e62/variants.parquet": "a38fd4dd70780bfb30637686bb49a3642e200ad87ecd16b63cbe98306f9c50c0",
+    "protocols/E62_PROTOCOL.md": "72bceb1211fc78ca39d512757d0b72fa519f1c419acc678e192599464013e240",
+    "e62_base/records.jsonl": "aef49366bf6df423c2cae91cd32b23356d1d1806c5a53e9ce6d3936a2d51b0f4"
+  },
+  "kernel_sha256": "31c9e6fc95aa6c22c5ebdc340b8da878c08ce1eeffbd69bfcc5ab6776bfce762",
+  "submitted_at": "2026-10-28T22:51:26.032591+00:00",
+  "metadata": {
+    "id": "salam2026/aimo-small-e62v-qwen-f",
+    "title": "aimo-small-e62v-qwen-f",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

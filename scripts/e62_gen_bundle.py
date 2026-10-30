@@ -13,7 +13,8 @@ Each kernel here serves two models through vLLM's OpenAI-compatible server, one 
 Both reasoning parsers keep the thinking out of the text the script parses; it is still logged for the audit. vLLM
 0.20.0 runs in its own venv after the CUDA linker check, E52's recipe. `WORKERS` generator processes per kernel take
 disjoint slices of the kernel's share of `data/e62/eligible.parquet`, so the servers batch them; every process saves
-one record per finished problem. `smoke` runs two problems first and its output is discarded.
+one record per finished problem. `smoke` runs two problems first and its output is discarded. `rest` reruns, with the
+same settings, the eligible problems no downloaded part finished (a part its guard stopped).
 
 `python scripts/e62_gen_bundle.py merge` folds the downloaded kernels into `data/e62/` (the OpenRouter output moves to
 `data/e62/superseded/openrouter/` first) and rewrites `variants.parquet`, the input of the `e62v-qwen-*` kernels.
@@ -23,6 +24,7 @@ Run via:  python scripts/kaggle_followup.py push e62g-a --account <ALIAS>
 
 from __future__ import annotations
 
+import io
 import json
 import shutil
 import sys
@@ -31,6 +33,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "datagen" / "perturb"))
+import pandas as pd  # noqa: E402
 from e52_gpu_bundle import HEADER, payload  # noqa: E402
 
 GENERATOR, CHECKER = "Qwen/Qwen3-8B-AWQ", "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
@@ -42,19 +45,35 @@ ENGINE = ["--dtype", "float16", "--max-model-len", "16384", "--gpu-memory-utiliz
 MAX_TOKENS, CHECKER_TEMPERATURE = 12000, 0.6  # completion budget inside the 16k context
 KERNELS, WORKERS, HOURS = 10, 4, 9.0
 PARTS = "abcdefghij"
-JOBS = ["smoke", *PARTS[:KERNELS]]
+JOBS = ["smoke", *PARTS[:KERNELS], "rest"]
 FILES = ("datagen/perturb/premise_variants.py", "datagen/perturb/transforms.py", "data/e62/eligible.parquet",
          "protocols/E62_PROTOCOL.md", "scripts/kaggle_cuda_setup.py", "scripts/kaggle_process_guard.py")
-DOWNLOADED = "runs/e62g-[a-j]-*/e62g-*/w*/e62/raw"
+POOL, REST = "data/e62/eligible.parquet", "data/e62/rest.parquet"
+DOWNLOADED = "runs/e62g-*/e62g-*/w*/e62/raw"
+
+
+def parts() -> list[Path]:
+    """Every downloaded worker's `raw/` directory, the smoke runs left out."""
+    return [raw for raw in sorted(ROOT.glob(DOWNLOADED)) if "smoke" not in raw.as_posix()]
+
+
+def missing() -> bytes:
+    """The eligible problems no downloaded worker finished, as the parquet `rest` runs."""
+    done = {json.loads(line)["pool_id"] for raw in parts()
+            for line in (raw / "progress.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()}
+    pool = pd.read_parquet(ROOT / POOL)
+    buffer = io.BytesIO()
+    pool[~pool["pool_id"].isin(done)].to_parquet(buffer, index=False)
+    return buffer.getvalue()
 
 
 def render(job: str) -> tuple[str, dict]:
-    entries, hashes = payload(FILES)
+    entries, hashes = payload(FILES, {REST: missing()} if job == "rest" else None)
     out = f"e62g-{job}"
     # Disjoint slices: kernel k's worker w takes every (KERNELS * WORKERS)-th problem from k + KERNELS * w.
-    shards, workers, hours = ((150, [0], 2.0) if job == "smoke"
+    shards, workers, hours = ((150, [0], 2.0) if job == "smoke" else (WORKERS, list(range(WORKERS)), HOURS) if job == "rest"
                               else (KERNELS * WORKERS, [PARTS.index(job) + KERNELS * w for w in range(WORKERS)], HOURS))
-    argv = [["datagen/perturb/premise_variants.py", "--pool", "data/e62/eligible.parquet",
+    argv = [["datagen/perturb/premise_variants.py", "--pool", REST if job == "rest" else POOL,
              "--out-dir", f"/kaggle/working/{out}/w{i}/e62", "--generator", GENERATOR, "--checker", CHECKER,
              "--generator-url", "http://127.0.0.1:8001/v1", "--checker-url", "http://127.0.0.1:8002/v1",
              "--checker-temperature", str(CHECKER_TEMPERATURE), "--max-tokens", str(MAX_TOKENS),
@@ -115,14 +134,14 @@ def merge() -> None:
     (e62 / "raw").mkdir(exist_ok=True)
     progress = {}
     for name in ("progress", "generation", "check"):
-        lines = [line for raw in sorted(ROOT.glob(DOWNLOADED)) for line in
+        lines = [line for raw in parts() for line in
                  (raw / f"{name}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
         if name == "progress":
             progress = {json.loads(line)["pool_id"]: json.loads(line) for line in lines}
             lines = [json.dumps(p) for p in progress.values()]
         (e62 / "raw" / f"{name}.jsonl").write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
     write_outputs(list(progress.values()), e62)
-    print(f"{len(progress)} problems from {len(list(ROOT.glob(DOWNLOADED)))} worker records -> {e62}")
+    print(f"{len(progress)} problems from {len(parts())} worker records -> {e62}")
 
 
 if __name__ == "__main__" and sys.argv[1:] == ["merge"]:

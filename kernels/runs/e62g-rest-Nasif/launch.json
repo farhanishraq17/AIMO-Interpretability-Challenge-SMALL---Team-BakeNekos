@@ -1,0 +1,29 @@
+{
+  "job": "e62g-rest",
+  "account": "Nasif",
+  "ref": "nasifol/aimo-small-e62g-rest",
+  "source_sha256": {
+    "datagen/perturb/premise_variants.py": "e9b10b97425143eee6f9b79476b5484f419660e0ae5ff28fda0ea220d2d400b8",
+    "datagen/perturb/transforms.py": "bc925640cde89b288af940d9ea0d301147240f05c29af0b85a6e062bcde68b7a",
+    "data/e62/eligible.parquet": "b7e42fd884a337643756d75f7db2824affa9c3fd3164a2384cc8515c2d1dafab",
+    "protocols/E62_PROTOCOL.md": "72bceb1211fc78ca39d512757d0b72fa519f1c419acc678e192599464013e240",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be",
+    "data/e62/rest.parquet": "5b908f1853401a9db77638e56d669320e401d8c3ac18c1a078f8cc541d566e1d"
+  },
+  "kernel_sha256": "ac5974733543fd2c34d6d8b9913424e18c42e61d3c17a93f9460d1d78925c03d",
+  "submitted_at": "2026-10-28T19:33:12.477602+00:00",
+  "metadata": {
+    "id": "nasifol/aimo-small-e62g-rest",
+    "title": "aimo-small-e62g-rest",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

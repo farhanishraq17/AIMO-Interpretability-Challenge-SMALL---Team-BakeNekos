@@ -67,6 +67,23 @@ ids, so 7 of a slice's keys were missing. `e62_pool.py` now derives the id from 
 restarted on the rebuilt pool and every kernel re-pushed as version 2. Superseded outputs are kept in
 `data/e62/superseded/`.
 
+**Amendment 4, 28-29 Oct: generation moved to Kaggle.** OpenRouter had covered 88 of 300 eligible problems in a
+week. `scripts/e62_gen_bundle.py` serves a generator and a checker through vLLM, one per T4. The first smoke showed
+`Qwen3-14B-AWQ` cannot hold a 16k context on a T4 (1.68 GiB of KV cache against 2.5 GiB), so the pre-registered
+fallback `Qwen3-8B-AWQ` writes; `DeepSeek-R1-Distill-Llama-8B` (bitsandbytes 4-bit, temperature 0.6) checks. The
+second smoke kept 4 variants for 2 problems. `e62g-a` to `e62g-j` (ten accounts, four processes each) finished 292
+problems in 7.0-9.0 h; `c`, `h` and `i` reached the 9-hour guard and `e62g-rest` (Nasif, 2.7 h) ran their 8.
+`python scripts/e62_gen_bundle.py merge` moved the OpenRouter output to `data/e62/superseded/openrouter/` and wrote
+**377 kept variants on 200 problems, 177 with two**. The checker gave no verdict on 183 of 944 variant checks and on
+78 of 300 originals (a problem whose original is not called solvable keeps nothing).
+
+**Hand audit, 29 Oct (`docs/e62_hand_audit.md`, `datagen/perturb/e62_audit.py`): 29 of 30 genuine, pass.**
+Committed (`af1c96f`) before any contradiction was sampled.
+
+**Sampling, pushed 29 Oct ~23:00 UTC:** `e62v-qwen-a` to `-h` on Arifin, Eshad, Samin, Tamim2, Labib, SALAM, DIDHITI
+and Simanta01, 132-248 samples a slice (k = 4, 32k cap). At the base phase's ~22 samples an hour, slices `b`, `e`,
+`f` and `g` (204-248) may reach the 9-hour guard; such a slice is resumed from its own downloaded records.
+
 ### E61: built and checked 21 Oct, awaiting Docker and two board reads (Finding 86; protocol `protocols/E61_PROTOCOL.md`, committed `606cf9b` before any threshold)
 
 **Outcome so far:** C1 (NLL parity 0.0 on all four checkpoints), C2 (DeepSeek MATH 0.624 [0.545, 0.697]) and C5
