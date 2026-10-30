@@ -1,0 +1,36 @@
+{
+  "job": "e62v-qwen-e-resume",
+  "account": "Nasif",
+  "ref": "nasifol/aimo-small-e62v-qwen-e-resume",
+  "source_sha256": {
+    "datagen/perturb/sample.py": "d82ecb2d4616681c3d71b0ead6b27e6ffe717b57037641628c899e4834b3e7e6",
+    "datagen/perturb/answers.py": "10d240d3db4d6b13863b43559b907b8dc4c3d9bc8a87e97d3fd1311db0946b05",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be",
+    "data/e62/pool.parquet": "e234530e3b2fb401456eb89bb5b3c89801b9ccdf35d1aec073a9441bc7745242",
+    "data/e62/variants.parquet": "a38fd4dd70780bfb30637686bb49a3642e200ad87ecd16b63cbe98306f9c50c0",
+    "protocols/E62_PROTOCOL.md": "beb263a98d6b58de3fc2a603907f41b70250c950d04716a8e3823b2149ec9091",
+    "resume/variants/shard_00_of_02/metadata.json": "eead0fe9f2c99e3992339e2e779d67e89dc914442e5368bad3db12fe3052f29a",
+    "resume/variants/shard_00_of_02/records.jsonl": "082fc14a85e4a7cd0fc20dbea046e86a59daa57e6fbc9115d7f5676d6ad4aea2",
+    "resume/variants/shard_01_of_02/metadata.json": "55afdff1d8cf8b2dfdc20afa2f3177e292fabc646e7f2b21229fdd1412cc5b56",
+    "resume/variants/shard_01_of_02/records.jsonl": "f90903ba6a995f189bf5cd2d110bd0272b414d61444b0b05e71605639b40edf5",
+    "e62_base/records.jsonl": "f7dd37f58faa7758e28190f8b7c256c7cb646349489eecbcdbf3ce16e8aff4d9"
+  },
+  "kernel_sha256": "9c5953a1eefcb7a7b84f5fea89d0f263c758837f8f7aba50a52960cdd6f2f85c",
+  "submitted_at": "2026-10-30T13:14:40.108885+00:00",
+  "metadata": {
+    "id": "nasifol/aimo-small-e62v-qwen-e-resume",
+    "title": "aimo-small-e62v-qwen-e-resume",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

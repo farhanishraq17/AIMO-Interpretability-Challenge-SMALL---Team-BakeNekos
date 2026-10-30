@@ -41,14 +41,15 @@ HEADING = "E62: familiarity and contradiction detection"
 
 def problems() -> pd.DataFrame:
     """One row per sampled problem: eligibility, contradiction outcomes, Qwen's mean NLL and length."""
-    for phase in ("base", "variants"):
-        for meta in ROOT.glob(RECORDS.format(experiment="e62", short="qwen", phase=phase).replace("records.jsonl", "metadata.json")):
+    # The base phase ran as `e62-qwen-*`, the contradictions as `e62v-qwen-*` (and their resumes).
+    for experiment, phase in (("e62", "base"), ("e62v", "variants")):
+        for meta in ROOT.glob(RECORDS.format(experiment=experiment, short="qwen", phase=phase).replace("records.jsonl", "metadata.json")):
             assert json.loads(meta.read_text(encoding="utf-8"))["args"]["max_new_tokens"] == CAP, meta
     base = {r["pool_id"]: r for r in _records("e62", "qwen", "base")}
     if not base:
         raise SystemExit("no e62 base records; download the e62-qwen-* kernels first")
     variants: dict[str, list[dict]] = {}
-    for record in _records("e62", "qwen", "variants"):
+    for record in _records("e62v", "qwen", "variants"):
         variants.setdefault(record["pool_id"], []).append(record)
     nll = {r["problem_key"]: r["mean_nll"] for p in ROOT.glob(E55_QWEN)
            for r in map(json.loads, p.read_text(encoding="utf-8").splitlines()) if r}
