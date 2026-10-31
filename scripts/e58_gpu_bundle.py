@@ -68,12 +68,15 @@ E59_BASE = "runs/e59-{model}-*/e59-{model}-*/base/shard_*/records.jsonl"
 # E59 amendment 1: e59-deepseek-b's first chunk of four items took 6.9 h, so its resume saves each item as it
 # finishes (`--chunk 1`, an engine setting) instead of risking the guard with nothing flushed.
 RESUME = {"e58": {"qwen-c": ("runs/e58-qwen-c-TASHIN/e58-qwen-c", None)},
-          "e59": {"deepseek-b": ("runs/e59-deepseek-b-DIDHITI/e59-deepseek-b", "1")}}
+          "e59": {"deepseek-b": ("runs/e59-deepseek-b-DIDHITI/e59-deepseek-b", "1")},
+          # E62: the four largest contradiction slices reached the 9-hour guard (30 Oct); a resume saves every 8 items.
+          "e62v": {f"qwen-{part}": (f"runs/e62v-qwen-{part}-{account}/e62v-qwen-{part}", "8")
+                   for part, account in (("b", "Eshad"), ("e", "Labib"), ("f", "SALAM"), ("g", "DIDHITI"))}}
 JOBS = [f"{m}-{part}" for m, n in SPLITS["e58"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e58"]]
 E59_JOBS = [f"{m}-{part}" for m, n in SPLITS["e59"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e59"]]
 E60_JOBS = [f"{m}-{part}" for m, n in SPLITS["e60"].items() for part in "abcdefgh"[:n]]
 E62_JOBS = [f"{m}-{part}" for m, n in SPLITS["e62"].items() for part in "abcdefgh"[:n]]
-E62V_JOBS = [f"{m}-{part}" for m, n in SPLITS["e62v"].items() for part in "abcdefgh"[:n]]
+E62V_JOBS = [f"{m}-{part}" for m, n in SPLITS["e62v"].items() for part in "abcdefgh"[:n]] + [f"{job}-resume" for job in RESUME["e62v"]]
 E66_JOBS = [f"{m}-{part}" for m, n in SPLITS["e66"].items() for part in PARTS[:n]]
 
 

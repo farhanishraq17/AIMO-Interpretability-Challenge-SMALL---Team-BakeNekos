@@ -134,3 +134,8 @@ while the fleet had more than 300 GPU-hours of unused quota this week. So:
 - **Rerun, 29 Oct (only counts read):** seven parts finished their 30 problems in 7.0-8.9 hours; `e62g-c`, `e62g-h`
   and `e62g-i` reached the 9-hour guard with 27, 26 and 29 done. Their 8 unfinished problems are rerun, with the same
   settings, by `e62g-rest` (four processes of two problems each); every finished record stands as written.
+- **Sampling resumed, 30 Oct (only record counts read):** `e62v-qwen-b`, `-e`, `-f` and `-g` reached the 9-hour
+  guard with 44 of 57, 32 of 57, 41 of 51 and 32 of 62 variants recorded; the other four slices finished. Each of
+  the four is resumed from its own downloaded records (`-resume`, saving every 8 items instead of 16), sampling
+  settings unchanged. `train/eval_e62.py` looked for contradiction records under `e62-qwen-*`, where there are none;
+  it now reads `e62v-qwen-*`, a path fix made before any sample was read.

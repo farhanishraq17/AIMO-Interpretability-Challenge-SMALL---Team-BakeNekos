@@ -1080,6 +1080,12 @@ added premise (Finding 76), then on problems it finds familiar it should flag co
 rows that could test a continuous version were already read there post hoc (AUC 0.675). The report
 deadline (15 Nov) is after the submission deadline, so it can run past the freeze.
 
+**Done, 31 Oct (Finding 95).** Amendment 4 moved generation to Kaggle (Qwen3-8B-AWQ writes,
+DeepSeek-R1-Distill-Llama-8B checks); 377 variants on 200 problems, hand audit 29 of 30. On 177
+qualifying problems Spearman(mean NLL, detection) is **0.256 [0.112, 0.386]**, the predicted
+direction; within length terciles 0.142 [-0.015, 0.282]. In the report: §11.1's mechanism has one
+direct test in its favour, with length as the caveat.
+
 ### 13.5 The loop every experiment goes through
 
 1. **Pre-register** in `protocols/`, commit, then compute. No number is read before the commit.

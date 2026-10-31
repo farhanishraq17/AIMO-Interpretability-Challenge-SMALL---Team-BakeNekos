@@ -1,0 +1,36 @@
+{
+  "job": "e62v-qwen-g-resume",
+  "account": "TASHIN",
+  "ref": "tashintahir/aimo-small-e62v-qwen-g-resume",
+  "source_sha256": {
+    "datagen/perturb/sample.py": "d82ecb2d4616681c3d71b0ead6b27e6ffe717b57037641628c899e4834b3e7e6",
+    "datagen/perturb/answers.py": "10d240d3db4d6b13863b43559b907b8dc4c3d9bc8a87e97d3fd1311db0946b05",
+    "datagen/tokenizer_check.py": "0bd60eb52d4ba79d9d9df581164cb0099619d87ee5d9ce092b3492c3ae579702",
+    "datagen/extract_features.py": "8123ecd277e27e162b73b1396ab23f0182119a9a75cdf46bff62b139be8a035d",
+    "scripts/kaggle_cuda_setup.py": "92e79ad19b55a4e128103542028905bfacf07c3c846b9769b0a33eae9a713284",
+    "scripts/kaggle_process_guard.py": "0cda80dad52039d2591114a08afcfbdcea61e5723e7185e3b806ea2f9ed068be",
+    "data/e62/pool.parquet": "e234530e3b2fb401456eb89bb5b3c89801b9ccdf35d1aec073a9441bc7745242",
+    "data/e62/variants.parquet": "a38fd4dd70780bfb30637686bb49a3642e200ad87ecd16b63cbe98306f9c50c0",
+    "protocols/E62_PROTOCOL.md": "beb263a98d6b58de3fc2a603907f41b70250c950d04716a8e3823b2149ec9091",
+    "resume/variants/shard_00_of_02/metadata.json": "d1a5f6d78d7a256fe538648c975039ba0ce98c5e959b39b092cb41dbbab1dbdc",
+    "resume/variants/shard_00_of_02/records.jsonl": "4926735e7eaf0da0114f54c561934733d1ca2615f4fdacbfc112a2f39bd20233",
+    "resume/variants/shard_01_of_02/metadata.json": "88bc9faccfdb017fcd0238a6b9b5149d941165bbbebeb2b32477b41f67f6488b",
+    "resume/variants/shard_01_of_02/records.jsonl": "52d6aa5eac899c59f52f6618c2488a862f9ee1e5e55c8d4bb2dd17875b980216",
+    "e62_base/records.jsonl": "e091dba1da862dab570dc2bdba83f7593e45559e5814f59b172d2eea09099c09"
+  },
+  "kernel_sha256": "fd30537bded36ea9de6a034e04ce9958464f03615aca8af5b6ef0fa31834c91c",
+  "submitted_at": "2026-10-30T13:13:08.666175+00:00",
+  "metadata": {
+    "id": "tashintahir/aimo-small-e62v-qwen-g-resume",
+    "title": "aimo-small-e62v-qwen-g-resume",
+    "code_file": "run.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": true,
+    "enable_gpu": true,
+    "enable_internet": true,
+    "dataset_sources": [],
+    "competition_sources": [],
+    "kernel_sources": []
+  }
+}

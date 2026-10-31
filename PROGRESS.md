@@ -3004,6 +3004,45 @@ session-hours), and all 60 problems are complete.
   is the white-box causal check, and it is negative.
 - **Use:** none for the Form (E64 stays).
 
+**95. E62: Qwen3.5-4B flags an added contradiction less often on the problems it finds familiar. Spearman(mean NLL,
+detection rate) is 0.256 [0.112, 0.386] over 177 olympiad problems, the pre-registered direction. Within length
+terciles it is 0.142 [-0.015, 0.282], so problem length carries part of it.** (`protocols/E62_PROTOCOL.md`, committed
+`aa4ae4a` before any variant or sample, amendments 1-4; `train/eval_e62.py`. RESULTS, "E62: familiarity and
+contradiction detection".)
+
+E62 tests the mechanism §11.1 of the paper offered untested: a model that recognises a problem answers from memory
+and skips an added premise. Qwen sampled E62's 497 non-official olympiad problems (k = 2, 32k cap, the prompt that can
+decline); 300 were eligible (both samples correct). Amendment 4 moved generation to Kaggle: `Qwen3-8B-AWQ` wrote two
+contradicting conditions a problem and `DeepSeek-R1-Distill-Llama-8B` checked each variant and the original blind,
+keeping 377 variants on 200 problems (the checker gave no verdict on 183 of 944 variant checks and on 78 originals). A
+hand audit of 30 kept variants found 29 genuine (`docs/e62_hand_audit.md`), committed before any sample existed. Qwen
+then sampled each kept variant k = 4: eight kernels, the four largest slices resumed once after the 9-hour guard.
+**177 problems qualify** (eligible, two kept variants, all 8 samples). A sample is flagged when E52's grader scores it
+as declining; a truncated sample is not flagged.
+
+| NLL quintile (1 = most familiar) | problems | detection rate | cap hit |
+| --- | --- | --- | --- |
+| 1 | 36 | 0.229 | 0.399 |
+| 2 | 35 | 0.250 | 0.361 |
+| 3 | 35 | 0.336 | 0.393 |
+| 4 | 35 | 0.464 | 0.296 |
+| 5 | 36 | 0.389 | 0.236 |
+
+- **The primary interval is positive (§7: the mechanism has direct support).** Qwen flags a third of its contradiction
+  samples overall (0.333). It flags 23% on the problems it finds most familiar and 39-46% on the two least familiar
+  quintiles. The rise is not monotone: the least familiar fifth flags less than the fourth.
+- **Length is the main caveat.** Mean NLL is lower on longer problems (Spearman -0.392 between character length and
+  NLL), and longer problems are flagged less (-0.371). Controlling for length within terciles keeps the sign (0.142)
+  but the interval reaches -0.015. Part of "familiar" here is "long".
+- **Truncation does not explain it** (exploratory, computed after the pre-registered rows). Familiar problems hit the
+  32k cap more (0.399 against 0.236), and a truncated sample counts as not flagged, which favours the result. Over each
+  problem's untruncated samples only (171 problems) the correlation is 0.213 [0.069, 0.357], still positive.
+- **Scope.** One model, synthetic premise contradictions written by another model, unlabelled problems. It supports the
+  mechanism, not the publication split it was meant to explain (F-69 found no support for that split at n = 34). It
+  says nothing about the official perturbation families except the one it imitates (`expert_no_solution`).
+- **Use:** none for the Form (E64 stays). For the report it is the one direct test of §11.1's mechanism, and it points
+  the predicted way.
+
 ## 10. Open questions and blockers
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because

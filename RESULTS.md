@@ -1388,3 +1388,26 @@ Exploratory, added after the gates were read: were trace length to follow E64's 
 Run time: 22.3 GPU-process hours, median 21.9 min a problem; 11.8 Kaggle session-hours for the four kernels.
 
 **Gates: G1 fail, G2 fail, G3 pass, S pass.**
+
+## E62: familiarity and contradiction detection
+
+Fixed in `protocols/E62_PROTOCOL.md` (with amendments) before any sample existed. Qwen3.5-4B, 32k cap, the prompt that can decline; detection rate = flagged / 8 over two premise contradictions, k = 4 each.
+
+Sampled 497 problems; eligible 300; qualifying (eligible, two kept variants, 8 samples) **177**. Cap hit: base 0.337, contradictions 0.345.
+
+| measure | value | 95% interval |
+| --- | --- | --- |
+| Spearman(mean NLL, detection rate) | **0.256** | [0.112, 0.386] |
+| the same within length terciles, averaged | 0.142 | [-0.015, 0.282] |
+
+| NLL quintile (1 = most familiar) | problems | max NLL | mean detection | cap hit |
+| --- | --- | --- | --- | --- |
+| 1 | 36 | 1.164 | 0.229 | 0.399 |
+| 2 | 35 | 1.388 | 0.250 | 0.361 |
+| 3 | 35 | 1.572 | 0.336 | 0.393 |
+| 4 | 35 | 1.979 | 0.464 | 0.296 |
+| 5 | 36 | 2.954 | 0.389 | 0.236 |
+
+**Reading (§7):** the primary interval is positive; the memorisation mechanism predicts positive (less familiar, more detection).
+
+Exploratory, not pre-registered: over each problem's untruncated samples only (171 problems), Spearman 0.213 [0.069, 0.357]. Character length against mean NLL -0.392, against detection -0.371.
