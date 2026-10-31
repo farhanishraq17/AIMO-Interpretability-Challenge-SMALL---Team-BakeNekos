@@ -46,6 +46,7 @@ The same method may also be submitted to the Main Track as a *separate* ZIP with
 | Reference baselines | https://github.com/aimo-interp/baselines |
 | Org GitHub | https://github.com/aimo-interp |
 | Codabench (submit + leaderboard) | https://www.codabench.org/competitions/16180/ |
+| OpenReview (report + prize nomination) | https://openreview.net/group?id=NeurIPS.cc/2026/Workshop/AIMOInterp_Challenge |
 | Proposal paper (arXiv) | https://arxiv.org/abs/2607.13899 |
 | Proposal PDF | https://arxiv.org/pdf/2607.13899 |
 | Discord | https://discord.gg/PaAMFmpsBQ |
@@ -133,7 +134,7 @@ There are three levels, and only the last decides prizes:
 | --- | --- | --- |
 | Local: `getting-started/scripts/run_local.py` | The public `val-sample` (24 cases, only **1** small-model case), run through the same ingestion and scoring programs Codabench uses | Contract and packaging checks: `coverage 1.0`, `invalid_predictions 0`, `small.txt` placement. **Not** a score estimate. |
 | **Live Codabench leaderboard** | Task "AIMO Robustness Validation **v8** - Small Model Track" (task id 36241, **created 16 Sep 2026 22:35 UTC**; recorded as v7 before, Finding 35) in the Competition Phase. Input and reference data are non-public, i.e. the hidden validation set, which the website says "covers all types of models contained in the test set". | The only external estimate of real performance. It is public and shows Accuracy, Coverage, and Invalid predictions. |
-| Final ranking | Held-out private test set, scored after the deadline, on "a new set of problems and variants" (organizers, `getting-started` issue #7). The solution to rank is submitted through the organizers' Google Form, not taken from the leaderboard. | Prizes. Ties are broken by average runtime over repeated runs. |
+| Final ranking | Held-out private test set, scored after the deadline, on "a new set of problems and variants" (organizers, `getting-started` issue #7). The solutions to rank are nominated in the OpenReview report form (`leaderboard_submission_ids`: one or two Codabench submission IDs), and the final score is the better of the two (organizers, issue #6). There is no final-submission Google Form (checked 31 Oct). The final test has 30-50 problems with **160 s enforced per `are_robust` call**; a call that times out is scored wrong (issue #6, 28 Oct). | Prizes. Ties are broken by average runtime over repeated runs. |
 
 Scoring details from `components/scoring_program/scoring.py`:
 
@@ -167,11 +168,10 @@ The leaderboard metric is raw accuracy, which depends on the class prior, while 
 | When | What |
 | --- | --- |
 | 30 Apr – 31 Aug 2026 | Codabench Warmup Phase (task "AIMO Robustness Validation v8") |
-| **1 Sep – 1 Nov 2026, 12:55 UTC** | **Codabench Competition Phase (we are in this window)**: Main Track and Small Model Track tasks. The website describes the competition phase as 15 Aug – 1 Nov. |
-| **1 Nov 2026, 12:55 UTC** | **Final submission deadline**: Codabench closes |
-| 1–15 Nov 2026 | Technical report + open-sourced implementation |
-| 15 Nov 2026 | Report due for award-eligible teams |
-| 15–30 Nov 2026 | Result validation, report review, rules compliance; award-eligible teams peer-review up to 3 reports |
+| **1 Sep – 1 Nov 2026, 11:55 UTC** | **Codabench Competition Phase (we are in this window)**: Main Track and Small Model Track tasks. 11:55 UTC is the phase `end` in Codabench's API (read 31 Oct); this file said 12:55 before. The website says 1 Nov AoE; Codabench's own clock closes the uploads. |
+| **1 Nov 2026, 11:55 UTC** | **Final submission deadline**: Codabench closes |
+| **5 Nov 2026 (AoE)** | **OpenReview report due**: the form's `duedate` is 6 Nov, 12:59 UTC. It nominates the Codabench submission IDs for prizes (§12). This file said 15 Nov before 31 Oct; the website's Rules now say 5 Nov. |
+| 5–12 Nov 2026 (AoE) | Reviewing: award-considered teams peer-review up to 3 reports |
 | 11/12 Dec 2026 | Competition workshop at NeurIPS 2026 |
 
 ---
@@ -180,9 +180,9 @@ The leaderboard metric is raw accuracy, which depends on the class prior, while 
 
 1. **Signals.** Weights, activations, token probabilities, or any other internal signals are allowed. White-box methods are encouraged. Black-box behavioural analysis is allowed if it fits the evaluation compute budget (for example, using reasoning traces).
 2. **Tracks.** Each ZIP counts for one track. The same method can be uploaded twice (with / without `small.txt`).
-3. **Report.** Award-considered teams must submit a technical report and open-sourced implementation by **15 Nov 2026**.
+3. **Report.** Award-considered teams must submit a technical report and open-sourced implementation by **5 Nov 2026 (AoE)** on OpenReview. The rules require the NeurIPS template, at most 5 pages excluding the AI usage statement, limitations, references and appendix, and no duplicate reports for highly similar methods.
 4. **Transparency.** Organizers must be able to reproduce the score from the report alone. Document training data, training codebase, and the submission bundle. The submission may depend only on documented resources.
-5. **Reviewing.** Award-considered teams peer-review up to 3 other reports, 15–30 Nov 2026.
+5. **Reviewing.** Award-considered teams peer-review up to 3 other reports, 5–12 Nov 2026 (AoE).
 
 **Data-rule clarification (website, 19 Sep 2026):** the organizers retired the proposal-paper
 restriction on extra labeled data. Extra labeled training data and self-generated perturbation
@@ -392,6 +392,19 @@ Example output: `dist/solution-trained-probe-small.zip`.
 
 Invalid predictions usually mean an exception, a non-bool, or the wrong list length. Participant tracebacks may be hidden — reproduce locally in the competition Docker image.
 
+### Nominating for prizes: the OpenReview form
+
+These fields are read from the submission invitation's own field descriptions (OpenReview API, 31 Oct 2026). There is no Google Form.
+
+Form: [OpenReview, AIMOInterp Challenge](https://openreview.net/group?id=NeurIPS.cc/2026/Workshop/AIMOInterp_Challenge). It is due **6 Nov 2026, 12:59 UTC** (5 Nov AoE).
+
+- **`leaderboard_submission_ids`**: one or two Codabench submission IDs (main or small track) for the prizes, written as `123456` or `123456, 654321`. Ours: `e64-difficulty` is **1010961** (`submission/README.md`).
+- **PDF**: NeurIPS template, main body at most 5 pages, **anonymized**. The AI use statement is mandatory and goes after the main text, before the references; it, the limitations and the appendix do not count toward the page limit.
+- **Authors**: every author needs an OpenReview profile. Only one report is allowed per first author. The organizers check that the IDs belong to the same Codabench user.
+- **`supplementary_material`**: optional, a single ZIP of at most 50 MB (code or data).
+- **`white_box_award`**: tick it only if the verdict depends on signals beyond the generated text; the report must then include an ablation with and without the white-box component.
+- **Other fields**: TLDR, abstract, keywords, the AI-assistance checklist (it must match the statement), reciprocal reviewers (listed authors who review three other reports), voluntary reviewers, and confirmations of rules compliance and of reciprocal reviewing.
+
 ---
 
 ## 13. Starter methods (starting points)
@@ -450,8 +463,8 @@ Training for uncertainty profiling uses `aimo-interp/augmented-sample-math-agg@f
 5. Optional: request Fields Model compute — https://forms.gle/oYkYDN1EtSVeSfMd9
 6. Implement `are_robust`, train artifacts offline on open-weight 7B/8B models
 7. Package with `small.txt`, upload to the Small Models task
-8. Iterate until **1 Nov 2026**
-9. If award-eligible: report + open source by **15 Nov 2026**, then review peers
+8. Iterate until **1 Nov 2026, 11:55 UTC**
+9. If award-eligible: report + open source on OpenReview by **5 Nov 2026 (AoE)**, nominating one or two Codabench submission IDs (§12), then review peers 5–12 Nov
 
 ---
 

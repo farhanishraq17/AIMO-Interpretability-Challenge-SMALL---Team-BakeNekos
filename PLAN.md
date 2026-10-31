@@ -7,8 +7,9 @@
 | Date | Event |
 | --- | --- |
 | 21 Oct 2026 | Plan last updated. **Start at §13: the final push under per-problem evaluation.** §12 is the history behind it. |
-| 1 Nov 2026, 12:55 UTC | Codabench submissions close (about 6.5 weeks away) |
-| 15 Nov 2026 | Technical report and open-source code due |
+| **1 Nov 2026, 11:55 UTC** | Codabench submissions close (Codabench's phase `end`; 12:55 here before 31 Oct was wrong) |
+| **5 Nov 2026 (AoE)** | Technical report and open-source code due on OpenReview, which also nominates the prize submissions (§13.6b). 15 Nov here before 31 Oct was wrong |
+| 5 - 12 Nov 2026 (AoE) | Reciprocal reviewing of up to 3 reports |
 | 11/12 Dec 2026 | NeurIPS workshop |
 
 **Companion documents:**
@@ -1114,8 +1115,25 @@ direct test in its favour, with length as the caveat.
 | Sat 24 - Mon 26 Oct | Quotas reset. E62 sampling on the fleet. Report drafting |
 | **Tue 27 Oct** | **Freeze:** the ship rule picks E61b or `e27f` |
 | Wed 28 - Fri 30 Oct | Three repeatability and timing runs of the frozen ZIP in the competition image; send it through the Google Form by 30 Oct and keep its SHA-256 with the confirmation |
-| 1 Nov, 12:55 UTC | Codabench closes |
-| 2 - 15 Nov | E62 analysis; technical report and open-source repository |
+| 1 Nov, 11:55 UTC | Codabench closes |
+| 1 - 5 Nov (AoE) | Technical report and open-source repository; OpenReview submission with the nomination (§13.6b) |
+| 5 - 12 Nov | Reciprocal reviewing |
+
+### 13.6b 31 Oct: no Google Form; OpenReview nominates the prize submissions
+
+The "Form ZIP" in this plan was to go through an organizers' Google Form. **No such form exists.** Checked on 31 Oct:
+the website, the getting-started issues, the Codabench pages and the OpenReview venue. The final step is the OpenReview
+report form (`docs/COMPETITION.md` §12, "Nominating for prizes"):
+
+- **Codabench closes 1 Nov, 11:55 UTC.** E64 is already on the board as **1010961**, so nothing is left to upload.
+- **OpenReview by 5 Nov AoE** (6 Nov, 12:59 UTC):
+  - `leaderboard_submission_ids` takes one or two Codabench IDs. The final score is the better of the two (issue #6).
+    1010961 goes first; the second is the owner's choice.
+  - The PDF is anonymized, in the NeurIPS template, at most 5 pages, followed by the mandatory AI use statement.
+  - The code goes as a supplementary ZIP of 50 MB or less, or as the open-source repository.
+- **Final test:** 30-50 problems with 160 s enforced per `are_robust` call; a timeout scores wrong (issue #6).
+  E64 runs one forward pass per problem.
+- **The report deadline moved to 5 Nov**, so E62's analysis and the report share four days, not two weeks.
 
 ### 13.6a 28 Oct: E64 opened up (Findings 91-93); E64 stays
 
