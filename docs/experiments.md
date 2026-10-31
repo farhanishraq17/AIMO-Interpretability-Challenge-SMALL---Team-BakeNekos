@@ -24,7 +24,7 @@ GQA path on T4s, which led to the grouped decode attention in `steer.py`; v2 mea
 Trace length did not move under the push (+2 sigma: -0.003 [-0.114, +0.111]; -2 sigma: -0.004 [-0.122, +0.113]),
 while E64's read past the steered layer moved ±0.19. Score with `python train/eval_e67.py`.
 
-### E62: running from 21 Oct (report experiment; protocol `protocols/E62_PROTOCOL.md`, committed `aa4ae4a` before any variant or sample, amendment 1 at `cf9ab83`)
+### E62: closed 31 Oct, Finding 95 (report experiment; protocol `protocols/E62_PROTOCOL.md`, committed `aa4ae4a` before any variant or sample, amendment 1 at `cf9ab83`)
 
 Qwen base phase (k = 2, 32k cap, the prompt that can decline) in eight hash-ordered slices of the 497-problem pool,
 version 2 pushed 00:10-00:20 UTC; engines up by 00:42, about 9.5 minutes each. Contradictions come from E60's
@@ -83,6 +83,12 @@ Committed (`af1c96f`) before any contradiction was sampled.
 **Sampling, pushed 29 Oct ~23:00 UTC:** `e62v-qwen-a` to `-h` on Arifin, Eshad, Samin, Tamim2, Labib, SALAM, DIDHITI
 and Simanta01, 132-248 samples a slice (k = 4, 32k cap). At the base phase's ~22 samples an hour, slices `b`, `e`,
 `f` and `g` (204-248) may reach the 9-hour guard; such a slice is resumed from its own downloaded records.
+
+**Closed 31 Oct (Finding 95).** Slices `a`, `c`, `d`, `h` finished (6.9-9.2 h); `b`, `e`, `f`, `g` reached the guard
+with 44/57, 32/57, 41/51 and 32/62 variants and were resumed once (`-resume` on Tamim3, Nasif, Simanta02, TASHIN;
+3.9-6.4 h, all exit 0). 377 of 377 variants have 4 samples. `train/eval_e62.py` (after the `e62v` path fix):
+**177 qualifying, Spearman 0.256 [0.112, 0.386]**, within length terciles 0.142 [-0.015, 0.282]; exploratory,
+untruncated samples only, 0.213 [0.069, 0.357].
 
 ### E61: built and checked 21 Oct, awaiting Docker and two board reads (Finding 86; protocol `protocols/E61_PROTOCOL.md`, committed `606cf9b` before any threshold)
 

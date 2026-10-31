@@ -107,18 +107,34 @@ def main() -> None:
         boot_w = [tercile_spearman(x[i], y[i], length[i]) for i in draws]
         ci_p, ci_w = (np.nanpercentile(b, [2.5, 97.5]).tolist() for b in (boot_p, boot_w))
         q["quintile"] = pd.qcut(q["mean_nll"], 5, labels=False, duplicates="drop") + 1
+        q["cap_hit"] = q["truncated"] / N_SAMPLES
         table = q.groupby("quintile").agg(problems=("detection", "size"), nll_max=("mean_nll", "max"),
-                                          detection=("detection", "mean"))
+                                          detection=("detection", "mean"), cap_hit=("cap_hit", "mean"))
+        # Exploratory, not in the protocol: a truncated sample counts as not flagged and familiar problems hit the cap
+        # more often, so the same correlation over each problem's untruncated samples; and length against both sides.
+        seen = q[q["truncated"] < N_SAMPLES]
+        xs, ys = seen["mean_nll"].to_numpy(), (seen["detected"] / (N_SAMPLES - seen["truncated"])).to_numpy()
+        boot_s = [spearmanr(xs[i], ys[i]).statistic for i in (rng.integers(0, len(seen), len(seen)) for _ in range(BOOT))]
+        untruncated, ci_s = float(spearmanr(xs, ys).statistic), np.nanpercentile(boot_s, [2.5, 97.5]).tolist()
+        length_nll, length_detection = (float(spearmanr(length, v).statistic) for v in (x, y))
         result.update(spearman=primary, spearman_ci=ci_p, within_length=within, within_length_ci=ci_w,
                       quintiles=table.reset_index().to_dict("records"),
+                      exploratory={"untruncated_spearman": untruncated, "untruncated_ci": ci_s,
+                                   "untruncated_problems": int(len(seen)), "length_vs_nll": length_nll,
+                                   "length_vs_detection": length_detection},
                       reading="positive" if ci_p[0] > 0 else "negative" if ci_p[1] < 0 else "spans zero")
         lines += ["", "| measure | value | 95% interval |", "| --- | --- | --- |",
                   f"| Spearman(mean NLL, detection rate) | **{primary:.3f}** | [{ci_p[0]:.3f}, {ci_p[1]:.3f}] |",
                   f"| the same within length terciles, averaged | {within:.3f} | [{ci_w[0]:.3f}, {ci_w[1]:.3f}] |",
-                  "", "| NLL quintile (1 = most familiar) | problems | max NLL | mean detection |", "| --- | --- | --- | --- |"]
-        lines += [f"| {int(k)} | {int(r.problems)} | {r.nll_max:.3f} | {r.detection:.3f} |" for k, r in table.iterrows()]
+                  "", "| NLL quintile (1 = most familiar) | problems | max NLL | mean detection | cap hit |",
+                  "| --- | --- | --- | --- | --- |"]
+        lines += [f"| {int(k)} | {int(r.problems)} | {r.nll_max:.3f} | {r.detection:.3f} | {r.cap_hit:.3f} |"
+                  for k, r in table.iterrows()]
         lines += ["", f"**Reading (§7):** the primary interval is {result['reading']}; the memorisation mechanism "
-                  "predicts positive (less familiar, more detection)."]
+                  "predicts positive (less familiar, more detection).", "",
+                  f"Exploratory, not pre-registered: over each problem's untruncated samples only ({len(seen)} problems), "
+                  f"Spearman {untruncated:.3f} [{ci_s[0]:.3f}, {ci_s[1]:.3f}]. Character length against mean NLL "
+                  f"{length_nll:.3f}, against detection {length_detection:.3f}."]
 
     body = "\n".join(lines)
     print(body)

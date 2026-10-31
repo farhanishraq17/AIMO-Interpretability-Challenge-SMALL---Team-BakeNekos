@@ -1242,6 +1242,17 @@ publication hypothesis again with a mechanism attached, and F-69 has already fou
 the publication split at n = 34, so we offer it as the next thing to test rather than an
 explanation.
 
+**E62 tested the mechanism directly, and it points the predicted way** (F-95, pre-registered). On 177
+unlabelled olympiad problems Qwen3.5-4B solved twice, we inserted two checked premise contradictions
+each and sampled every variant four times with a prompt that allows declining. Qwen flags the
+contradiction less often on problems it finds familiar: Spearman between mean NLL and detection rate
+0.256 [0.112, 0.386], from 23% flagged in the most familiar fifth to 39-46% in the two least familiar.
+The effect is partly length: longer problems read as more familiar and are flagged less, and within
+length terciles the correlation is 0.142 [-0.015, 0.282]. Truncation does not produce it: familiar
+problems hit the cap more often, and over untruncated samples alone it is 0.213 [0.069, 0.357]. This
+is one model, with synthetic contradictions written by another model. It supports the mechanism, not
+the publication split it was meant to explain.
+
 ### 11.2 Limitations
 
 - **Sample size dominates everything.** Fourteen validation cases, 33 labelled problems, 82 rows.
