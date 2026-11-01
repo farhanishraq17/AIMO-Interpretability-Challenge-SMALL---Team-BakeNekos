@@ -1,5 +1,10 @@
 # Docker load test — instructions
 
+**Status, 1 Nov:** written for `e27k`. The submission we nominate is now
+`dist/solution-e64-difficulty-small.zip`. Its Docker test was waived on 27 Oct, because Docker Desktop has not started
+on this machine since 21 Oct and Codabench's own run covered the load path (`protocols/E64_PROTOCOL.md` amendment 4).
+To repeat it for the report, use that ZIP's name in the commands below.
+
 **What this is:** a check that our competition submission loads and runs inside the *exact* image
 Codabench uses, rather than only in our own Python environment.
 

@@ -14,14 +14,18 @@ Team workspace for the **AIMO Interpretability Challenge (NeurIPS 2026)**, enter
   the final-push plan, E61/E63 (familiarity per problem, 8-9/14), E64 (difficulty), E65 (E64 reverses on MATH) and
   E66 (64k-cap refit, failed its ship rule on 27 Oct; E64 stays). `train/explain_e64.py` (Findings 91-93, 28 Oct)
   opens E64 up: the official rows' noise, its MATH reversal (one perturbation family) and what the ridge reads.
+  Two report experiments closed after that, and neither changes what ships: E67 (Finding 94: steering along E64's
+  direction moves its read of later layers, not trace length) and E62 (Finding 95: Qwen flags added contradictions
+  less on familiar problems, 0.256 [0.112, 0.386]).
 - **This repository is the Small Models Track only.** The Main Track (adds `gpt-oss-120b`) lives in
   its own repository, `https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-LARGE---Team-BakeNekos`;
   nothing here depends on it, the two only share the Kaggle accounts, and its `LF-n` findings are
   cited here by number only. **Paper content is written for this track only.**
 - **Scoring:** Codabench competition 16180, not Kaggle. Kaggle is only free GPU capacity.
-- **Deadlines:** Codabench closes **1 Nov 2026, 11:55 UTC**; the technical report and open-source code
-  are due on **OpenReview by 5 Nov 2026 (AoE)**. That form also nominates one or two Codabench submission IDs for
-  the prizes (E64 = 1010961). There is no Google Form (`docs/COMPETITION.md` §12, `PLAN.md` §13.6b).
+- **Deadlines:** Codabench closes **1 Nov 2026 (AoE)**: its phase `end` read 2 Nov, 12:00 UTC on 1 Nov (1 Nov, 11:55 UTC
+  the day before). The technical report and open-source code are due on **OpenReview by 5 Nov 2026 (AoE)**. That form
+  also nominates one or two Codabench submission IDs for the prizes (E64 = 1010961), and the final score is the better
+  of the two. There is no Google Form (`docs/COMPETITION.md` §12, `PLAN.md` §13.6b, Finding 96).
 
 ## Documents: read before changing direction
 
@@ -58,7 +62,7 @@ Upstream URLs (competition site, starter kit, datasets) are in `docs/COMPETITION
     **Upstream has since moved to `de79405`** (PR #9, `reasoning_effort` support, 2 commits
     ahead). The pin is deliberate; our signature already works under both callers.
   - `.gitignore` excludes `Secrets.env` (and `*.env`), `data/`, `features/`, `runs/`,
-    `kaggle_runs/`, and `dist/`.
+    `kaggle_runs/`, and every `dist/` except the root one, whose ZIPs are committed.
   - Before every commit, run `python scripts/check_staged_secrets.py`. It rejects complete
     token patterns, current local credential values and staged environment files without
     printing secrets. Literal markers in documentation and
@@ -261,7 +265,8 @@ Recovered or measured facts that the pipeline depends on (evidence in `PROGRESS.
   `openai/gpt-oss-120b`. Return `[False] * len(problems)` for models you do not cover rather
   than raising.
 - Budget: **3600 s** for the whole prediction run on **one** RTX PRO 6000 (96 GB, Blackwell,
-  bf16). A cached 4–8B model loads in about 2 s. Ties break on runtime.
+  bf16). A cached 4–8B model loads in about 2 s. Ties break on runtime. The final test enforces **160 s on each
+  `are_robust` call** over 30-50 problems, and a call over that is scored wrong (organizers, issue #6).
 - Accept both call styles: `are_robust(model_id, problems)` and
   `are_robust(model_id, reasoning_effort=..., problems=...)`, which is **merged upstream** as of
   `de79405`, not pending. The E11 signature `(model_id, problems, reasoning_effort="default")`
@@ -416,7 +421,7 @@ step needs another repo file, add it to `BUNDLE_FILES`. Kernels are private
 - Prompts for representation work must match the probe baseline exactly: the system prompt
   from `probe_artifact.pkl` (SHA-1 `9021e9d4…`) and the chat template with
   `add_generation_prompt=True`. Never transcribe the prompt by hand.
-- Generated outputs (`data/`, `features/`, `runs/`, `kaggle_runs/`, `dist/`) are git-ignored
-  and must regenerate deterministically.
+- Generated outputs (`data/`, `features/`, `runs/`, `kaggle_runs/`) are git-ignored and must regenerate
+  deterministically. The root `dist/` ZIPs are committed, and their builders are deterministic.
 - Treat `getting-started/` as vendored upstream code: extend it from our own directories
   instead of editing it, so upstream updates can be pulled.

@@ -5,7 +5,7 @@ live in `datagen/kaggle_launch.py` (`EXPERIMENTS`); the kernels as pushed, with 
 manifest, are in `kernels/`; measurements live in `RESULTS.md`; the reasoning behind each
 result is the numbered Finding in `PROGRESS.md`.
 
-Last updated: 30 September 2026. **The 27 Oct freeze is decided: ship `e27k`** (Findings 63, 64). E37 and E38 are closed and no new candidate is eligible; E39, E40 and E41 audited the incumbent instead, and it survives all three.
+Last updated: 1 November 2026. **`e64-difficulty` is the submission we nominate (Codabench 1010961, 10/14 per problem; Findings 88, 96).** `e27k`'s 0.86 was the batch protocol, and per problem it equals the constants (Finding 79).
 
 ### E67: done 28 Oct, G1 and G2 failed, G3 and S passed (Finding 94; protocol `protocols/E67_PROTOCOL.md`, committed `3836304` before any sample)
 
@@ -397,14 +397,14 @@ the result exists but a later run replaced it. Failed means it produced nothing 
 
 ## 2. Running now
 
-**Nothing, on either track** (checked 26 September: `kaggle_launch.py status` and
-`klarge.py status` both report zero RUNNING or QUEUED kernels).
+**Nothing** (checked 1 November: `scripts/kaggle_quota.py` shows no GPU session running on the 18 aliases it can
+read; Shafeen and MalihaMehnaj return HTTP 401).
 
-**The submission that stands is `e27k`, 12/14 = 0.86** on the small-track leaderboard: within
-each model's batch, the more familiar problems are called robust, and how many are called robust
-comes from that model's class balance as the probes measured it. `e27e` (0.71) is the prior-free
-version of the same ranking, and E11 v2 (0.64) is the zero-GPU fallback. Every ZIP rebuilds with
-`python submission/make_e27.py`.
+**The submission that stands is `e64-difficulty`, 10/14 = 0.71 per problem** (Codabench 1010961): difficulty read from
+one forward pass, with the easier problems called robust. It is one case above the per-model constants (`e27f`, 0.64).
+`e27k`'s 12/14 = 0.86 below was the batch protocol: within each model's batch, the more familiar problems are called
+robust, and how many comes from that model's class balance as the probes measured it. Called one problem at a time it
+is the constants (Finding 79). `python submission/make_e64.py` rebuilds E64 and `python submission/make_e27.py` the E27 series.
 
 **The leaderboard series, in full** (Small Model Track, 14 cases, so one case is 0.07). `submission/README.md` carries the same series **ordered by score**, with each ZIP's name, what it does and how to rebuild it:
 
@@ -420,6 +420,12 @@ version of the same ranking, and E11 v2 (0.64) is the zero-GPU fallback. Every Z
 | `e27h` | 0.71 | split for DeepSeek alone: the whole gain of `e27e` |
 | **`e27k`** | **0.86** | `e27e` with Skywork and Olmo calling one fewer problem robust |
 | `e27m`/`e27n`/`e27o`/`e27p` | 0.79 | every single-step neighbour of `e27k`'s counts |
+| **Per problem, since 15 Oct** | | |
+| `e27k`, re-scored | 0.64 | with one problem a call it is the constants |
+| `e61a` | 0.57 | familiarity against a frozen AMC median |
+| `e61b` | 0.64 | familiarity cut at a quantile of unlabelled problems |
+| `e63` | 0.64 | familiarity cut at a quantile of the official problems |
+| **`e64`** | **0.71** | predicted difficulty from one forward pass |
 
 ---
 

@@ -5,6 +5,9 @@ decides no submission and has no gate. Code: `datagen/perturb/e62_pool.py`, `dat
 (generation), the E60 sampling kernels (`scripts/e58_gpu_bundle.py` pattern), `train/eval_e62.py` (to be written
 before the first sample is read). Any change after the first sample is read is an amendment, dated in §8.
 
+**Result, 31 Oct (Finding 95): positive. Spearman(mean NLL, detection rate) 0.256 [0.112, 0.386] on 177 problems;
+within length terciles 0.142 [-0.015, 0.282].**
+
 ## Motivation
 
 `e27k`'s direction, familiar problems are robust, holds on DeepSeek's MATH rows and on the hidden validation set,

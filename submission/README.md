@@ -3,6 +3,10 @@
 Every ZIP this track has built, ordered by its **Codabench leaderboard score**, highest first.
 Narrative and evidence live in `../PROGRESS.md` (numbered Findings); this file is the index.
 
+**What we nominate (1 Nov): `e64-difficulty`, Codabench 1010961**, on the OpenReview form by 5 Nov AoE
+(`../docs/COMPETITION.md` §12). The form takes a second ID, and the better of the two counts; that choice is open.
+The first table below is the old batch protocol: since 15 Oct `e27k`'s 0.86 reads 0.64.
+
 **How to read a score.** The hidden validation set has **14 cases**, so every score is a multiple
 of 1/14 and one case is 0.07. That is a small board: a one-case difference is noise, and the whole
 series below was produced deliberately, one upload at a time, to measure structure rather than to
@@ -24,7 +28,7 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 
 | Score | | Submission | What it does | What it settled |
 | --- | --- | --- | --- | --- |
-| **0.86** | 12/14 | **`e27k-tilted`** ⭐ | Familiarity ranking, plus per-model robust counts: Skywork and Olmo call one fewer problem robust than the median | **The incumbent.** The count each model's measured class balance implies (Findings 60, 61) |
+| **0.86** | 12/14 | **`e27k-tilted`** | Familiarity ranking, plus per-model robust counts: Skywork and Olmo call one fewer problem robust than the median | **The incumbent until 15 Oct**, when per-problem evaluation took it to 0.64. The count each model's measured class balance implies (Findings 60, 61) |
 | 0.79 | 11/14 | `e27m-qwen-down` | `e27k`, Qwen one fewer robust | Every single-step neighbour of `e27k` loses exactly one case, so `e27k` is a strict local optimum and all six tests agree with the probe-measured balances (Finding 61) |
 | 0.79 | 11/14 | `e27n-deepseek-down` | `e27k`, DeepSeek one fewer robust | ″ |
 | 0.79 | 11/14 | `e27o-qwen-up` | `e27k`, Qwen one more robust | ″ |
@@ -49,18 +53,18 @@ a rebuild reproduces them byte for byte (see "Rebuilding", below).
 
 | Score | | Submission | What it does | What it settled |
 | --- | --- | --- | --- | --- |
-| **0.71** | **10/14** | **`e64-difficulty`** ⭐ (1010961, 26 Oct) | Difficulty read from one forward pass (per-layer ridge from prompt states to Qwen's log trace length on 497 unlabelled olympiad problems); easier = robust, cutoffs at the `p_m` quantiles of the 36 official problems | **The first per-problem method above the constants**, by one case. Its pre-registered ship rule (10/14 or better) makes it the Form ZIP (Finding 88), although it reverses on DeepSeek MATH (Finding 89) |
+| **0.71** | **10/14** | **`e64-difficulty`** ⭐ (1010961, 26 Oct) | Difficulty read from one forward pass (per-layer ridge from prompt states to Qwen's log trace length on 497 unlabelled olympiad problems); easier = robust, cutoffs at the `p_m` quantiles of the 36 official problems | **The first per-problem method above the constants**, by one case. Its pre-registered ship rule (10/14 or better) makes it the submission we nominate (Finding 88), although it reverses on DeepSeek MATH (Finding 89) |
 | 0.64 | 9/14 | `e63-official-quantile` (1010959, 26 Oct) | E61's familiarity cutoffs recalibrated on the 36 `train-main-v2` problems, Qwen at its constant | **Equals the constants**, below its expected 10.3. Per-problem familiarity has now read 8, 9 and 9 (Finding 87) |
 | 0.64 | 9/14 | `e61b-quantile` (1007215, 21 Oct) | Robust iff mean NLL is at or below the `p_m` quantile of E55's 548 unlabelled problems (Qwen 0.6, DeepSeek 2/3, Skywork and Olmo 1/3) | **Equals the constants.** The batch ranking's 12/14 does not survive an absolute threshold (Finding 86) |
 | 0.64 | 9/14 | `e27k-tilted` (990659, re-scored 15 Oct) | The batch ranking; with one problem a call it is the constants | Finding 79 |
 | 0.57 | 8/14 | `e61a-amc-median` (1007214, 21 Oct) | Control: robust iff mean NLL is below E54's frozen 75-problem AMC median | One case below the constants |
 
-**Uploaded 26 Oct, 21:13 and 21:14 UTC, E63 first so the board ends on E64.** Two earlier attempts the same evening (1010405, 1010444) never received a score and are not reads. The Form ZIP is `e64-difficulty` under the rule fixed in its protocol before either read: it replaces `e27f` at 10/14 or better, and E63 did not reach 10. The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, and the owner waived it on 27 Oct, as for E61 (`protocols/E64_PROTOCOL.md` amendment 4). **There is no Google Form (checked 31 Oct).** The OpenReview report nominates **Codabench submission 1010961**
+**Uploaded 26 Oct, 21:13 and 21:14 UTC, E63 first so the board ends on E64.** Two earlier attempts the same evening (1010405, 1010444) never received a score and are not reads. The submission we nominate is `e64-difficulty`, under the rule fixed in its protocol before either read: it replaces `e27f` at 10/14 or better, and E63 did not reach 10. The Codabench run itself, on the organizers' GPU runner, had coverage 1.0 and 0 invalid predictions, and its read differs from the constants', so the model path ran there rather than the fallback: that covers what the Docker test checks, and the owner waived it on 27 Oct, as for E61 (`protocols/E64_PROTOCOL.md` amendment 4). **There is no Google Form (checked 31 Oct).** The OpenReview report nominates **Codabench submission 1010961**
 (`dist/solution-e64-difficulty-small.zip`, SHA-256 `665f86ddd28730c2…`) in `leaderboard_submission_ids`, by 5 Nov
 AoE; see `docs/COMPETITION.md` §12.
 
 **E66 (27 Oct) built no ZIP for upload.** E64 refitted on a 64k-cap target failed its official-row gates (AUC 0.808,
-26/34, against E64's 0.883 and 28/34; Finding 90), so it never reached the board and E64 stays the Form ZIP.
+26/34, against E64's 0.883 and 28/34; Finding 90), so it never reached the board and E64 stays the submission we nominate.
 `make_e64.py --experiment e66` can rebuild it; the E64 ZIP rebuilds byte for byte after the builder change.
 
 Both E61 ZIPs were uploaded without the Docker test (owner's decision, `protocols/E61_PROTOCOL.md` amendment 1).
@@ -91,6 +95,8 @@ E11 v1's 0.47 is still a pre-rebuild reading with no current equivalent.
 ---
 
 ## The re-probe (built 30 Sep, ready to upload)
+
+**Since 15 Oct the per-model counts it protected no longer act** (Finding 79). No upload is planned; this is the record.
 
 `python submission/make_probes.py` rebuilds five constant ZIPs into `dist/probes/`. They exist to
 re-measure each model's class balance `d = robust - spurious` on the **current** task, because

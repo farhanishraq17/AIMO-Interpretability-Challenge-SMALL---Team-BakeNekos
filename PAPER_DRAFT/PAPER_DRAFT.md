@@ -1,3 +1,6 @@
+> **Superseded by `PAPER.md`.** An alternative draft of 2 Oct, kept for its structure. It predates per-problem
+> evaluation (15 Oct) and E64, so its results and what it says we ship are out of date.
+
 # Predicting Reasoning Robustness Without Training Data
 
 ### Four claims from the AIMO Interpretability Challenge, Small Models Track
