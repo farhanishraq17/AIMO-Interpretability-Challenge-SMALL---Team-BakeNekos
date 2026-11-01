@@ -136,3 +136,10 @@ hidden_dim)`) and `records.parquet` with labels, uncertainty scalars, and fold i
 Keeping every layer and three poolings is deliberate: the shipped probe reads only the
 last prompt token at one layer and measures at chance (`PLAN.md` §9, Finding 2), so layer
 and pooling should be selected on grouped CV rather than inherited from the baseline.
+
+## 4. Later runs, outside the registry
+
+Later experiments are not in `EXPERIMENTS`. Each is a self-contained bundle, `scripts/*_gpu_bundle.py` or
+`scripts/e62_gen_bundle.py`, pushed and downloaded with `scripts/kaggle_followup.py`
+(`push <job> --account <alias>`). Their pools and generators are in `datagen/perturb/`, and each run's launch
+record is in `kernels/runs/`.

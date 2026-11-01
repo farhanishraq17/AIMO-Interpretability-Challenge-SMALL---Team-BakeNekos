@@ -72,3 +72,6 @@ it.** Docker Desktop has not started on this machine since 21 Oct. The Codabench
 organizers' GPU runner) had coverage 1.0 and 0 invalid predictions, and its 10/14 differs from the constants' 9/14,
 so the shipped model path ran in the evaluation runtime rather than the fallback. `e64-difficulty` goes into the
 Google Form unchanged (`dist/solution-e64-difficulty-small.zip`).
+
+**5 (1 Nov, a note, not a change to the rule): there is no Google Form (Finding 96).** The prizes go to the Codabench
+IDs nominated on the OpenReview form, so "goes in the Google Form" above means E64 is nominated, as 1010961.

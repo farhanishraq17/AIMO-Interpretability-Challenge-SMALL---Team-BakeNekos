@@ -6,9 +6,11 @@
 
 | Date | Event |
 | --- | --- |
-| 21 Oct 2026 | Plan last updated. **Start at §13: the final push under per-problem evaluation.** §12 is the history behind it. |
-| 1 Nov 2026, 12:55 UTC | Codabench submissions close (about 6.5 weeks away) |
-| 15 Nov 2026 | Technical report and open-source code due |
+| 1 Nov 2026 | Plan last updated. **Start at §13.6b: what is left before the report.** §13 is the final push under per-problem evaluation; §12 is the history behind it. "Form ZIP" and "Google Form" before §13.6b mean the submission we nominate: no such form exists (Finding 96). |
+| **1 Nov 2026 (AoE)** | Codabench submissions close. Its phase `end` read 2 Nov, 12:00 UTC on 1 Nov, which fits the website's AoE date; it read 1 Nov, 11:55 UTC on 31 Oct, and 12:55 here before that was wrong |
+| **5 Nov 2026 (AoE)** | Technical report and open-source code due on OpenReview, which also nominates the prize submissions (§13.6b). 15 Nov here before 31 Oct was wrong |
+| 5 - 12 Nov 2026 (AoE) | Reciprocal reviewing of up to 3 reports |
+| 15 Nov 2026 (AoE) | Decisions: results and awards announced |
 | 11/12 Dec 2026 | NeurIPS workshop |
 
 **Companion documents:**
@@ -960,8 +962,8 @@ Our 0.64 is `e27k` re-scored per problem, which collapses to the per-model const
   the same as its constant, and nothing we have measured moves a Qwen case.
 - **13 or 14 needs per-case information about Qwen.** We could build it (Finding 75 names the swap)
   and it would say nothing about new problems; the owner rejected it on 14 Oct and it is not in this
-  plan. The prize is decided on new problems and variants, from the ZIP sent through the
-  organizers' Google Form, not from this board.
+  plan. The prize is decided on new problems and variants, from the submissions we nominate on
+  OpenReview (§13.6b), not from this board.
 - **Some of the board above us may not be methods.** `train-main-v2` revision `25e45665` still holds
   7 labelled validation cells (Qwen 3, Olmo 3, DeepSeek 1; Finding 75). Using it is evaluation
   leakage. Every script here pins `23791d9b`; keep it that way.
@@ -1078,7 +1080,7 @@ added premise (Finding 76), then on problems it finds familiar it should flag co
 
 **Why it cannot ship:** its labeller failed the official-row gate in E60 (kappa 0.045), and the only
 rows that could test a continuous version were already read there post hoc (AUC 0.675). The report
-deadline (15 Nov) is after the submission deadline, so it can run past the freeze.
+deadline (5 Nov; it read 15 Nov when this was written) is after the submission deadline, so it can run past the freeze.
 
 **Done, 31 Oct (Finding 95).** Amendment 4 moved generation to Kaggle (Qwen3-8B-AWQ writes,
 DeepSeek-R1-Distill-Llama-8B checks); 377 variants on 200 problems, hand audit 29 of 30. On 177
@@ -1113,9 +1115,43 @@ direct test in its favour, with length as the caveat.
 | Fri 23 Oct | Board: E61a, then E61b. Finding 86. Pre-register E62; generate and check its contradictions on the Gemini and OpenRouter keys |
 | Sat 24 - Mon 26 Oct | Quotas reset. E62 sampling on the fleet. Report drafting |
 | **Tue 27 Oct** | **Freeze:** the ship rule picks E61b or `e27f` |
-| Wed 28 - Fri 30 Oct | Three repeatability and timing runs of the frozen ZIP in the competition image; send it through the Google Form by 30 Oct and keep its SHA-256 with the confirmation |
-| 1 Nov, 12:55 UTC | Codabench closes |
-| 2 - 15 Nov | E62 analysis; technical report and open-source repository |
+| Wed 28 - Fri 30 Oct | Three repeatability and timing runs of the frozen ZIP in the competition image. The Form step planned here does not exist (§13.6b) |
+| 1 Nov (AoE) | Codabench closes (phase `end` 2 Nov, 12:00 UTC) |
+| 1 - 5 Nov (AoE) | Technical report and open-source repository; OpenReview submission with the nomination (§13.6b) |
+| 5 - 12 Nov | Reciprocal reviewing |
+
+### 13.6b 31 Oct: no Google Form; OpenReview nominates the prize submissions
+
+The "Form ZIP" in this plan was to go through an organizers' Google Form. **No such form exists.** Checked on 31 Oct:
+the website, the getting-started issues, the Codabench pages and the OpenReview venue. The final step is the OpenReview
+report form (`docs/COMPETITION.md` §12, "Nominating for prizes"):
+
+- **Codabench closes 1 Nov AoE** (phase `end` 2 Nov, 12:00 UTC, re-read 1 Nov; it read 1 Nov, 11:55 UTC on 31 Oct).
+  E64 is already on the board as **1010961**, so nothing is left to upload.
+- **OpenReview by 5 Nov AoE** (6 Nov, 12:59 UTC):
+  - `leaderboard_submission_ids` takes one or two Codabench IDs. The final score is the better of the two (issue #6).
+    1010961 goes first; the second is the owner's choice.
+  - The PDF uses the NeurIPS template, with at most 5 pages excluding the mandatory AI use statement, limitations,
+    references and appendix. The form asked for an anonymized body on 31 Oct; on 1 Nov neither it nor the website
+    says so. Keep the body anonymous unless the organizers say otherwise.
+  - The code goes as a supplementary ZIP of 50 MB or less, or as the open-source repository.
+- **Final test:** 30-50 problems with 160 s enforced per `are_robust` call; a timeout scores wrong (issue #6).
+  E64 runs one forward pass per problem.
+- **The report deadline moved to 5 Nov.** E62 (Finding 95) and E67 (Finding 94) are closed, so the days left are the
+  report's.
+
+**What is left, 1 Nov:**
+
+| Item | Who | State |
+| --- | --- | --- |
+| Nominate 1010961; choose whether to add a second ID | owner | Open. Any second ID must be one the report describes |
+| 5-page body from `PAPER_DRAFT/PAPER.md`, the rest as appendix | team | Not started. `PAPER.md` is the long form |
+| AI use statement, matching the form's checklist | team | Not written |
+| OpenReview profile for every author; listed authors named as reciprocal reviewers | owner | A missed review gets the report desk rejected |
+| `white_box_award` | owner | E64 reads hidden states, so it needs an ablation with and without that component in the report |
+| Open the code: public repository and a licence, or a supplementary ZIP of 50 MB or less | owner | The repository returned 404 to an anonymous request on 1 Nov, and no licence file is tracked |
+| Number audit of the E62 and E67 paragraphs in `PAPER.md` | team | Added after the 27 Oct audit |
+| Reciprocal reviewing, 5-12 Nov | listed reviewers | After submission |
 
 ### 13.6a 28 Oct: E64 opened up (Findings 91-93); E64 stays
 
@@ -1129,8 +1165,8 @@ direct test in its favour, with length as the caveat.
 - **The white-box account (F-93):** a 20-50-dimensional difficulty subspace present at every depth, read alike by all
   four models, about half explained by surface features. Vocabulary alone ranks the official rows as well, but fits
   unlabelled olympiad problems much worse.
-- **Open for the report (2-15 Nov), optional:** a steering run on Qwen would test whether that subspace *causes* longer
-  reasoning. It needs its own pre-registration and GPU time after the quota reset on 31 Oct.
+- **Done as E67 (Finding 94, 28 Oct):** the steering run on Qwen this item proposed. The push moved E64's read of the
+  later layers by ±0.19 and left trace length where it was (+2 sigma -0.003, -2 sigma -0.004).
 
 ### 13.7 Housekeeping in `Secrets.env` (owner)
 

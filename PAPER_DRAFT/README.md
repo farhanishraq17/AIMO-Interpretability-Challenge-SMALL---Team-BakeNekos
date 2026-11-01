@@ -1,11 +1,20 @@
 # PAPER_DRAFT
 
-The technical report for the AIMO Interpretability Challenge, due **15 November 2026** for award
-consideration, plus a peer review of up to three other reports between 15 and 30 November.
+The technical report for the AIMO Interpretability Challenge, due on OpenReview by **5 November 2026
+(AoE)** for award consideration, plus a peer review of up to three other reports between 5 and 12
+November. Decisions are announced on 15 November.
 
 | File | What it is |
 | --- | --- |
 | `PAPER.md` | The whole draft. Written to be read end to end by someone who has never seen the repository |
+| `REPORT_STANDARD.md` | What the report is judged on, with the rules as read on 1 November |
+| `EXEMPLAR_REPORTS.md` | Seven real competition reports, analysed |
+| `PAPER_DRAFT.md` | An alternative draft of 2 October, superseded by `PAPER.md` |
+| `Project_Manual.pdf` | The project manual as of 8 October |
+
+**`PAPER.md` is the long form, not the PDF we upload.** The form takes a 5-page body in the NeurIPS
+template; the AI use statement, limitations, references and appendix do not count. See "Before this
+can be submitted".
 
 **Small Models Track only.** The Main Track's experiments are not complete, so the paper carries no
 Main Track content — no sections, results or `LF-n` findings. See that track's `CLAUDE.md`.
@@ -22,12 +31,14 @@ Fifteen sections, a verified reference list and two appendices. They answer diff
   results, and we have twenty. §6.10-6.12 are the per-problem ones: familiarity stays at the
   constants (E61, E63), E64 reverses on DeepSeek MATH (E65), and a 64k-cap refit fails its gates (E66).
 - **Want what changed on 15 October?** §7.4: per-problem scoring turned our 12/14 into the constants'
-  9/14. §7.5: E64 reads 10/14 per problem (submission 1010961, 12th of 93) and is the Google Form ZIP.
+  9/14. §7.5: E64 reads 10/14 per problem (submission 1010961, 12th of 93) and is the submission we nominate on OpenReview.
 - **Want the open problem?** §9: familiarity and difficulty both flip between DeepSeek's MATH rows and
   the official rows, and the hidden board sides with each depending on how it is read.
 - **Want the explanation?** §6.2 and §6.9: our training labels and the competition's are decided
   by different perturbation families, and on the competition's the models answer through an
   impossible premise.
+- **Want the two direct tests?** §7.5: steering along E64's direction moves its read of later layers,
+  not trace length (E67). §11.1: Qwen flags added contradictions less on familiar problems (E62).
 - **Want the method?** §4.1-4.5 is E64: a per-layer ridge from prompt states to Qwen's log trace
   length on 497 unlabelled problems, averaged over layers, cut at each model's share. §4.2 is the one
   piece of real formalism: the share `p_m = (n_m + d_m)/(2 n_m)` and the batch count `t = (d − 1)/2`,
@@ -58,7 +69,7 @@ contrast), and every series carries a direct label rather than relying on hue al
 
 ## Before this can be submitted
 
-Item 1 is done; item 2 is still open.
+Due on OpenReview by 5 November AoE. Item 1 needs one more pass; the rest are open.
 
 1. **Number audit: done 14 October.** All 395 numeric tokens were checked for a source, every line
    holding two or more for a single source paragraph containing them all, and every single-number line
@@ -77,8 +88,22 @@ Item 1 is done; item 2 is still open.
    source mismatch was found and not copied: `PROGRESS.md` Finding 89 places E64's D3 correlations
    (−0.35 to −0.50) on the official rows, but `train/eval_e64.py` computes them over E55's 548
    problems, which is what §9 says.
-2. **The author list is incomplete.** One name is filled in. Add co-authors, affiliations, and a
-   licence for the repository.
+
+   **Still to audit:** the E67 paragraph (§7.5, F-94) and the E62 paragraph (§11.1, F-95), added since.
+2. **The 5-page body does not exist yet.** Cut it from `PAPER.md` in the NeurIPS template and keep the
+   rest as the appendix.
+3. **The AI use statement is not written.** It is mandatory and goes after the main text, before the
+   references: which tasks used which tools, which tasks did not, and that the authors reviewed
+   everything and take responsibility. It must match the form's checklist.
+4. **The author list is incomplete.** One name is filled in. Every author needs an OpenReview profile.
+   Keep names, the email and the repository link out of the PDF body: the form asked for anonymization
+   on 31 October, and on 1 November nothing says the request was dropped or kept.
+5. **The nomination.** 1010961 on the small track. A second ID is optional, must be one the report
+   describes, and the better of the two counts.
+6. **The white-box award.** E64 reads hidden states, so ticking it requires an ablation with and
+   without that component in the report.
+7. **The code is not open yet.** The repository returned 404 to an anonymous request on 1 November and
+   has no licence file. Open it with a licence, or upload the code as a supplementary ZIP of 50 MB or less.
 
 Optional, in rough order of value: a diagram of the method in §4 (currently prose and pseudocode),
 and per-figure alt text if the submission format wants it.
@@ -88,7 +113,9 @@ and per-figure alt text if the submission format wants it.
 - Organizers must be able to reproduce the score **from the report alone** — hence §14, and hence
   the rule that no number is hand-typed into a document.
 - The implementation must be open-sourced alongside it.
-- Award-considered teams peer-review up to three other reports.
+- Award-considered teams peer-review up to three other reports, 5-12 November. A listed reciprocal
+  reviewer who misses a review gets the report desk rejected.
+- One report per first author, and no two reports on highly similar methods.
 
 ## Keeping it honest
 

@@ -7,7 +7,7 @@
 ¹ Correspondence: farhanishraq2003@gmail.com · Code:
 <https://github.com/farhanishraq17/AIMO-Interpretability-Challenge-SMALL---Team-BakeNekos>
 
-**Draft — 27 October 2026.** Every number here is regenerable from the repository; the
+**Draft — 1 November 2026.** Every number here is regenerable from the repository; the
 commands are in §14. Findings are cited as `F-n` (`PROGRESS.md`). Where this draft and a
 `RESULTS.md` table disagree, the table is right.
 
@@ -124,7 +124,9 @@ so the honest reading is *we do not know*, not *we were nearly right*.
 **Evaluation is one hour, once.** A single RTX PRO 6000 (96 GB), 3600 s for the *whole* run
 covering every model and every problem, no network, no installs, weights only from a read-only
 cache. This is not a training-time constraint that scale can relax; it is a hard bound on what any
-method may do per problem at test time.
+method may do per problem at test time. The final test adds a limit per call: 30-50 problems, 160 s
+enforced on each `are_robust` call, and a call over that is scored wrong (organizers, `getting-started`
+issue #6).
 
 ### 1.3 Why generalization and efficiency are the objects of study
 
@@ -951,8 +953,8 @@ scored **10/14 = 0.71** (submission 1010961): one case above the constants, and 
 per-problem read above 9. It moved us from 27th to 12th of 93 teams with a small-track score (11
 above, 15 tied at 0.71). Two earlier upload attempts that evening never received a score and are not
 reads. Under the rule fixed in its protocol before either read, which replaces the constants at
-10/14 or better, **E64 is the ZIP we submit through the organizers' Google Form**, from which the
-prizes are decided on new problems: `dist/solution-e64-difficulty-small.zip`, SHA-256 `665f86dd…`.
+10/14 or better, **E64 is the submission we nominate on the OpenReview form**, and the prizes are
+decided on new problems: `dist/solution-e64-difficulty-small.zip`, SHA-256 `665f86dd…`.
 
 **What it rests on offline.** Every check was fixed in `protocols/E64_PROTOCOL.md` before any fit:
 

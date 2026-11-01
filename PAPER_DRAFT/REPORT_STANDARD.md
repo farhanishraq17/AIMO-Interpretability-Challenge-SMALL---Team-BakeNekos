@@ -3,58 +3,39 @@
 Research compiled 2 Oct 2026 for `PAPER.md`. Companion file: `EXEMPLAR_REPORTS.md`, which analyses
 seven real competition reports in depth. Sources are linked inline. Anything attributed to the
 organizers comes from `COMPETITION.md`, the competition site, or their arXiv proposal (2607.13899).
+Rules, dates and §0 were corrected on 1 Nov against the live site and the OpenReview form.
 
-**Frame:** this is a *competition technical report* judged by the AIMO organizers, not a
-peer-reviewed NeurIPS workshop submission. No anonymous review, no rebuttal, no acceptance
-threshold. There is a $5,000 pot, a panel, four stated interests, and a peer-review round where
+**Frame:** this is a *competition technical report* judged by the AIMO organizers and submitted on
+OpenReview. There is a $5,000 pot, a panel, four stated interests, and a peer-review round where
 rival teams read our report. Workshop craft advice applies to the *writing*. It does not apply to
 the *rules*.
 
 ---
 
-## 0. Report length: checked, and it is not a constraint
+## 0. Report length: a 5-page body, with the evidence in the appendix
 
-**Checked verbatim on 2 Oct against the proposal paper, the live site, the starter-kit README and
-our own `COMPETITION.md`.** An earlier version of this file claimed the award report is capped at
-1–2 pages. **That was wrong.** The proposal paper describes *three different artifacts*, and the
-page limit belongs to the smallest of them:
+**Corrected 1 Nov.** On 2 Oct this section found no page limit on any source. The live rules now state
+one, and the OpenReview form agrees on what falls outside it:
 
-| Artifact | Who | Length | Source |
-| --- | --- | --- | --- |
-| Methods summary | **every participant**, after the deadline | **1–2 pages** | proposal §2.1 |
-| **Award / compliance report** | **teams considered for awards**, by 15 Nov | **no limit stated anywhere** | proposal §2.2, live site, `COMPETITION.md` §7 |
-| Workshop report | optional, non-archival | 1 page | proposal §2.5 |
+| Part | Limit | Source |
+| --- | --- | --- |
+| Main body | **5 pages, NeurIPS template** | live site, rules and FAQ |
+| AI usage statement | not counted, and mandatory | live site, OpenReview form |
+| Limitations, references, appendix | not counted | live site |
 
-The exact sentences:
+**Conclusion: `PAPER.md` cannot be the body.** It is the long form. Its evidence can sit in the
+appendix, and the body has to carry the argument alone, because rival teams and the panel may read
+nothing else. The four stated interests of §2 have to be answered inside those 5 pages.
 
-> §2.1 — "After the competition deadline, participants will be required to submit a **1–2-page
-> technical report**, summarizing the methods applied in their submission."
->
-> §2.2 — "Report: ranked teams must submit a technical report within one week for compliance checks."
-> *(no length given)*
->
-> Live site — "teams considered for awards must submit a technical report with details on their
-> submission and its open-sourced implementation… must enable the organizers to reproduce their
-> score from the instructions in the technical report alone… The report must document the training
-> data, the training codebase and the submission bundle."
+Also from the site and the form:
 
-**Conclusion: `PAPER.md`'s length is not a problem.** The award report is the one that carries the
-$5,000, it has no stated page limit on any current source, and its stated requirements — full
-reproduction from the report alone, plus training data, codebase and bundle — cannot fit in two
-pages. The live site, which supersedes the proposal (it already retired the extra-data restriction
-on 19 Sep), specifies no limit at all.
-
-Two practical consequences that are easy to miss:
-
-1. **We may owe a short methods summary as well**, separate from this report. Worth confirming, but
-   it is cheap: 1–2 pages distilled from the abstract and §4.
-2. **A 1-page non-archival workshop report** is also available if we present. Also cheap, same
-   source material.
-
-The remaining genuine unknown is *format*, not length — no template is published, and
-[getting-started issue #10](https://github.com/aimo-interp/getting-started/issues/10) asking about
-templates and format is still open with no organizer reply. Worth asking, but it no longer blocks
-anything structural.
+1. **Anonymity.** On 31 Oct the form asked for an anonymized body. On 1 Nov neither the form nor the
+   site says so. Keep the body anonymous unless the organizers say otherwise.
+2. **Reciprocal reviewing can sink the report.** A listed reviewer who misses a review gets the
+   report desk rejected and out of the awards.
+3. **One report per first author**, and no two reports on highly similar methods.
+4. **The proposal's other artifacts** (a 1-2 page methods summary, a 1-page workshop report) appear
+   in the proposal only. The site's rules name this one report.
 
 A second, overlooked incentive from the proposal paper, worth knowing because it is not the $5,000:
 
@@ -72,13 +53,13 @@ That clause is written for a report like ours.
 | Prize | **$5,000**, "for selected technical reports, **regardless of their ranking**" |
 | Judged on | "scientific contribution" |
 | Also at stake | an invitation to present in person, for "broadly impactful methodological lessons" |
-| Due | **15 Nov 2026** |
-| Then | we peer-review up to 3 other teams' reports, 15–30 Nov |
+| Due | **5 Nov 2026 (AoE)**, on OpenReview |
+| Then | we peer-review up to 3 other teams' reports, 5–12 Nov |
 | Hard gate | organizers must reproduce our score **from the report alone** |
 
 The leaderboard prize and the writeup prize are **independent**. A report can take the writeup pot
 having placed nowhere. This is the most important strategic fact here: the report should not read as
-a victory lap for 0.86. It should read as a scientific contribution that a competition happened to
+a victory lap for a board score. It should read as a scientific contribution that a competition happened to
 validate.
 
 ## 2. The four stated interests, decoded
@@ -178,7 +159,7 @@ identifies which problem deserves solving. Concrete rules he gives:
 - "Put in an unreasonable amount of effort" on experimental rigor
 - Make the paper **maximal** — no obvious unfinished improvement left visible
 
-**Read-across:** our "so what" is not 0.86. It is that offline interpretability validation was
+**Read-across:** our "so what" is not a board score. It is that offline interpretability validation was
 anti-correlated with held-out behaviour on this task, and that a method with nothing to fit beat
 every fitted one. That is a claim about interpretability methodology, and it survives the "so what"
 test far better than the score does.

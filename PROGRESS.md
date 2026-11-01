@@ -9,12 +9,16 @@ Companion documents:
 - `RESULTS.md`: generated metrics.
 - `CLAUDE.md`: working conventions and commands.
 
-Last updated: 29 September 2026. Current decisions: Findings 62–64 and `PLAN.md` §12;
-the early status tables below describe earlier stages.
+Last updated: 1 November 2026. Current decisions: Finding 79 (per-problem evaluation), Finding 88 (E64 ships),
+Finding 96 (how it is nominated) and `PLAN.md` §13.6b; the early status tables below describe earlier stages.
 
 ---
 
 ## 1. Where things stand
+
+**Now (1 Nov):** `e64-difficulty` (Codabench 1010961, 10/14 per problem) is the submission we nominate. E62 and E67
+are closed (Findings 94, 95) and `scripts/kaggle_quota.py` shows no GPU session running on the 18 accounts it can read.
+What is left is the report and the OpenReview form (`PLAN.md` §13.6b). The table below is the September record.
 
 | Area | Status |
 | --- | --- |
@@ -3043,7 +3047,28 @@ as declining; a truncated sample is not flagged.
 - **Use:** none for the Form (E64 stays). For the report it is the one direct test of §11.1's mechanism, and it points
   the predicted way.
 
+**96. There is no Google Form. The prizes go to the Codabench IDs nominated on the OpenReview report form, and the
+final score is the better of at most two. The report is due 5 Nov AoE, not 15 Nov, and its body is limited to 5
+pages.** (Read 31 Oct and again 1 Nov: Codabench's competition API, the OpenReview submission invitation, the website,
+`getting-started` issue #6; `docs/COMPETITION.md` §6 and §12.)
+
+- **Nomination.** The form takes one or two Codabench IDs that the report describes, each with its track. E64 is
+  1010961, so nothing is left to upload. "The Form" in earlier Findings, protocols and `PLAN.md` means the submission
+  we nominate.
+- **Dates.** OpenReview is due 6 Nov, 12:59 UTC (5 Nov AoE), reviewing is 5-12 Nov, and 15 Nov is when decisions are
+  announced. Codabench's phase `end` read 1 Nov, 11:55 UTC on 31 Oct and 2 Nov, 12:00 UTC on 1 Nov, which fits the
+  website's 1 Nov AoE.
+- **Final test.** 30-50 problems, 160 s enforced on each `are_robust` call, and a call over that is scored wrong
+  (issue #6). E64 runs one forward pass per problem.
+- **Report.** NeurIPS template, 5 pages excluding the AI use statement, limitations, references and appendix. This
+  overturns what `PAPER_DRAFT/REPORT_STANDARD.md` §0 said on 2 Oct, so `PAPER.md` is the long form, not the body. The
+  form asked for an anonymized body on 31 Oct; on 1 Nov neither it nor the website says so.
+- **Use:** E64 stays. What is left is in `PLAN.md` §13.6b.
+
 ## 10. Open questions and blockers
+
+**Status, 1 Nov:** the list below is the 25 Sep record. The organizers answered questions 1 and 2 on 26 Sep (Finding
+59), and the board's 14 cases answer question 3. On question 4, issue #6 gives only the size: 30-50 problems.
 
 **For the organizers** (updated 25 Sep, not sent; use Discord/registration support because
 new GitHub issues are restricted):
@@ -3062,11 +3087,8 @@ new GitHub issues are restricted):
 
 **Requiring you:**
 
-- Send the organizer message above through the challenge Discord or registration support.
-- If access is granted, add a Hugging Face token with permission to read
-  `aimo-interp/problems-public`; do not paste it into the repository or chat.
-- No leaderboard action is currently needed: E27e/E27h at 0.71 remains the performance
-  candidate and E11 v2 at 0.64 remains the conservative fallback.
+- The owner's items in `PLAN.md` §13.6b: the nomination, the authors' OpenReview profiles, and opening the code.
+- No leaderboard action is needed: E64 is on the board as 1010961.
 
 **Housekeeping:**
 
@@ -3082,16 +3104,11 @@ new GitHub issues are restricted):
 
 ## 11. Next steps
 
-Ranked by value (25 Sep):
+As of 1 Nov; the checklist is `PLAN.md` §13.6b.
 
-1. **Request `problems-public` access and official-family label clarification.** E33 remains
-   blocked until legitimate access exists; cached search snippets are not reconstructed.
-2. **Do not relax E34a after failure.** Its 1/52 yield closes E34b; no eligibility, sampling,
-   perturbation or threshold change follows from this result.
-3. **Do not tune E35 on Putnam.** Its independent AUC gate failed; no vectorizer, threshold,
-   aggregation band or source substitution follows from the holdout outcome.
-4. **Retain the current submissions.** E27e/E27h (0.71) is the performance candidate; E11 v2
-   (0.64) is the conservative fallback. No new Codabench upload without E33 or E34 clearing
-   its independent-validation gate.
-5. **If access is denied, stop GPU experimentation** and focus on the technical
-   report, reproducibility, runtime measurements and negative-result figures.
+1. **Write the report.** A 5-page body in the NeurIPS template from `PAPER_DRAFT/PAPER.md`, the rest as appendix, plus
+   the AI use statement. Due on OpenReview by 5 Nov AoE (Finding 96).
+2. **Nominate.** `e64-difficulty` (1010961) first. A second ID is optional and must be one the report describes.
+3. **Open the code.** A public repository with a licence, or a supplementary ZIP of 50 MB or less.
+4. **Review.** Reciprocal reviewing runs 5-12 Nov, and a missed review gets the report desk rejected.
+5. **No more GPU work or uploads are planned.** E62 and E67 are closed, and E64 stays.
